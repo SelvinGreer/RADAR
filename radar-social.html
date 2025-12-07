@@ -17,6 +17,12 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -1070,6 +1076,21 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhcfX0M5oqX7rZ6WdCZaHfxHKcxySxQl8",
+            authDomain: "radar-social-5a61f.firebaseapp.com",
+            projectId: "radar-social-5a61f",
+            storageBucket: "radar-social-5a61f.firebasestorage.app",
+            messagingSenderId: "1010787643000",
+            appId: "1:1010787643000:web:e9dc6a1c175d875b90478d",
+            measurementId: "G-NXM0HPCWMY"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
         const MOCK_USERS = [
             { id: 99, name: 'Tú', age: 25, photo: 'https://i.pravatar.cc/150?img=33', thought: 'Tomando café ☕', hasStory: true, distance: 0, angle: 0, hasNewMessage: false },
             { id: 1, name: 'Emma', age: 24, photo: 'https://i.pravatar.cc/150?img=1', thought: 'En el gym', hasStory: true, distance: 5, angle: 315, hasNewMessage: false },
@@ -1098,13 +1119,65 @@
             const [viewingStory, setViewingStory] = useState(null);
 
             useEffect(() => {
-                const user = MOCK_USERS.find(u => u.id === 99);
-                setCurrentUser(user);
-                setThought(user.thought);
-                
                 // Initialize audio context
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 setAudioContext(ctx);
+                
+                // Load real user from Firebase
+                const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+                    if (firebaseUser) {
+                        console.log('Firebase User loaded:', firebaseUser);
+                        console.log('Photo URL:', firebaseUser.photoURL);
+                        
+                        try {
+                            // Get user data from Firestore
+                            const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
+                            
+                            let thought = 'Tomando café ☕';
+                            if (userDoc.exists) {
+                                const userData = userDoc.data();
+                                thought = userData.thought || thought;
+                            }
+                            
+                            // Create real user object with Google photo
+                            const realUser = {
+                                id: 99,
+                                name: firebaseUser.displayName || 'Usuario',
+                                age: 25,
+                                photo: firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(firebaseUser.displayName || 'User') + '&background=38bd62&color=fff&size=150',
+                                thought: thought,
+                                hasStory: false,
+                                distance: 0,
+                                angle: 0,
+                                hasNewMessage: false,
+                                email: firebaseUser.email
+                            };
+                            
+                            console.log('Real user created:', realUser);
+                            
+                            setCurrentUser(realUser);
+                            setThought(realUser.thought);
+                            
+                            // Update users array with real user
+                            setUsers(prevUsers => {
+                                const filtered = prevUsers.filter(u => u.id !== 99);
+                                return [realUser, ...filtered];
+                            });
+                        } catch (error) {
+                            console.error('Error loading user:', error);
+                            // Fallback to mock user
+                            const user = MOCK_USERS.find(u => u.id === 99);
+                            setCurrentUser(user);
+                            setThought(user.thought);
+                        }
+                    } else {
+                        // No user logged in, redirect to auth
+                        console.log('No user logged in, redirecting...');
+                        window.location.href = 'auth.html';
+                    }
+                });
+                
+                return () => unsubscribe();
             }, []);
 
             // Calculate direction to point towards closest user with message
@@ -1249,12 +1322,24 @@
                 setLocationPermission(true);
             };
 
-            const updateThought = () => {
+            const updateThought = async () => {
                 if (currentUser) {
                     setUsers(users.map(u => 
                         u.id === currentUser.id ? { ...u, thought } : u
                     ));
                     setCurrentUser({ ...currentUser, thought });
+                    
+                    // Save to Firebase if user is authenticated
+                    const user = auth.currentUser;
+                    if (user) {
+                        try {
+                            await db.collection('users').doc(user.uid).update({
+                                thought: thought
+                            });
+                        } catch (error) {
+                            console.error('Error updating thought:', error);
+                        }
+                    }
                 }
             };
 
