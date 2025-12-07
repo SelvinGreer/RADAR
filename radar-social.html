@@ -1091,23 +1091,13 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        const MOCK_USERS = [
-            { id: 99, name: 'Tú', age: 25, photo: 'https://i.pravatar.cc/150?img=33', thought: 'Tomando café ☕', hasStory: true, distance: 0, angle: 0, hasNewMessage: false },
-            { id: 1, name: 'Emma', age: 24, photo: 'https://i.pravatar.cc/150?img=1', thought: 'En el gym', hasStory: true, distance: 5, angle: 315, hasNewMessage: false },
-            { id: 2, name: 'Megan', age: 27, photo: 'https://i.pravatar.cc/150?img=5', thought: '', hasStory: true, distance: 12, angle: 0, hasNewMessage: true },
-            { id: 6, name: 'TGvesta', age: 23, photo: 'https://i.pravatar.cc/150?img=9', thought: '', hasStory: false, distance: 18, angle: 45, hasNewMessage: false },
-            { id: 4, name: 'Josh', age: 25, photo: 'https://i.pravatar.cc/150?img=13', thought: '', hasStory: false, distance: 25, angle: 135, hasNewMessage: false },
-            { id: 3, name: 'Dylan', age: 26, photo: 'https://i.pravatar.cc/150?img=12', thought: '', hasStory: false, distance: 32, angle: 180, hasNewMessage: false },
-            { id: 5, name: 'Daniel', age: 28, photo: 'https://i.pravatar.cc/150?img=14', thought: '', hasStory: false, distance: 40, angle: 225, hasNewMessage: false },
-            { id: 7, name: 'Libre', age: 29, photo: 'https://i.pravatar.cc/150?img=15', thought: 'Libre hoy', hasStory: false, distance: 48, angle: 270, hasNewMessage: false }
-        ];
-
         function RadarSocialApp() {
             const [locationPermission, setLocationPermission] = useState(false);
             const [radius, setRadius] = useState(50);
             const [thought, setThought] = useState('');
             const [currentUser, setCurrentUser] = useState(null);
-            const [users, setUsers] = useState(MOCK_USERS);
+            const [userLocation, setUserLocation] = useState(null);
+            const [users, setUsers] = useState([]); // Start empty - will load from Firebase
             const [isDraggingDial, setIsDraggingDial] = useState(false);
             const [selectedUser, setSelectedUser] = useState(null);
             const [chats, setChats] = useState({});
@@ -1117,6 +1107,36 @@
             const [showSidebar, setShowSidebar] = useState(false);
             const [showProfile, setShowProfile] = useState(false);
             const [viewingStory, setViewingStory] = useState(null);
+
+            // Calculate distance between two GPS coordinates (Haversine formula)
+            const calculateDistance = (lat1, lon1, lat2, lon2) => {
+                const R = 6371e3; // Earth's radius in meters
+                const φ1 = lat1 * Math.PI / 180;
+                const φ2 = lat2 * Math.PI / 180;
+                const Δφ = (lat2 - lat1) * Math.PI / 180;
+                const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+                const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                          Math.cos(φ1) * Math.cos(φ2) *
+                          Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+                return R * c; // Distance in meters
+            };
+
+            // Calculate angle/bearing from point 1 to point 2
+            const calculateBearing = (lat1, lon1, lat2, lon2) => {
+                const φ1 = lat1 * Math.PI / 180;
+                const φ2 = lat2 * Math.PI / 180;
+                const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+                const y = Math.sin(Δλ) * Math.cos(φ2);
+                const x = Math.cos(φ1) * Math.sin(φ2) -
+                          Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+                const θ = Math.atan2(y, x);
+
+                return (θ * 180 / Math.PI + 360) % 360; // Bearing in degrees
+            };
 
             useEffect(() => {
                 // Initialize audio context
@@ -1129,46 +1149,146 @@
                         console.log('Firebase User loaded:', firebaseUser);
                         console.log('Photo URL:', firebaseUser.photoURL);
                         
-                        try {
-                            // Get user data from Firestore
-                            const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
-                            
-                            let thought = 'Tomando café ☕';
-                            if (userDoc.exists) {
-                                const userData = userDoc.data();
-                                thought = userData.thought || thought;
-                            }
-                            
-                            // Create real user object with Google photo
-                            const realUser = {
-                                id: 99,
-                                name: firebaseUser.displayName || 'Usuario',
-                                age: 25,
-                                photo: firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(firebaseUser.displayName || 'User') + '&background=38bd62&color=fff&size=150',
-                                thought: thought,
-                                hasStory: false,
-                                distance: 0,
-                                angle: 0,
-                                hasNewMessage: false,
-                                email: firebaseUser.email
-                            };
-                            
-                            console.log('Real user created:', realUser);
-                            
-                            setCurrentUser(realUser);
-                            setThought(realUser.thought);
-                            
-                            // Update users array with real user
-                            setUsers(prevUsers => {
-                                const filtered = prevUsers.filter(u => u.id !== 99);
-                                return [realUser, ...filtered];
-                            });
-                        } catch (error) {
-                            console.error('Error loading user:', error);
-                            // Fallback to mock user
-                            const user = MOCK_USERS.find(u => u.id === 99);
-                            setCurrentUser(user);
-                            setThought(user.thought);
+                        // Get user's current location
+                        if ('geolocation' in navigator) {
+                            navigator.geolocation.getCurrentPosition(
+                                async (position) => {
+                                    const { latitude, longitude } = position.coords;
+                                    setUserLocation({ latitude, longitude });
+                                    
+                                    try {
+                                        // Get user data from Firestore
+                                        const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
+                                        
+                                        let thought = '';
+                                        if (userDoc.exists) {
+                                            const userData = userDoc.data();
+                                            thought = userData.thought || '';
+                                        }
+                                        
+                                        // Update user in Firestore with current location
+                                        await db.collection('users').doc(firebaseUser.uid).set({
+                                            uid: firebaseUser.uid,
+                                            displayName: firebaseUser.displayName,
+                                            email: firebaseUser.email,
+                                            photoURL: firebaseUser.photoURL,
+                                            location: new firebase.firestore.GeoPoint(latitude, longitude),
+                                            thought: thought,
+                                            isOnline: true,
+                                            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                                        }, { merge: true });
+                                        
+                                        // Create current user object
+                                        const realUser = {
+                                            id: firebaseUser.uid,
+                                            name: firebaseUser.displayName || 'Usuario',
+                                            age: 25,
+                                            photo: firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(firebaseUser.displayName || 'User') + '&background=38bd62&color=fff&size=150',
+                                            thought: thought,
+                                            hasStory: false,
+                                            distance: 0,
+                                            angle: 0,
+                                            hasNewMessage: false,
+                                            email: firebaseUser.email,
+                                            latitude: latitude,
+                                            longitude: longitude
+                                        };
+                                        
+                                        console.log('Real user created:', realUser);
+                                        setCurrentUser(realUser);
+                                        setThought(realUser.thought);
+                                        
+                                        // Listen to all users in real-time
+                                        const usersUnsubscribe = db.collection('users')
+                                            .where('isOnline', '==', true)
+                                            .onSnapshot((snapshot) => {
+                                                const otherUsers = [];
+                                                
+                                                snapshot.forEach((doc) => {
+                                                    const userData = doc.data();
+                                                    
+                                                    // Skip current user
+                                                    if (userData.uid === firebaseUser.uid) return;
+                                                    
+                                                    // Calculate distance and angle from current user
+                                                    if (userData.location) {
+                                                        const userLat = userData.location.latitude;
+                                                        const userLon = userData.location.longitude;
+                                                        
+                                                        const distance = Math.round(
+                                                            calculateDistance(latitude, longitude, userLat, userLon)
+                                                        );
+                                                        
+                                                        const angle = Math.round(
+                                                            calculateBearing(latitude, longitude, userLat, userLon)
+                                                        );
+                                                        
+                                                        otherUsers.push({
+                                                            id: userData.uid,
+                                                            name: userData.displayName || 'Usuario',
+                                                            age: 25,
+                                                            photo: userData.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.displayName || 'User') + '&background=38bd62&color=fff&size=150',
+                                                            thought: userData.thought || '',
+                                                            hasStory: false,
+                                                            distance: distance,
+                                                            angle: angle,
+                                                            hasNewMessage: false,
+                                                            latitude: userLat,
+                                                            longitude: userLon
+                                                        });
+                                                    }
+                                                });
+                                                
+                                                // Update users list (current user + others)
+                                                setUsers([realUser, ...otherUsers]);
+                                                console.log('Users updated:', otherUsers.length, 'users found');
+                                            });
+                                        
+                                        // Update user location every 30 seconds
+                                        const locationInterval = setInterval(() => {
+                                            navigator.geolocation.getCurrentPosition(
+                                                async (pos) => {
+                                                    const { latitude: newLat, longitude: newLon } = pos.coords;
+                                                    setUserLocation({ latitude: newLat, longitude: newLon });
+                                                    
+                                                    await db.collection('users').doc(firebaseUser.uid).update({
+                                                        location: new firebase.firestore.GeoPoint(newLat, newLon),
+                                                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                                                    });
+                                                    
+                                                    // Update current user location in state
+                                                    setCurrentUser(prev => ({
+                                                        ...prev,
+                                                        latitude: newLat,
+                                                        longitude: newLon
+                                                    }));
+                                                },
+                                                (error) => console.error('Location update error:', error)
+                                            );
+                                        }, 30000); // Every 30 seconds
+                                        
+                                        // Cleanup on unmount
+                                        return () => {
+                                            clearInterval(locationInterval);
+                                            usersUnsubscribe();
+                                            // Mark user as offline when component unmounts
+                                            db.collection('users').doc(firebaseUser.uid).update({
+                                                isOnline: false,
+                                                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                                            });
+                                        };
+                                        
+                                    } catch (error) {
+                                        console.error('Error loading user:', error);
+                                    }
+                                },
+                                (error) => {
+                                    console.error('Location error:', error);
+                                    alert('No se pudo obtener tu ubicación. Por favor activa el GPS.');
+                                }
+                            );
+                        } else {
+                            alert('Tu dispositivo no soporta geolocalización');
                         }
                     } else {
                         // No user logged in, redirect to auth
@@ -1182,7 +1302,8 @@
 
             // Calculate direction to point towards closest user with message
             const getDirectionToTarget = () => {
-                const usersWithMessages = users.filter(u => u.hasNewMessage && u.id !== 99 && u.distance <= radius);
+                if (!currentUser) return 0;
+                const usersWithMessages = users.filter(u => u.hasNewMessage && u.id !== currentUser.id && u.distance <= radius);
                 if (usersWithMessages.length === 0) return 0;
                 
                 // Get closest user with message
@@ -1246,7 +1367,7 @@
                     sweepAngle = (sweepAngle + (sweepSpeed * 50)) % 360; // Update every 50ms
                     
                     users.forEach(user => {
-                        if (user.hasNewMessage && user.id !== 99 && user.distance <= radius) {
+                        if (currentUser && user.hasNewMessage && user.id !== currentUser.id && user.distance <= radius) {
                             const userAngle = user.angle;
                             
                             // Calculate where the brightest part of the sweep is
@@ -1270,7 +1391,7 @@
                 }, 50); // Check every 50ms for smooth detection
                 
                 return () => clearInterval(checkSweepInterval);
-            }, [users, radius, audioContext, locationPermission]);
+            }, [users, radius, audioContext, locationPermission, currentUser]);
 
             const handleDialMouseDown = (e) => {
                 e.preventDefault();
@@ -1344,7 +1465,7 @@
             };
 
             const handleAvatarClick = (user) => {
-                if (user.id !== 99) {
+                if (currentUser && user.id !== currentUser.id) {
                     if (user.hasStory) {
                         setViewingStory(user);
                     } else {
@@ -1415,7 +1536,7 @@
                             {/* People Counter */}
                             <div className="radar-info">
                                 <div className="radar-info-count">
-                                    {users.filter(u => u.id !== 99 && u.distance <= radius).length}
+                                    {currentUser ? users.filter(u => u.id !== currentUser.id && u.distance <= radius).length : 0}
                                 </div>
                                 <div className="radar-info-title">Personas cerca de ti</div>
                             </div>
@@ -1469,9 +1590,9 @@
                                 </div>
 
                                 {users
-                                    .filter(user => user.id === 99 || user.distance <= radius)
+                                    .filter(user => currentUser && (user.id === currentUser.id || user.distance <= radius))
                                     .map(user => {
-                                        const isCenter = user.id === 99;
+                                        const isCenter = currentUser && user.id === currentUser.id;
                                         
                                         // Calculate position based on distance, angle, and current zoom (radius)
                                         let x = 0, y = 0;
@@ -1640,12 +1761,6 @@
                                     {!chats[`${currentUser.id}-${selectedUser.id}`] && (
                                         <div className="chat-info">
                                             Esta persona te encontró en un radio de {radius} m y te envió un mensaje.
-                                        </div>
-                                    )}
-
-                                    {selectedUser.id === 2 && (
-                                        <div className="message received">
-                                            Hola, también estoy por aquí. ¿Te gustaría conversar un rato?
                                         </div>
                                     )}
 
