@@ -485,7 +485,11 @@
             transform: translate(-50%, -50%) !important;
             z-index: 100 !important;
             opacity: 1 !important;
-            pointer-events: none;
+            pointer-events: auto !important;
+        }
+        
+        .center-avatar-fixed .avatar-wrapper {
+            transform: none !important;
         }
         
         .center-avatar .avatar-ring {
