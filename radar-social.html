@@ -458,15 +458,16 @@
         }
 
         .precision-badge-corner {
-            position: fixed;
-            top: 80px;
-            right: 16px;
-            z-index: 100;
-            margin: 0;
-            padding: 6px 12px;
-            font-size: 10px;
+            position: fixed !important;
+            top: 80px !important;
+            right: 16px !important;
+            z-index: 100 !important;
+            margin: 0 !important;
+            padding: 6px 12px !important;
+            font-size: 10px !important;
             backdrop-filter: blur(12px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+            display: block !important;
         }
 
         .precision-badge.ultrasonic-active {
@@ -1536,6 +1537,12 @@
             };
 
             useEffect(() => {
+                // VERSION CHECK
+                console.log('🚀 RADAR SOCIAL v2.0 - Chat + Precision Badge Corner');
+                console.log('✅ Badge en esquina superior derecha');
+                console.log('✅ Sistema de mensajes Firestore activo');
+                console.log('✅ Auto-cleanup de audio implementado');
+                
                 // Initialize audio context
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 setAudioContext(ctx);
@@ -2089,18 +2096,18 @@
             useEffect(() => {
                 if (!currentUser) return;
                 
-                // Escuchar mensajes donde el usuario actual es el receptor
+                // Escuchar TODOS los mensajes donde el usuario actual es el receptor
+                // Sin orderBy para evitar necesidad de índice compuesto
                 const unsubscribe = db.collection('messages')
                     .where('receiver', '==', currentUser.id)
                     .where('read', '==', false)
-                    .orderBy('timestamp', 'desc')
                     .onSnapshot(snapshot => {
                         snapshot.docChanges().forEach(change => {
                             if (change.type === 'added') {
                                 const message = change.doc.data();
                                 const senderId = message.sender;
                                 
-                                console.log(`📩 Nuevo mensaje de ${senderId}`);
+                                console.log(`📩 Nuevo mensaje de ${senderId}:`, message.content);
                                 
                                 // Marcar al remitente como que tiene mensaje nuevo
                                 setUsers(prevUsers => prevUsers.map(u => 
@@ -2120,10 +2127,13 @@
                                         read: false
                                     }]
                                 }));
+                                
+                                console.log(`✅ Avatar de ${senderId} marcado con hasNewMessage = true`);
                             }
                         });
                     }, error => {
-                        console.error('Error listening to messages:', error);
+                        console.error('❌ Error listening to messages:', error);
+                        console.log('Índice necesario:', error.message);
                     });
                 
                 return () => unsubscribe();
@@ -2467,25 +2477,30 @@
                     read: false
                 };
 
+                console.log(`📤 Enviando mensaje a ${selectedUser.name} (${selectedUser.id})`);
+                console.log('Contenido:', messageInput.trim());
+
                 try {
                     // Guardar mensaje en Firestore
-                    await db.collection('messages').add(newMessage);
+                    const docRef = await db.collection('messages').add(newMessage);
                     
-                    console.log(`💬 Mensaje enviado a ${selectedUser.name}`);
+                    console.log(`✅ Mensaje guardado en Firestore con ID: ${docRef.id}`);
+                    console.log(`Receptor: ${selectedUser.id}`);
                     
                     // Actualizar estado local inmediatamente para feedback
                     setMessages(prev => ({
                         ...prev,
                         [chatKey]: [...(prev[chatKey] || []), {
                             ...newMessage,
-                            id: Date.now(),
+                            id: docRef.id,
                             timestamp: new Date()
                         }]
                     }));
 
                     setMessageInput('');
                 } catch (error) {
-                    console.error('Error enviando mensaje:', error);
+                    console.error('❌ Error enviando mensaje:', error);
+                    alert('Error al enviar mensaje: ' + error.message);
                 }
             };
 
