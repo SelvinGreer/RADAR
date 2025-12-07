@@ -201,77 +201,99 @@
             to { transform: rotate(360deg); }
         }
 
-        .dial-container {
+        /* Horizontal Range Slider */
+        .range-slider-container {
             position: fixed;
             left: 50%;
-            bottom: 120px;
+            bottom: 110px;
             transform: translateX(-50%);
             z-index: 50;
-        }
-
-        .dial {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #232a34 0%, #1a2028 100%);
-            border: 1px solid rgba(48, 54, 61, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: grab;
+            width: 280px;
+            padding: 16px 20px;
+            background: linear-gradient(145deg, rgba(22, 27, 34, 0.95) 0%, rgba(13, 17, 23, 0.95) 100%);
+            border: 1px solid rgba(48, 54, 61, 0.6);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
             box-shadow: 
-                0 4px 16px rgba(0, 0, 0, 0.5),
-                inset 0 2px 3px rgba(255, 255, 255, 0.03),
-                inset 0 -2px 3px rgba(0, 0, 0, 0.4);
-            position: relative;
-            transition: all 0.2s ease;
-            user-select: none;
+                0 8px 24px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.03);
         }
 
-        .dial:active {
-            cursor: grabbing;
+        .range-slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }
 
-        .dial::before {
-            content: '';
-            position: absolute;
-            inset: 7px;
-            border-radius: 50%;
-            border: 1px solid rgba(48, 54, 61, 0.35);
+        .range-slider-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .dial-marks {
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-        }
-
-        .dial-mark {
-            position: absolute;
-            width: 1.5px;
-            height: 5px;
-            background: rgba(139, 148, 158, 0.35);
-            top: 5px;
-            left: 50%;
-            transform-origin: 50% 31px;
-            margin-left: -0.75px;
-        }
-
-        .dial-notch {
-            position: absolute;
-            width: 3px;
-            height: 14px;
-            background: linear-gradient(180deg, #8b949e 0%, #6e7681 100%);
-            border-radius: 1.5px;
-            top: 9px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-        }
-
-        .dial-value {
-            font-size: 14px;
+        .range-slider-value {
+            font-size: 16px;
             font-weight: 700;
-            color: #c9d1d9;
+            color: #38bd62;
             letter-spacing: -0.3px;
+        }
+
+        .range-slider-track {
+            position: relative;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, rgba(48, 54, 61, 0.5) 0%, rgba(48, 54, 61, 0.3) 100%);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .range-slider-progress {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, #38bd62 0%, #2ea556 100%);
+            border-radius: 3px;
+            transition: width 0.2s ease;
+            box-shadow: 0 0 8px rgba(56, 189, 98, 0.4);
+        }
+
+        .range-slider-thumb {
+            position: absolute;
+            top: 50%;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(145deg, #38bd62 0%, #2ea556 100%);
+            border: 2px solid #0d1117;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 
+                0 2px 8px rgba(0, 0, 0, 0.3),
+                0 0 12px rgba(56, 189, 98, 0.4);
+        }
+
+        .range-slider-thumb:active {
+            cursor: grabbing;
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 
+                0 3px 12px rgba(0, 0, 0, 0.4),
+                0 0 16px rgba(56, 189, 98, 0.6);
+        }
+
+        .range-slider-marks {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding: 0 2px;
+        }
+
+        .range-slider-mark {
+            font-size: 10px;
+            color: rgba(139, 148, 158, 0.5);
+            font-weight: 500;
         }
 
         .avatar-container {
@@ -1621,48 +1643,49 @@
                 return () => clearInterval(checkSweepInterval);
             }, [users, radius, audioContext, locationPermission, currentUser]);
 
-            const handleDialMouseDown = (e) => {
+            const handleSliderMouseDown = (e) => {
                 e.preventDefault();
                 setIsDraggingDial(true);
+                handleSliderMove(e);
             };
 
-            const handleDialMouseMove = (e) => {
-                if (!isDraggingDial) return;
+            const handleSliderMove = (e) => {
+                const slider = document.querySelector('.range-slider-track');
+                if (!slider) return;
                 
-                const dial = document.querySelector('.dial');
-                if (!dial) return;
-                
-                const rect = dial.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                
+                const rect = slider.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                 
-                const angle = Math.atan2(clientY - centerY, clientX - centerX);
-                let degrees = (angle * 180 / Math.PI + 90 + 360) % 360;
+                // Calculate position relative to slider
+                let position = (clientX - rect.left) / rect.width;
+                position = Math.max(0, Math.min(1, position)); // Clamp 0-1
                 
-                // Map 0-360 degrees to 5-50 meters
-                const newRadius = Math.round(5 + (degrees / 360) * 45);
+                // Map 0-1 to 5-50 meters
+                const newRadius = Math.round(5 + position * 45);
                 setRadius(newRadius);
             };
 
-            const handleDialMouseUp = () => {
+            const handleSliderMouseMove = (e) => {
+                if (!isDraggingDial) return;
+                handleSliderMove(e);
+            };
+
+            const handleSliderMouseUp = () => {
                 setIsDraggingDial(false);
             };
 
             useEffect(() => {
                 if (isDraggingDial) {
-                    window.addEventListener('mousemove', handleDialMouseMove);
-                    window.addEventListener('mouseup', handleDialMouseUp);
-                    window.addEventListener('touchmove', handleDialMouseMove);
-                    window.addEventListener('touchend', handleDialMouseUp);
+                    window.addEventListener('mousemove', handleSliderMouseMove);
+                    window.addEventListener('mouseup', handleSliderMouseUp);
+                    window.addEventListener('touchmove', handleSliderMouseMove);
+                    window.addEventListener('touchend', handleSliderMouseUp);
                     
                     return () => {
-                        window.removeEventListener('mousemove', handleDialMouseMove);
-                        window.removeEventListener('mouseup', handleDialMouseUp);
-                        window.removeEventListener('touchmove', handleDialMouseMove);
-                        window.removeEventListener('touchend', handleDialMouseUp);
+                        window.removeEventListener('mousemove', handleSliderMouseMove);
+                        window.removeEventListener('mouseup', handleSliderMouseUp);
+                        window.removeEventListener('touchmove', handleSliderMouseMove);
+                        window.removeEventListener('touchend', handleSliderMouseUp);
                     };
                 }
             }, [isDraggingDial]);
@@ -1843,24 +1866,32 @@
                                         // Calculate position based on distance, angle, and current zoom (radius)
                                         let x = 0, y = 0;
                                         if (!isCenter) {
-                                            // Position relative to current radius view - max 35% to keep all content inside
-                                            const percentage = Math.min((user.distance / radius) * 35, 35);
+                                            // IMPROVED POSITIONING ALGORITHM
+                                            // Dead zone: minimum 15% (prevents overlap with center avatar)
+                                            // Max zone: 45% (uses more radar space)
+                                            // Formula: maps distance to 15%-45% range
+                                            
+                                            const MIN_PERCENTAGE = 15; // Dead zone around center
+                                            const MAX_PERCENTAGE = 45; // Max usable area
+                                            
+                                            // Linear mapping: 0m → 15%, radius → 45%
+                                            let percentage = MIN_PERCENTAGE + (user.distance / radius) * (MAX_PERCENTAGE - MIN_PERCENTAGE);
+                                            percentage = Math.min(percentage, MAX_PERCENTAGE);
                                             
                                             const angleRad = (user.angle - 90) * (Math.PI / 180);
                                             x = percentage * Math.cos(angleRad);
                                             y = percentage * Math.sin(angleRad);
                                         }
                                         
-                                        // Dynamic scale based on zoom level (radius)
-                                        // At 5m radius: avatars larger (1.2x base)
-                                        // Dynamic scale based on zoom level (radius)
-                                        // At 5m radius: avatars larger (1.2x base)
-                                        // At 50m radius: avatars smaller (0.6x base)
+                                        // Avatar sizing
+                                        // Center avatar: fixed medium size
+                                        // Other users: fixed small size (consistent regardless of zoom)
                                         let scale = 1.0;
                                         if (!isCenter) {
-                                            const zoomFactor = 1.2 - (radius / 50) * 0.6; // 1.2 at 5m, 0.6 at 50m
-                                            scale = zoomFactor;
+                                            // Fixed small size for all other avatars (like when radius is at 50m)
+                                            scale = 0.6;
                                         }
+                                        // Center avatar stays at normal size (scale = 1.0)
                                         // Center avatar is always fixed size (no scaling)
                                         
                                         return (
@@ -1916,29 +1947,33 @@
                                 <div className="compass-label compass-o">O</div>
                             </div>
 
-                            <div className="dial-container">
+                            {/* Horizontal Range Slider */}
+                            <div className="range-slider-container">
+                                <div className="range-slider-label">
+                                    <div className="range-slider-title">Radio de Búsqueda</div>
+                                    <div className="range-slider-value">{radius}m</div>
+                                </div>
+                                
                                 <div 
-                                    className="dial"
-                                    onMouseDown={handleDialMouseDown}
-                                    onTouchStart={handleDialMouseDown}
+                                    className="range-slider-track"
+                                    onMouseDown={handleSliderMouseDown}
+                                    onTouchStart={handleSliderMouseDown}
                                 >
-                                    <div className="dial-marks">
-                                        {[...Array(24)].map((_, i) => (
-                                            <div
-                                                key={i}
-                                                className="dial-mark"
-                                                style={{ transform: `rotate(${i * 15}deg) translateY(-31px)` }}
-                                            />
-                                        ))}
-                                    </div>
                                     <div 
-                                        className="dial-notch"
-                                        style={{ 
-                                            transform: `rotate(${((radius - 5) / 45) * 360}deg)`,
-                                            transition: isDraggingDial ? 'none' : 'transform 0.3s ease'
-                                        }}
-                                    ></div>
-                                    <div className="dial-value">{radius}m</div>
+                                        className="range-slider-progress"
+                                        style={{ width: `${((radius - 5) / 45) * 100}%` }}
+                                    />
+                                    <div 
+                                        className="range-slider-thumb"
+                                        style={{ left: `${((radius - 5) / 45) * 100}%` }}
+                                    />
+                                </div>
+                                
+                                <div className="range-slider-marks">
+                                    <div className="range-slider-mark">5m</div>
+                                    <div className="range-slider-mark">15m</div>
+                                    <div className="range-slider-mark">30m</div>
+                                    <div className="range-slider-mark">50m</div>
                                 </div>
                             </div>
                         </div>
