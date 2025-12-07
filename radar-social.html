@@ -517,9 +517,9 @@
             height: 0;
             border-left: 6px solid transparent;
             border-right: 6px solid transparent;
-            border-bottom: 12px solid #ff9999;
-            filter: drop-shadow(0 0 4px rgba(255, 153, 153, 0.8));
-            transition: all 0.2s ease;
+            border-bottom: 12px solid #38bd62;
+            filter: drop-shadow(0 0 6px rgba(56, 189, 98, 0.6));
+            transition: transform 0.1s ease-out;
             z-index: 10;
             pointer-events: none;
         }
@@ -1138,6 +1138,7 @@
             const [showSidebar, setShowSidebar] = useState(false);
             const [showProfile, setShowProfile] = useState(false);
             const [viewingStory, setViewingStory] = useState(null);
+            const [deviceHeading, setDeviceHeading] = useState(0); // Phone compass direction
 
             // Calculate distance between two GPS coordinates (Haversine formula)
             const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -1384,6 +1385,73 @@
                 });
                 
                 return () => unsubscribe();
+            }, []);
+
+            // Listen to device orientation (compass)
+            useEffect(() => {
+                let hasRequested = false;
+                
+                const handleOrientation = (event) => {
+                    // alpha: rotation around z-axis (compass heading)
+                    // iOS uses webkitCompassHeading, Android uses alpha
+                    let heading = 0;
+                    
+                    if (event.webkitCompassHeading !== undefined) {
+                        // iOS - direct compass heading
+                        heading = event.webkitCompassHeading;
+                    } else if (event.alpha !== null) {
+                        // Android - calculate from alpha
+                        heading = 360 - event.alpha;
+                    }
+                    
+                    setDeviceHeading(heading);
+                };
+                
+                const requestOrientationPermission = async () => {
+                    if (hasRequested) return;
+                    hasRequested = true;
+                    
+                    // Request permission on iOS 13+
+                    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        try {
+                            const permissionState = await DeviceOrientationEvent.requestPermission();
+                            if (permissionState === 'granted') {
+                                window.addEventListener('deviceorientation', handleOrientation, true);
+                                console.log('✅ Brújula activada (iOS)');
+                            } else {
+                                console.log('❌ Permiso de brújula denegado');
+                            }
+                        } catch (error) {
+                            console.error('Error requesting orientation permission:', error);
+                        }
+                    } else if (window.DeviceOrientationEvent) {
+                        // Non-iOS or older iOS - no permission needed
+                        window.addEventListener('deviceorientation', handleOrientation, true);
+                        console.log('✅ Brújula activada');
+                    } else {
+                        console.log('❌ Brújula no soportada');
+                    }
+                };
+                
+                // On iOS, we need a user gesture to request permission
+                // Add a one-time click listener to the document
+                const handleFirstClick = () => {
+                    requestOrientationPermission();
+                    document.removeEventListener('click', handleFirstClick);
+                };
+                
+                // For iOS: wait for first click
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    document.addEventListener('click', handleFirstClick);
+                } else {
+                    // For Android: start immediately
+                    requestOrientationPermission();
+                }
+                
+                return () => {
+                    window.removeEventListener('deviceorientation', handleOrientation, true);
+                    document.removeEventListener('click', handleFirstClick);
+                };
             }, []);
 
             // Recalculate distances when user location changes
@@ -1789,9 +1857,9 @@
                                                             user.hasNewMessage ? 'new-message' : 
                                                             user.hasStory ? 'has-story' : 'no-story'
                                                         }`}
-                                                        style={isCenter ? { transform: `rotate(${getDirectionToTarget()}deg)` } : {}}
+                                                        style={isCenter ? { transform: `rotate(${deviceHeading}deg)` } : {}}
                                                     >
-                                                        <div className="avatar-img-wrapper" style={isCenter ? { transform: `rotate(${-getDirectionToTarget()}deg)` } : {}}>
+                                                        <div className="avatar-img-wrapper" style={isCenter ? { transform: `rotate(${-deviceHeading}deg)` } : {}}>
                                                             <img src={user.photo} alt={user.name} className="avatar-img" />
                                                         </div>
                                                         {isCenter && (
