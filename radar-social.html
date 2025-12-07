@@ -457,6 +457,18 @@
             transition: all 0.3s ease;
         }
 
+        .precision-badge-corner {
+            position: fixed;
+            top: 80px;
+            right: 16px;
+            z-index: 100;
+            margin: 0;
+            padding: 6px 12px;
+            font-size: 10px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
         .precision-badge.ultrasonic-active {
             background: rgba(255, 193, 7, 0.2);
             border-color: rgba(255, 193, 7, 0.5);
@@ -1980,6 +1992,98 @@
             }, []);
 
             // ==========================================
+            // APP VISIBILITY - Apagar audio cuando se sale de la app
+            // ==========================================
+            useEffect(() => {
+                const handleVisibilityChange = () => {
+                    if (document.hidden) {
+                        // App en background - apagar todo el audio/micrófono
+                        console.log('🔇 App en background - desactivando audio/micrófono');
+                        
+                        // Detener ultrasonido
+                        if (ultrasonicActive) {
+                            stopUltrasonicDetector();
+                        }
+                        
+                        // Suspender AudioContext
+                        if (audioContext && audioContext.state === 'running') {
+                            audioContext.suspend().then(() => {
+                                console.log('🔇 AudioContext suspendido');
+                            });
+                        }
+                    } else {
+                        // App volvió a foreground - reactivar AudioContext
+                        console.log('🔊 App en foreground - reactivando audio');
+                        
+                        if (audioContext && audioContext.state === 'suspended') {
+                            audioContext.resume().then(() => {
+                                console.log('🔊 AudioContext reactivado');
+                            });
+                        }
+                        
+                        // Re-activar ultrasonido si hay usuarios cerca
+                        const nearbyUsers = users.filter(u => 
+                            currentUser && u.id !== currentUser.id && u.distance > 0 && u.distance < 5
+                        );
+                        if (nearbyUsers.length > 0 && !ultrasonicActive) {
+                            console.log('🔊 Re-activando ultrasonido (usuarios cerca)');
+                            startUltrasonicDetector();
+                        }
+                    }
+                };
+                
+                const handlePageHide = () => {
+                    console.log('🔇 Página cerrada/oculta - limpiando recursos');
+                    
+                    // Detener ultrasonido completamente
+                    if (ultrasonicActive) {
+                        stopUltrasonicDetector();
+                    }
+                    
+                    // Cerrar AudioContext
+                    if (audioContext) {
+                        audioContext.close();
+                    }
+                };
+                
+                // Listeners
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                window.addEventListener('pagehide', handlePageHide);
+                window.addEventListener('beforeunload', handlePageHide);
+                
+                return () => {
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+                    window.removeEventListener('pagehide', handlePageHide);
+                    window.removeEventListener('beforeunload', handlePageHide);
+                };
+            }, [audioContext, ultrasonicActive, users, currentUser]);
+
+            // ==========================================
+            // BROWSER BACK BUTTON - Prevenir cierre de sesión, solo cerrar chat
+            // ==========================================
+            useEffect(() => {
+                const handlePopState = (e) => {
+                    if (selectedUser) {
+                        // Si hay chat abierto, solo cerrarlo
+                        e.preventDefault();
+                        setSelectedUser(null);
+                        // Volver a agregar estado al historial
+                        window.history.pushState(null, '', window.location.href);
+                    }
+                };
+                
+                // Agregar estado inicial al historial
+                window.history.pushState(null, '', window.location.href);
+                
+                // Escuchar el botón "atrás"
+                window.addEventListener('popstate', handlePopState);
+                
+                return () => {
+                    window.removeEventListener('popstate', handlePopState);
+                };
+            }, [selectedUser]);
+
+            // ==========================================
             // REAL-TIME MESSAGES LISTENER
             // ==========================================
             useEffect(() => {
@@ -2416,6 +2520,15 @@
                     </div>
 
                     <div className="main-container">
+                        {/* Precision Badge - Top Right Corner */}
+                        <div className={`precision-badge precision-badge-corner ${ultrasonicActive && ultrasonicDetections.nearby ? 'ultrasonic-active' : ''}`}>
+                            {ultrasonicActive && ultrasonicDetections.nearby ? '🔊' : (sensorData.isMoving ? '🧠' : '📍')} 
+                            {' '}±{ultrasonicActive && ultrasonicDetections.nearby ? 
+                                (ultrasonicDetections.nearby < 1 ? '0.5' : ultrasonicDetections.nearby.toFixed(1)) : 
+                                locationAccuracy.toFixed(1)
+                            }m
+                        </div>
+                        
                         <div className="radar-container">
                             {/* People Counter */}
                             <div className="radar-info">
@@ -2423,13 +2536,6 @@
                                     {currentUser ? users.filter(u => u.id !== currentUser.id && u.distance <= radius).length : 0}
                                 </div>
                                 <div className="radar-info-title">Personas cerca de ti</div>
-                                <div className={`precision-badge ${ultrasonicActive && ultrasonicDetections.nearby ? 'ultrasonic-active' : ''}`}>
-                                    {ultrasonicActive && ultrasonicDetections.nearby ? '🔊' : (sensorData.isMoving ? '🧠' : '📍')} 
-                                    {' '}±{ultrasonicActive && ultrasonicDetections.nearby ? 
-                                        (ultrasonicDetections.nearby < 1 ? '0.5' : ultrasonicDetections.nearby.toFixed(1)) : 
-                                        locationAccuracy.toFixed(1)
-                                    }m
-                                </div>
                             </div>
 
                             <div className="radar-bg">
