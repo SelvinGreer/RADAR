@@ -86,6 +86,7 @@
             position: relative;
             overflow: visible;
             padding: 20px;
+            padding-bottom: 140px; /* Space for slider and thought input */
             background: radial-gradient(ellipse at center, rgba(22, 27, 34, 0.5) 0%, #0d1117 70%);
         }
 
@@ -93,7 +94,7 @@
             position: relative;
             width: min(85vw, 400px);
             height: min(85vw, 400px);
-            margin: 0 auto;
+            margin: -20px auto 0; /* Move radar up slightly */
             overflow: visible;
         }
 
@@ -201,98 +202,94 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Horizontal Range Slider */
+        /* Horizontal Range Slider - Integrated Design */
         .range-slider-container {
             position: fixed;
             left: 50%;
-            bottom: 110px;
+            bottom: 125px;
             transform: translateX(-50%);
             z-index: 50;
-            width: 280px;
-            padding: 16px 20px;
-            background: linear-gradient(145deg, rgba(22, 27, 34, 0.95) 0%, rgba(13, 17, 23, 0.95) 100%);
-            border: 1px solid rgba(48, 54, 61, 0.6);
-            border-radius: 16px;
-            backdrop-filter: blur(12px);
-            box-shadow: 
-                0 8px 24px rgba(0, 0, 0, 0.4),
-                inset 0 1px 1px rgba(255, 255, 255, 0.03);
+            width: 300px;
+            padding: 12px 0;
         }
 
         .range-slider-label {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            padding: 0 4px;
         }
 
         .range-slider-title {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
-            color: #8b949e;
+            color: rgba(139, 148, 158, 0.7);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
         }
 
         .range-slider-value {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 700;
             color: #38bd62;
-            letter-spacing: -0.3px;
+            letter-spacing: -0.5px;
+            text-shadow: 0 0 8px rgba(56, 189, 98, 0.4);
         }
 
         .range-slider-track {
             position: relative;
             width: 100%;
-            height: 6px;
-            background: linear-gradient(90deg, rgba(48, 54, 61, 0.5) 0%, rgba(48, 54, 61, 0.3) 100%);
-            border-radius: 3px;
-            overflow: hidden;
+            height: 4px;
+            background: rgba(48, 54, 61, 0.4);
+            border-radius: 2px;
+            overflow: visible;
+            cursor: pointer;
         }
 
         .range-slider-progress {
             position: absolute;
             height: 100%;
-            background: linear-gradient(90deg, #38bd62 0%, #2ea556 100%);
-            border-radius: 3px;
+            background: linear-gradient(90deg, rgba(56, 189, 98, 0.6) 0%, #38bd62 100%);
+            border-radius: 2px;
             transition: width 0.2s ease;
-            box-shadow: 0 0 8px rgba(56, 189, 98, 0.4);
+            box-shadow: 0 0 12px rgba(56, 189, 98, 0.5);
         }
 
         .range-slider-thumb {
             position: absolute;
             top: 50%;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             background: linear-gradient(145deg, #38bd62 0%, #2ea556 100%);
-            border: 2px solid #0d1117;
+            border: 3px solid #0d1117;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             cursor: grab;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             box-shadow: 
-                0 2px 8px rgba(0, 0, 0, 0.3),
-                0 0 12px rgba(56, 189, 98, 0.4);
+                0 2px 8px rgba(0, 0, 0, 0.4),
+                0 0 16px rgba(56, 189, 98, 0.6);
         }
 
         .range-slider-thumb:active {
             cursor: grabbing;
-            transform: translate(-50%, -50%) scale(1.15);
+            transform: translate(-50%, -50%) scale(1.2);
             box-shadow: 
-                0 3px 12px rgba(0, 0, 0, 0.4),
-                0 0 16px rgba(56, 189, 98, 0.6);
+                0 3px 12px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(56, 189, 98, 0.8);
         }
 
         .range-slider-marks {
             display: flex;
             justify-content: space-between;
-            margin-top: 8px;
-            padding: 0 2px;
+            margin-top: 6px;
+            padding: 0 4px;
         }
 
         .range-slider-mark {
-            font-size: 10px;
-            color: rgba(139, 148, 158, 0.5);
+            font-size: 9px;
+            color: rgba(139, 148, 158, 0.4);
             font-weight: 500;
         }
 
@@ -1701,22 +1698,31 @@
                         timestamp: Date.now()
                     };
                     
-                    setUsers(users.map(u => 
-                        u.id === currentUser.id ? { ...u, thought: thoughtData.text, thoughtTimestamp: thoughtData.timestamp } : u
+                    // Update local state immediately for instant feedback
+                    const updatedCurrentUser = { 
+                        ...currentUser, 
+                        thought: thoughtData.text, 
+                        thoughtTimestamp: thoughtData.timestamp 
+                    };
+                    
+                    setCurrentUser(updatedCurrentUser);
+                    setUsers(prevUsers => prevUsers.map(u => 
+                        u.id === currentUser.id ? updatedCurrentUser : u
                     ));
-                    setCurrentUser({ ...currentUser, thought: thoughtData.text, thoughtTimestamp: thoughtData.timestamp });
+                    
+                    // Clear input immediately
+                    setThought('');
                     
                     // Save to Firebase if user is authenticated
                     const user = auth.currentUser;
                     if (user) {
                         try {
-                            await db.collection('users').doc(user.uid).update({
+                            await db.collection('users').doc(user.uid).set({
                                 thought: thoughtData.text,
                                 thoughtTimestamp: firebase.firestore.FieldValue.serverTimestamp()
-                            });
+                            }, { merge: true });
                             
-                            // Clear input after sending
-                            setThought('');
+                            console.log('✅ Pensamiento publicado:', thoughtData.text);
                         } catch (error) {
                             console.error('Error updating thought:', error);
                         }
