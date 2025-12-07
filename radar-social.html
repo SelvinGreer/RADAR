@@ -1748,20 +1748,26 @@
                         </div>
                         <div className="profile-content">
                             <div className="profile-avatar-section">
-                                <img src="https://i.pravatar.cc/150?img=33" alt="Profile" className="profile-avatar-large" />
-                                <div className="profile-name">Tú</div>
-                                <div className="profile-bio">Tomando café ☕</div>
+                                <img src={currentUser?.photo || 'https://i.pravatar.cc/150?img=33'} alt="Profile" className="profile-avatar-large" />
+                                <div className="profile-name">{currentUser?.name || 'Usuario'}</div>
+                                <div className="profile-bio">{currentUser?.thought || 'Sin estado'}</div>
                             </div>
                             
                             <div className="profile-section">
                                 <div className="profile-section-title">Información Personal</div>
                                 <div className="profile-field">
                                     <span className="profile-field-label">Nombre</span>
-                                    <span className="profile-field-value">Usuario</span>
+                                    <span className="profile-field-value">{currentUser?.name || 'Usuario'}</span>
                                 </div>
+                                {currentUser?.email && (
+                                    <div className="profile-field">
+                                        <span className="profile-field-label">Email</span>
+                                        <span className="profile-field-value">{currentUser.email}</span>
+                                    </div>
+                                )}
                                 <div className="profile-field">
                                     <span className="profile-field-label">Edad</span>
-                                    <span className="profile-field-value">25 años</span>
+                                    <span className="profile-field-value">{currentUser?.age || 25} años</span>
                                 </div>
                                 <div className="profile-field">
                                     <span className="profile-field-label">Ubicación</span>
@@ -1773,16 +1779,61 @@
                                 <div className="profile-section-title">Estadísticas</div>
                                 <div className="profile-field">
                                     <span className="profile-field-label">Conexiones</span>
-                                    <span className="profile-field-value">7 personas cercanas</span>
+                                    <span className="profile-field-value">{users.length - 1} personas cercanas</span>
                                 </div>
                                 <div className="profile-field">
                                     <span className="profile-field-label">Chats activos</span>
-                                    <span className="profile-field-value">1</span>
+                                    <span className="profile-field-value">{Object.keys(chats).length}</span>
                                 </div>
                                 <div className="profile-field">
                                     <span className="profile-field-label">Estados compartidos</span>
                                     <span className="profile-field-value">3 hoy</span>
                                 </div>
+                            </div>
+
+                            <div className="profile-section">
+                                <button 
+                                    onClick={async () => {
+                                        if (confirm('¿Seguro que quieres cerrar sesión?')) {
+                                            try {
+                                                await auth.signOut();
+                                                window.location.href = 'auth.html';
+                                            } catch (error) {
+                                                console.error('Error signing out:', error);
+                                                alert('Error al cerrar sesión');
+                                            }
+                                        }
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '14px',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                                        borderRadius: '12px',
+                                        color: '#ef4444',
+                                        fontSize: '15px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        e.target.style.background = 'rgba(239, 68, 68, 0.15)';
+                                        e.target.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.target.style.background = 'rgba(239, 68, 68, 0.1)';
+                                        e.target.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                                    }}
+                                >
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                    Cerrar Sesión
+                                </button>
                             </div>
                         </div>
                     </div>
