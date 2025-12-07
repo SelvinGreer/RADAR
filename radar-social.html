@@ -1139,6 +1139,14 @@
             const [showProfile, setShowProfile] = useState(false);
             const [viewingStory, setViewingStory] = useState(null);
             const [deviceHeading, setDeviceHeading] = useState(0); // Phone compass direction
+            const [lastKnownPositions, setLastKnownPositions] = useState({}); // For GPS smoothing
+
+            // Check if location change is significant (more than threshold)
+            const isSignificantMove = (oldLat, oldLon, newLat, newLon, thresholdMeters = 3) => {
+                if (!oldLat || !oldLon) return true;
+                const distance = calculateDistance(oldLat, oldLon, newLat, newLon);
+                return distance >= thresholdMeters;
+            };
 
             // Calculate distance between two GPS coordinates (Haversine formula)
             const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -1187,18 +1195,34 @@
                             let usersUnsubscribe = null;
                             
                             // Use watchPosition for continuous updates
+                            let previousLocation = null;
+                            
                             const watchId = navigator.geolocation.watchPosition(
                                 async (position) => {
                                     const { latitude, longitude, accuracy } = position.coords;
                                     const currentTime = Date.now();
                                     
-                                    console.log(`📍 Location update: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (±${accuracy.toFixed(1)}m)`);
+                                    // Check if movement is significant (more than 3 meters)
+                                    const shouldUpdate = !previousLocation || 
+                                                       calculateDistance(
+                                                           previousLocation.latitude,
+                                                           previousLocation.longitude,
+                                                           latitude,
+                                                           longitude
+                                                       ) >= 3;
                                     
-                                    // Update local state immediately
-                                    setUserLocation({ latitude, longitude });
+                                    if (shouldUpdate) {
+                                        console.log(`📍 Location update: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (±${accuracy.toFixed(1)}m)`);
+                                        
+                                        // Update local state
+                                        setUserLocation({ latitude, longitude });
+                                        previousLocation = { latitude, longitude };
+                                    } else {
+                                        console.log(`📍 GPS jitter ignored (< 3m)`);
+                                    }
                                     
                                     // Update Firebase every 3 seconds (throttle to avoid excessive writes)
-                                    if (currentTime - lastUpdateTime >= 3000) {
+                                    if (currentTime - lastUpdateTime >= 3000 && shouldUpdate) {
                                         lastUpdateTime = currentTime;
                                         
                                         try {
@@ -1849,7 +1873,7 @@
                                                     transform: `scale(${scale})`,
                                                     opacity: user.distance <= radius ? 1 : 0,
                                                     zIndex: 10 - Math.floor(user.distance / 10),
-                                                    transition: 'all 0.4s ease'
+                                                    transition: 'left 2s ease-out, top 2s ease-out, transform 0.4s ease, opacity 0.4s ease'
                                                 }}
                                                 onClick={() => handleAvatarClick(user)}
                                             >
@@ -2123,13 +2147,12 @@
                             <div className="profile-section">
                                 <button 
                                     onClick={async () => {
-                                        if (confirm('¿Seguro que quieres cerrar sesión?')) {
+                                        if (confirm('¿Cerrar sesión? Dejarás de aparecer en el radar.')) {
                                             try {
                                                 await auth.signOut();
                                                 window.location.href = 'auth.html';
                                             } catch (error) {
                                                 console.error('Error signing out:', error);
-                                                alert('Error al cerrar sesión');
                                             }
                                         }
                                     }}
