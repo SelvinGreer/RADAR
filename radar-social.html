@@ -1979,6 +1979,106 @@
                 };
             }, []);
 
+            // ==========================================
+            // REAL-TIME MESSAGES LISTENER
+            // ==========================================
+            useEffect(() => {
+                if (!currentUser) return;
+                
+                // Escuchar mensajes donde el usuario actual es el receptor
+                const unsubscribe = db.collection('messages')
+                    .where('receiver', '==', currentUser.id)
+                    .where('read', '==', false)
+                    .orderBy('timestamp', 'desc')
+                    .onSnapshot(snapshot => {
+                        snapshot.docChanges().forEach(change => {
+                            if (change.type === 'added') {
+                                const message = change.doc.data();
+                                const senderId = message.sender;
+                                
+                                console.log(`📩 Nuevo mensaje de ${senderId}`);
+                                
+                                // Marcar al remitente como que tiene mensaje nuevo
+                                setUsers(prevUsers => prevUsers.map(u => 
+                                    u.id === senderId ? { ...u, hasNewMessage: true } : u
+                                ));
+                                
+                                // Agregar mensaje al estado local
+                                const chatKey = [currentUser.id, senderId].sort().join('-');
+                                setMessages(prev => ({
+                                    ...prev,
+                                    [chatKey]: [...(prev[chatKey] || []), {
+                                        id: change.doc.id,
+                                        sender: message.sender,
+                                        receiver: message.receiver,
+                                        content: message.content,
+                                        timestamp: message.timestamp?.toDate() || new Date(),
+                                        read: false
+                                    }]
+                                }));
+                            }
+                        });
+                    }, error => {
+                        console.error('Error listening to messages:', error);
+                    });
+                
+                return () => unsubscribe();
+            }, [currentUser]);
+
+            // ==========================================
+            // LOAD MESSAGE HISTORY - Cargar historial cuando se abre chat
+            // ==========================================
+            useEffect(() => {
+                if (!currentUser || !selectedUser) return;
+                
+                const loadMessageHistory = async () => {
+                    try {
+                        const chatKey = [currentUser.id, selectedUser.id].sort().join('-');
+                        
+                        // Cargar mensajes que YO envié
+                        const sentMessages = await db.collection('messages')
+                            .where('sender', '==', currentUser.id)
+                            .where('receiver', '==', selectedUser.id)
+                            .orderBy('timestamp', 'asc')
+                            .limit(50)
+                            .get();
+                        
+                        // Cargar mensajes que ME enviaron
+                        const receivedMessages = await db.collection('messages')
+                            .where('sender', '==', selectedUser.id)
+                            .where('receiver', '==', currentUser.id)
+                            .orderBy('timestamp', 'asc')
+                            .limit(50)
+                            .get();
+                        
+                        // Combinar y ordenar todos los mensajes
+                        const allMessages = [
+                            ...sentMessages.docs.map(doc => ({
+                                id: doc.id,
+                                ...doc.data(),
+                                timestamp: doc.data().timestamp?.toDate() || new Date()
+                            })),
+                            ...receivedMessages.docs.map(doc => ({
+                                id: doc.id,
+                                ...doc.data(),
+                                timestamp: doc.data().timestamp?.toDate() || new Date()
+                            }))
+                        ].sort((a, b) => a.timestamp - b.timestamp);
+                        
+                        setMessages(prev => ({
+                            ...prev,
+                            [chatKey]: allMessages
+                        }));
+                        
+                        console.log(`📜 ${allMessages.length} mensajes cargados con ${selectedUser.name}`);
+                    } catch (error) {
+                        console.error('Error loading message history:', error);
+                    }
+                };
+                
+                loadMessageHistory();
+            }, [selectedUser, currentUser]);
+
             // Recalculate distances when user location changes
             useEffect(() => {
                 if (!userLocation || !currentUser) return;
@@ -2217,41 +2317,72 @@
                 return hoursPassed >= 24;
             };
 
-            const handleAvatarClick = (user) => {
+            const handleAvatarClick = async (user) => {
                 if (currentUser && user.id !== currentUser.id) {
                     if (user.hasStory) {
                         setViewingStory(user);
                     } else {
                         setSelectedUser(user);
-                        // Mark message as read
+                        
+                        // Marcar mensaje como leído localmente
                         setUsers(users.map(u => 
                             u.id === user.id ? { ...u, hasNewMessage: false } : u
                         ));
+                        
+                        // Marcar mensajes como leídos en Firestore
+                        try {
+                            const messagesSnapshot = await db.collection('messages')
+                                .where('sender', '==', user.id)
+                                .where('receiver', '==', currentUser.id)
+                                .where('read', '==', false)
+                                .get();
+                            
+                            const batch = db.batch();
+                            messagesSnapshot.docs.forEach(doc => {
+                                batch.update(doc.ref, { read: true });
+                            });
+                            await batch.commit();
+                            
+                            console.log(`✅ Mensajes de ${user.name} marcados como leídos`);
+                        } catch (error) {
+                            console.error('Error marking messages as read:', error);
+                        }
                     }
                 }
             };
 
-            const sendMessage = () => {
-                if (!messageInput.trim() || !selectedUser) return;
+            const sendMessage = async () => {
+                if (!messageInput.trim() || !selectedUser || !currentUser) return;
 
-                const chatKey = `${currentUser.id}-${selectedUser.id}`;
+                const chatKey = [currentUser.id, selectedUser.id].sort().join('-'); // Clave consistente
                 const newMessage = {
-                    id: Date.now(),
                     sender: currentUser.id,
-                    content: messageInput,
-                    timestamp: new Date()
+                    receiver: selectedUser.id,
+                    content: messageInput.trim(),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    read: false
                 };
 
-                setMessages(prev => ({
-                    ...prev,
-                    [chatKey]: [...(prev[chatKey] || []), newMessage]
-                }));
+                try {
+                    // Guardar mensaje en Firestore
+                    await db.collection('messages').add(newMessage);
+                    
+                    console.log(`💬 Mensaje enviado a ${selectedUser.name}`);
+                    
+                    // Actualizar estado local inmediatamente para feedback
+                    setMessages(prev => ({
+                        ...prev,
+                        [chatKey]: [...(prev[chatKey] || []), {
+                            ...newMessage,
+                            id: Date.now(),
+                            timestamp: new Date()
+                        }]
+                    }));
 
-                if (!chats[chatKey]) {
-                    setChats(prev => ({ ...prev, [chatKey]: true }));
+                    setMessageInput('');
+                } catch (error) {
+                    console.error('Error enviando mensaje:', error);
                 }
-
-                setMessageInput('');
             };
 
             if (!locationPermission) {
@@ -2527,27 +2658,30 @@
 
                             <div className="chat-content">
                                 <div className="chat-messages">
-                                    {!chats[`${currentUser.id}-${selectedUser.id}`] && (
-                                        <div className="chat-info">
-                                            Esta persona te encontró en un radio de {radius} m y te envió un mensaje.
-                                        </div>
-                                    )}
-
-                                    {messages[`${currentUser.id}-${selectedUser.id}`]?.map(msg => (
-                                        <div
-                                            key={msg.id}
-                                            className={`message ${msg.sender === currentUser.id ? 'sent' : 'received'}`}
-                                        >
-                                            {msg.content}
-                                        </div>
-                                    ))}
+                                    {(() => {
+                                        const chatKey = [currentUser.id, selectedUser.id].sort().join('-');
+                                        const chatMessages = messages[chatKey] || [];
+                                        
+                                        return (
+                                            <>
+                                                {chatMessages.length === 0 && (
+                                                    <div className="chat-info">
+                                                        Esta persona está cerca de ti. ¡Envía un mensaje para iniciar una conversación!
+                                                    </div>
+                                                )}
+                                                
+                                                {chatMessages.map(msg => (
+                                                    <div
+                                                        key={msg.id}
+                                                        className={`message ${msg.sender === currentUser.id ? 'sent' : 'received'}`}
+                                                    >
+                                                        {msg.content}
+                                                    </div>
+                                                ))}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
-
-                                {!chats[`${currentUser.id}-${selectedUser.id}`] && (
-                                    <div className="chat-info" style={{ margin: '0 16px 12px' }}>
-                                        Si respondes, se abrirá un chat con esta persona.
-                                    </div>
-                                )}
 
                                 <div className="chat-input-container">
                                     <div className="btn-round" style={{ width: '46px', height: '46px' }}>
