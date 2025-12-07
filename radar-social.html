@@ -454,6 +454,23 @@
             color: #38bd62;
             letter-spacing: 0.3px;
             text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .precision-badge.ultrasonic-active {
+            background: rgba(255, 193, 7, 0.2);
+            border-color: rgba(255, 193, 7, 0.5);
+            color: #ffc107;
+            animation: ultrasonic-pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes ultrasonic-pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 4px rgba(255, 193, 7, 0);
+            }
         }
 
         .radar-info-count {
@@ -1213,6 +1230,13 @@
             });
             const [locationAccuracy, setLocationAccuracy] = useState(20); // metros
             
+            // ULTRASONIC SYSTEM - Estados para audio ultrasónico
+            const [ultrasonicActive, setUltrasonicActive] = useState(false);
+            const [ultrasonicDetections, setUltrasonicDetections] = useState({}); // { userId: distance }
+            const ultrasonicContext = useRef(null);
+            const ultrasonicAnalyser = useRef(null);
+            const detectionInterval = useRef(null);
+            
             // Kalman Filters para latitud y longitud
             const kalmanLat = useRef(new KalmanFilter(0.001, 0.1));
             const kalmanLon = useRef(new KalmanFilter(0.001, 0.1));
@@ -1337,6 +1361,166 @@
                         accuracy: improvedAccuracy
                     };
                 }
+            };
+
+            // ==========================================
+            // ULTRASONIC SYSTEM - Audio Ultrasónico
+            // ==========================================
+            
+            // Emitir señal ultrasónica con ID de usuario codificado
+            const emitUltrasonicSignal = (userId) => {
+                if (!audioContext) return;
+                
+                try {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    // Frecuencia base: 19.5 kHz (inaudible para humanos)
+                    const baseFreq = 19500;
+                    
+                    // Codificar userId en la frecuencia (simple FSK)
+                    // Último dígito del hash del userId determina offset
+                    const userHash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                    const freqOffset = (userHash % 10) * 50; // 0-500 Hz offset
+                    
+                    oscillator.frequency.value = baseFreq + freqOffset;
+                    oscillator.type = 'sine';
+                    
+                    // Volumen moderado
+                    gainNode.gain.value = 0.3;
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Burst corto de 150ms
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.15);
+                    
+                    console.log(`🔊 Emitiendo ultrasonido: ${(baseFreq + freqOffset).toFixed(0)} Hz`);
+                } catch (error) {
+                    console.error('Error emitting ultrasonic:', error);
+                }
+            };
+            
+            // Iniciar detector de ultrasonido
+            const startUltrasonicDetector = async () => {
+                if (ultrasonicActive) return;
+                
+                try {
+                    // Solicitar permiso de micrófono
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false,
+                            sampleRate: 48000 // Alta frecuencia de muestreo para captar 19.5 kHz
+                        }
+                    });
+                    
+                    // Crear contexto de audio para análisis
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    ultrasonicContext.current = ctx;
+                    
+                    const analyser = ctx.createAnalyser();
+                    analyser.fftSize = 4096; // Alta resolución
+                    analyser.smoothingTimeConstant = 0.3;
+                    ultrasonicAnalyser.current = analyser;
+                    
+                    const source = ctx.createMediaStreamSource(stream);
+                    source.connect(analyser);
+                    
+                    setUltrasonicActive(true);
+                    console.log('✅ Detector ultrasónico activado');
+                    
+                    // Iniciar detección continua
+                    detectUltrasonicSignals();
+                } catch (error) {
+                    console.error('Error starting ultrasonic detector:', error);
+                    console.log('⚠️ Micrófono no disponible - precisión <5m desactivada');
+                }
+            };
+            
+            // Detener detector de ultrasonido
+            const stopUltrasonicDetector = () => {
+                if (detectionInterval.current) {
+                    clearInterval(detectionInterval.current);
+                    detectionInterval.current = null;
+                }
+                
+                if (ultrasonicContext.current) {
+                    ultrasonicContext.current.close();
+                    ultrasonicContext.current = null;
+                }
+                
+                setUltrasonicActive(false);
+                setUltrasonicDetections({});
+                console.log('❌ Detector ultrasónico desactivado');
+            };
+            
+            // Detectar señales ultrasónicas
+            const detectUltrasonicSignals = () => {
+                if (!ultrasonicAnalyser.current) return;
+                
+                const analyser = ultrasonicAnalyser.current;
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                detectionInterval.current = setInterval(() => {
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    // Buscar picos en rango 19-20 kHz
+                    // frequencyBinCount / 2 = Nyquist frequency (24 kHz at 48kHz sample rate)
+                    const nyquist = ultrasonicContext.current.sampleRate / 2;
+                    const binWidth = nyquist / bufferLength;
+                    
+                    const minFreq = 19000;
+                    const maxFreq = 20000;
+                    const minBin = Math.floor(minFreq / binWidth);
+                    const maxBin = Math.floor(maxFreq / binWidth);
+                    
+                    let maxAmplitude = 0;
+                    let peakFrequency = 0;
+                    
+                    for (let i = minBin; i < maxBin && i < bufferLength; i++) {
+                        if (dataArray[i] > maxAmplitude) {
+                            maxAmplitude = dataArray[i];
+                            peakFrequency = i * binWidth;
+                        }
+                    }
+                    
+                    // Threshold: detectar señal si amplitud > 100
+                    if (maxAmplitude > 100) {
+                        // Calcular distancia aproximada por intensidad de señal
+                        // Ley del cuadrado inverso simplificada
+                        // distance ≈ 5 * (1 - amplitude/255)
+                        const normalizedAmplitude = maxAmplitude / 255;
+                        const estimatedDistance = Math.max(0.1, 5 * (1 - normalizedAmplitude));
+                        
+                        console.log(`🎯 Ultrasonido detectado: ${peakFrequency.toFixed(0)} Hz, Amp:${maxAmplitude}, ~${estimatedDistance.toFixed(2)}m`);
+                        
+                        // Guardar detección
+                        setUltrasonicDetections(prev => ({
+                            ...prev,
+                            'nearby': estimatedDistance,
+                            lastUpdate: Date.now()
+                        }));
+                    }
+                }, 200); // Detectar cada 200ms
+            };
+            
+            // Combinar distancia GPS con distancia ultrasónica
+            const getFinalDistance = (gpsDistance, userId) => {
+                // Si hay detección ultrasónica reciente (< 1 segundo) y distancia GPS < 5m
+                const hasRecentDetection = ultrasonicDetections.lastUpdate && 
+                                         (Date.now() - ultrasonicDetections.lastUpdate) < 1000;
+                
+                if (gpsDistance < 5 && hasRecentDetection && ultrasonicDetections.nearby) {
+                    const ultrasonicDist = ultrasonicDetections.nearby;
+                    // Promedio ponderado: 70% ultrasónico, 30% GPS
+                    const finalDist = (ultrasonicDist * 0.7) + (gpsDistance * 0.3);
+                    return Math.max(0.1, finalDist); // Mínimo 10cm
+                }
+                return gpsDistance;
             };
 
             useEffect(() => {
@@ -1746,6 +1930,57 @@
                 setSensorData(prev => ({ ...prev, heading: deviceHeading }));
             }, [deviceHeading]);
 
+            // ==========================================
+            // ULTRASONIC AUTO-ACTIVATION
+            // ==========================================
+            useEffect(() => {
+                if (!currentUser || users.length === 0) return;
+                
+                // Verificar si hay usuarios a menos de 5 metros
+                const nearbyUsers = users.filter(u => 
+                    u.id !== currentUser.id && u.distance > 0 && u.distance < 5
+                );
+                
+                if (nearbyUsers.length > 0 && !ultrasonicActive) {
+                    // Activar sistema ultrasónico
+                    console.log(`🔊 ${nearbyUsers.length} usuario(s) a <5m, activando ultrasonido...`);
+                    startUltrasonicDetector();
+                } else if (nearbyUsers.length === 0 && ultrasonicActive) {
+                    // Desactivar si no hay nadie cerca
+                    console.log('❌ No hay usuarios a <5m, desactivando ultrasonido...');
+                    stopUltrasonicDetector();
+                }
+            }, [users, currentUser]);
+
+            // ==========================================
+            // ULTRASONIC EMISSION - Emitir señal periódicamente
+            // ==========================================
+            useEffect(() => {
+                if (!ultrasonicActive || !currentUser) return;
+                
+                // Emitir señal cada 1 segundo
+                const emitInterval = setInterval(() => {
+                    emitUltrasonicSignal(currentUser.id);
+                }, 1000);
+                
+                // Emitir inmediatamente al activarse
+                emitUltrasonicSignal(currentUser.id);
+                
+                return () => clearInterval(emitInterval);
+            }, [ultrasonicActive, currentUser]);
+
+            // ==========================================
+            // CLEANUP - Detener ultrasonido al desmontar
+            // ==========================================
+            useEffect(() => {
+                return () => {
+                    if (ultrasonicActive) {
+                        console.log('🧹 Cleanup: Deteniendo sistema ultrasónico');
+                        stopUltrasonicDetector();
+                    }
+                };
+            }, []);
+
             // Recalculate distances when user location changes
             useEffect(() => {
                 if (!userLocation || !currentUser) return;
@@ -1762,14 +1997,15 @@
                             };
                         } else if (user.latitude && user.longitude) {
                             // Other users - recalculate distance and angle
-                            const distance = Math.round(
-                                calculateDistance(
-                                    userLocation.latitude,
-                                    userLocation.longitude,
-                                    user.latitude,
-                                    user.longitude
-                                )
+                            const gpsDistance = calculateDistance(
+                                userLocation.latitude,
+                                userLocation.longitude,
+                                user.latitude,
+                                user.longitude
                             );
+                            
+                            // Aplicar Hybrid Precision: GPS + Ultrasonido si está cerca
+                            const finalDistance = getFinalDistance(gpsDistance, user.id);
                             
                             const angle = Math.round(
                                 calculateBearing(
@@ -1782,7 +2018,7 @@
                             
                             return {
                                 ...user,
-                                distance,
+                                distance: Math.round(finalDistance * 10) / 10, // 1 decimal de precisión
                                 angle
                             };
                         }
@@ -2058,8 +2294,12 @@
                                     {currentUser ? users.filter(u => u.id !== currentUser.id && u.distance <= radius).length : 0}
                                 </div>
                                 <div className="radar-info-title">Personas cerca de ti</div>
-                                <div className="precision-badge">
-                                    {sensorData.isMoving ? '🧠' : '📍'} ±{locationAccuracy.toFixed(1)}m
+                                <div className={`precision-badge ${ultrasonicActive && ultrasonicDetections.nearby ? 'ultrasonic-active' : ''}`}>
+                                    {ultrasonicActive && ultrasonicDetections.nearby ? '🔊' : (sensorData.isMoving ? '🧠' : '📍')} 
+                                    {' '}±{ultrasonicActive && ultrasonicDetections.nearby ? 
+                                        (ultrasonicDetections.nearby < 1 ? '0.5' : ultrasonicDetections.nearby.toFixed(1)) : 
+                                        locationAccuracy.toFixed(1)
+                                    }m
                                 </div>
                             </div>
 
@@ -2185,7 +2425,12 @@
                                                     {!isCenter && (
                                                         <>
                                                             <div className="avatar-name">{user.name}</div>
-                                                            <div className="avatar-distance">{user.distance} m</div>
+                                                            <div className="avatar-distance">
+                                                                {user.distance < 1 && ultrasonicActive ? 
+                                                                    `${user.distance.toFixed(1)} m 🔊` : 
+                                                                    `${Math.round(user.distance)} m`
+                                                                }
+                                                            </div>
                                                         </>
                                                     )}
                                                 </div>
