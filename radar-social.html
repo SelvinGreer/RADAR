@@ -1149,144 +1149,169 @@
                         console.log('Firebase User loaded:', firebaseUser);
                         console.log('Photo URL:', firebaseUser.photoURL);
                         
-                        // Get user's current location
+                        // Get user's current location with HIGH PRECISION
                         if ('geolocation' in navigator) {
-                            navigator.geolocation.getCurrentPosition(
+                            let lastUpdateTime = 0;
+                            let usersUnsubscribe = null;
+                            
+                            // Use watchPosition for continuous updates
+                            const watchId = navigator.geolocation.watchPosition(
                                 async (position) => {
-                                    const { latitude, longitude } = position.coords;
+                                    const { latitude, longitude, accuracy } = position.coords;
+                                    const currentTime = Date.now();
+                                    
+                                    console.log(`📍 Location update: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (±${accuracy.toFixed(1)}m)`);
+                                    
+                                    // Update local state immediately
                                     setUserLocation({ latitude, longitude });
                                     
-                                    try {
-                                        // Get user data from Firestore
-                                        const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
+                                    // Update Firebase every 3 seconds (throttle to avoid excessive writes)
+                                    if (currentTime - lastUpdateTime >= 3000) {
+                                        lastUpdateTime = currentTime;
                                         
-                                        let thought = '';
-                                        if (userDoc.exists) {
-                                            const userData = userDoc.data();
-                                            thought = userData.thought || '';
-                                        }
-                                        
-                                        // Update user in Firestore with current location
-                                        await db.collection('users').doc(firebaseUser.uid).set({
-                                            uid: firebaseUser.uid,
-                                            displayName: firebaseUser.displayName,
-                                            email: firebaseUser.email,
-                                            photoURL: firebaseUser.photoURL,
-                                            location: new firebase.firestore.GeoPoint(latitude, longitude),
-                                            thought: thought,
-                                            isOnline: true,
-                                            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                                        }, { merge: true });
-                                        
-                                        // Create current user object
-                                        const realUser = {
-                                            id: firebaseUser.uid,
-                                            name: firebaseUser.displayName || 'Usuario',
-                                            age: 25,
-                                            photo: firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(firebaseUser.displayName || 'User') + '&background=38bd62&color=fff&size=150',
-                                            thought: thought,
-                                            hasStory: false,
-                                            distance: 0,
-                                            angle: 0,
-                                            hasNewMessage: false,
-                                            email: firebaseUser.email,
-                                            latitude: latitude,
-                                            longitude: longitude
-                                        };
-                                        
-                                        console.log('Real user created:', realUser);
-                                        setCurrentUser(realUser);
-                                        setThought(realUser.thought);
-                                        
-                                        // Listen to all users in real-time
-                                        const usersUnsubscribe = db.collection('users')
-                                            .where('isOnline', '==', true)
-                                            .onSnapshot((snapshot) => {
-                                                const otherUsers = [];
+                                        try {
+                                            // First time setup
+                                            if (!usersUnsubscribe) {
+                                                // Get user data from Firestore
+                                                const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
                                                 
-                                                snapshot.forEach((doc) => {
-                                                    const userData = doc.data();
-                                                    
-                                                    // Skip current user
-                                                    if (userData.uid === firebaseUser.uid) return;
-                                                    
-                                                    // Calculate distance and angle from current user
-                                                    if (userData.location) {
-                                                        const userLat = userData.location.latitude;
-                                                        const userLon = userData.location.longitude;
+                                                let thought = '';
+                                                if (userDoc.exists) {
+                                                    const userData = userDoc.data();
+                                                    thought = userData.thought || '';
+                                                }
+                                                
+                                                // Create current user object
+                                                const realUser = {
+                                                    id: firebaseUser.uid,
+                                                    name: firebaseUser.displayName || 'Usuario',
+                                                    age: 25,
+                                                    photo: firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(firebaseUser.displayName || 'User') + '&background=38bd62&color=fff&size=150',
+                                                    thought: thought,
+                                                    hasStory: false,
+                                                    distance: 0,
+                                                    angle: 0,
+                                                    hasNewMessage: false,
+                                                    email: firebaseUser.email,
+                                                    latitude: latitude,
+                                                    longitude: longitude
+                                                };
+                                                
+                                                console.log('Real user created:', realUser);
+                                                setCurrentUser(realUser);
+                                                setThought(realUser.thought);
+                                                
+                                                // Listen to all users in real-time
+                                                usersUnsubscribe = db.collection('users')
+                                                    .where('isOnline', '==', true)
+                                                    .onSnapshot((snapshot) => {
+                                                        const otherUsers = [];
                                                         
-                                                        const distance = Math.round(
-                                                            calculateDistance(latitude, longitude, userLat, userLon)
-                                                        );
+                                                        // Get current location from state
+                                                        const currentLat = latitude;
+                                                        const currentLon = longitude;
                                                         
-                                                        const angle = Math.round(
-                                                            calculateBearing(latitude, longitude, userLat, userLon)
-                                                        );
-                                                        
-                                                        otherUsers.push({
-                                                            id: userData.uid,
-                                                            name: userData.displayName || 'Usuario',
-                                                            age: 25,
-                                                            photo: userData.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.displayName || 'User') + '&background=38bd62&color=fff&size=150',
-                                                            thought: userData.thought || '',
-                                                            hasStory: false,
-                                                            distance: distance,
-                                                            angle: angle,
-                                                            hasNewMessage: false,
-                                                            latitude: userLat,
-                                                            longitude: userLon
+                                                        snapshot.forEach((doc) => {
+                                                            const userData = doc.data();
+                                                            
+                                                            // Skip current user
+                                                            if (userData.uid === firebaseUser.uid) return;
+                                                            
+                                                            // Calculate distance and angle from current user
+                                                            if (userData.location) {
+                                                                const userLat = userData.location.latitude;
+                                                                const userLon = userData.location.longitude;
+                                                                
+                                                                const distance = Math.round(
+                                                                    calculateDistance(currentLat, currentLon, userLat, userLon)
+                                                                );
+                                                                
+                                                                const angle = Math.round(
+                                                                    calculateBearing(currentLat, currentLon, userLat, userLon)
+                                                                );
+                                                                
+                                                                otherUsers.push({
+                                                                    id: userData.uid,
+                                                                    name: userData.displayName || 'Usuario',
+                                                                    age: 25,
+                                                                    photo: userData.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.displayName || 'User') + '&background=38bd62&color=fff&size=150',
+                                                                    thought: userData.thought || '',
+                                                                    hasStory: false,
+                                                                    distance: distance,
+                                                                    angle: angle,
+                                                                    hasNewMessage: false,
+                                                                    latitude: userLat,
+                                                                    longitude: userLon
+                                                                });
+                                                            }
                                                         });
-                                                    }
-                                                });
-                                                
-                                                // Update users list (current user + others)
-                                                setUsers([realUser, ...otherUsers]);
-                                                console.log('Users updated:', otherUsers.length, 'users found');
-                                            });
-                                        
-                                        // Update user location every 30 seconds
-                                        const locationInterval = setInterval(() => {
-                                            navigator.geolocation.getCurrentPosition(
-                                                async (pos) => {
-                                                    const { latitude: newLat, longitude: newLon } = pos.coords;
-                                                    setUserLocation({ latitude: newLat, longitude: newLon });
-                                                    
-                                                    await db.collection('users').doc(firebaseUser.uid).update({
-                                                        location: new firebase.firestore.GeoPoint(newLat, newLon),
-                                                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                                                        
+                                                        // Update users list (current user + others)
+                                                        setUsers([realUser, ...otherUsers]);
+                                                        console.log('Users updated:', otherUsers.length, 'users found');
                                                     });
-                                                    
-                                                    // Update current user location in state
-                                                    setCurrentUser(prev => ({
-                                                        ...prev,
-                                                        latitude: newLat,
-                                                        longitude: newLon
-                                                    }));
-                                                },
-                                                (error) => console.error('Location update error:', error)
-                                            );
-                                        }, 30000); // Every 30 seconds
-                                        
-                                        // Cleanup on unmount
-                                        return () => {
-                                            clearInterval(locationInterval);
-                                            usersUnsubscribe();
-                                            // Mark user as offline when component unmounts
-                                            db.collection('users').doc(firebaseUser.uid).update({
-                                                isOnline: false,
-                                                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                                            });
-                                        };
-                                        
-                                    } catch (error) {
-                                        console.error('Error loading user:', error);
+                                            }
+                                            
+                                            // Update user in Firestore with current location
+                                            await db.collection('users').doc(firebaseUser.uid).set({
+                                                uid: firebaseUser.uid,
+                                                displayName: firebaseUser.displayName,
+                                                email: firebaseUser.email,
+                                                photoURL: firebaseUser.photoURL,
+                                                location: new firebase.firestore.GeoPoint(latitude, longitude),
+                                                isOnline: true,
+                                                lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                                                accuracy: accuracy
+                                            }, { merge: true });
+                                            
+                                            // Update current user location in state
+                                            setCurrentUser(prev => prev ? ({
+                                                ...prev,
+                                                latitude: latitude,
+                                                longitude: longitude
+                                            }) : prev);
+                                            
+                                        } catch (error) {
+                                            console.error('Error updating location:', error);
+                                        }
                                     }
                                 },
                                 (error) => {
                                     console.error('Location error:', error);
-                                    alert('No se pudo obtener tu ubicación. Por favor activa el GPS.');
+                                    let errorMessage = 'No se pudo obtener tu ubicación.';
+                                    
+                                    switch(error.code) {
+                                        case error.PERMISSION_DENIED:
+                                            errorMessage = 'Permiso de ubicación denegado. Por favor actívalo en la configuración.';
+                                            break;
+                                        case error.POSITION_UNAVAILABLE:
+                                            errorMessage = 'Ubicación no disponible. Verifica que el GPS esté activado.';
+                                            break;
+                                        case error.TIMEOUT:
+                                            errorMessage = 'Tiempo de espera agotado. Intenta de nuevo.';
+                                            break;
+                                    }
+                                    
+                                    alert(errorMessage);
+                                },
+                                {
+                                    enableHighAccuracy: true,  // ✅ Alta precisión GPS
+                                    timeout: 10000,            // 10 segundos timeout
+                                    maximumAge: 0              // No usar caché
                                 }
                             );
+                            
+                            // Cleanup on unmount
+                            return () => {
+                                navigator.geolocation.clearWatch(watchId);
+                                if (usersUnsubscribe) usersUnsubscribe();
+                                // Mark user as offline
+                                db.collection('users').doc(firebaseUser.uid).update({
+                                    isOnline: false,
+                                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                                }).catch(err => console.error('Error marking offline:', err));
+                            };
+                            
                         } else {
                             alert('Tu dispositivo no soporta geolocalización');
                         }
@@ -1299,6 +1324,51 @@
                 
                 return () => unsubscribe();
             }, []);
+
+            // Recalculate distances when user location changes
+            useEffect(() => {
+                if (!userLocation || !currentUser) return;
+                
+                // Update distances and angles for all users based on new location
+                setUsers(prevUsers => {
+                    return prevUsers.map(user => {
+                        if (user.id === currentUser.id) {
+                            // Current user - just update location
+                            return {
+                                ...user,
+                                latitude: userLocation.latitude,
+                                longitude: userLocation.longitude
+                            };
+                        } else if (user.latitude && user.longitude) {
+                            // Other users - recalculate distance and angle
+                            const distance = Math.round(
+                                calculateDistance(
+                                    userLocation.latitude,
+                                    userLocation.longitude,
+                                    user.latitude,
+                                    user.longitude
+                                )
+                            );
+                            
+                            const angle = Math.round(
+                                calculateBearing(
+                                    userLocation.latitude,
+                                    userLocation.longitude,
+                                    user.latitude,
+                                    user.longitude
+                                )
+                            );
+                            
+                            return {
+                                ...user,
+                                distance,
+                                angle
+                            };
+                        }
+                        return user;
+                    });
+                });
+            }, [userLocation, currentUser]);
 
             // Calculate direction to point towards closest user with message
             const getDirectionToTarget = () => {
