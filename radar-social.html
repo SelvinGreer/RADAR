@@ -477,17 +477,31 @@
             transform: translateY(-50%);
         }
 
-        /* Center avatar (current user) - 25% smaller */
+        /* Center avatar (current user) - Fixed in center, smaller and aesthetic */
+        .center-avatar-fixed {
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 100 !important;
+            opacity: 1 !important;
+            pointer-events: none;
+        }
+        
         .center-avatar .avatar-ring {
-            width: 63px;
-            height: 63px;
-            padding: 2.5px;
+            width: 50px;
+            height: 50px;
+            padding: 2px;
+            box-shadow: 
+                0 0 0 2px rgba(56, 189, 98, 0.15),
+                0 0 20px rgba(56, 189, 98, 0.3),
+                0 4px 12px rgba(0, 0, 0, 0.5);
         }
 
         .center-avatar .avatar-img-wrapper {
-            width: 58px;
-            height: 58px;
-            border: 2.5px solid #0d1117;
+            width: 46px;
+            height: 46px;
+            border: 2px solid #0d1117;
         }
 
         .direction-indicator {
@@ -527,32 +541,11 @@
             align-items: center;
         }
 
-        .btn-round {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(22, 27, 34, 0.85);
-            border: 1px solid rgba(48, 54, 61, 0.5);
+        .thought-input-container {
+            flex: 1;
+            position: relative;
             display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: all 0.2s ease;
-            box-shadow: 
-                0 2px 8px rgba(0, 0, 0, 0.3),
-                inset 0 1px 1px rgba(255, 255, 255, 0.04);
-        }
-
-        .btn-round:active {
-            background: rgba(22, 27, 34, 0.95);
-            transform: scale(0.95);
-        }
-
-        .btn-round svg {
-            width: 22px;
-            height: 22px;
-            color: #8b949e;
         }
 
         .thought-input {
@@ -560,7 +553,7 @@
             background: rgba(22, 27, 34, 0.7);
             border: 1px solid rgba(48, 54, 61, 0.4);
             border-radius: 25px;
-            padding: 13px 20px;
+            padding: 13px 50px 13px 20px;
             color: #e6edf3;
             font-size: 15px;
             font-family: 'Inter', sans-serif;
@@ -568,6 +561,40 @@
             transition: all 0.2s ease;
             font-weight: 400;
             letter-spacing: -0.2px;
+            width: 100%;
+        }
+        
+        .send-button {
+            position: absolute;
+            right: 6px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(56, 189, 98, 0.15);
+            border: 1px solid rgba(56, 189, 98, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        }
+        
+        .send-button:hover {
+            opacity: 1;
+            background: rgba(56, 189, 98, 0.25);
+            transform: scale(1.05);
+        }
+        
+        .send-button:active {
+            transform: scale(0.95);
+        }
+        
+        .send-button svg {
+            width: 18px;
+            height: 18px;
+            color: #38bd62;
+        }
         }
 
         .thought-input::placeholder {
@@ -1176,9 +1203,27 @@
                                                 const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
                                                 
                                                 let thought = '';
+                                                let thoughtTimestamp = null;
                                                 if (userDoc.exists) {
                                                     const userData = userDoc.data();
-                                                    thought = userData.thought || '';
+                                                    thoughtTimestamp = userData.thoughtTimestamp;
+                                                    
+                                                    // Check if thought is expired (24 hours)
+                                                    if (userData.thought && thoughtTimestamp) {
+                                                        const now = Date.now();
+                                                        const thoughtTime = thoughtTimestamp.toMillis ? thoughtTimestamp.toMillis() : thoughtTimestamp;
+                                                        const hoursPassed = (now - thoughtTime) / (1000 * 60 * 60);
+                                                        
+                                                        if (hoursPassed < 24) {
+                                                            thought = userData.thought;
+                                                        } else {
+                                                            // Clear expired thought
+                                                            await db.collection('users').doc(firebaseUser.uid).update({
+                                                                thought: '',
+                                                                thoughtTimestamp: null
+                                                            });
+                                                        }
+                                                    }
                                                 }
                                                 
                                                 // Create current user object
@@ -1230,12 +1275,24 @@
                                                                     calculateBearing(currentLat, currentLon, userLat, userLon)
                                                                 );
                                                                 
+                                                                // Check if thought is expired (24 hours)
+                                                                let displayThought = '';
+                                                                if (userData.thought && userData.thoughtTimestamp) {
+                                                                    const now = Date.now();
+                                                                    const thoughtTime = userData.thoughtTimestamp.toMillis ? userData.thoughtTimestamp.toMillis() : userData.thoughtTimestamp;
+                                                                    const hoursPassed = (now - thoughtTime) / (1000 * 60 * 60);
+                                                                    
+                                                                    if (hoursPassed < 24) {
+                                                                        displayThought = userData.thought;
+                                                                    }
+                                                                }
+                                                                
                                                                 otherUsers.push({
                                                                     id: userData.uid,
                                                                     name: userData.displayName || 'Usuario',
                                                                     age: 25,
                                                                     photo: userData.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.displayName || 'User') + '&background=38bd62&color=fff&size=150',
-                                                                    thought: userData.thought || '',
+                                                                    thought: displayThought,
                                                                     hasStory: false,
                                                                     distance: distance,
                                                                     angle: angle,
@@ -1514,24 +1571,42 @@
             };
 
             const updateThought = async () => {
-                if (currentUser) {
+                if (currentUser && thought.trim()) {
+                    const thoughtData = {
+                        text: thought.trim(),
+                        timestamp: Date.now()
+                    };
+                    
                     setUsers(users.map(u => 
-                        u.id === currentUser.id ? { ...u, thought } : u
+                        u.id === currentUser.id ? { ...u, thought: thoughtData.text, thoughtTimestamp: thoughtData.timestamp } : u
                     ));
-                    setCurrentUser({ ...currentUser, thought });
+                    setCurrentUser({ ...currentUser, thought: thoughtData.text, thoughtTimestamp: thoughtData.timestamp });
                     
                     // Save to Firebase if user is authenticated
                     const user = auth.currentUser;
                     if (user) {
                         try {
                             await db.collection('users').doc(user.uid).update({
-                                thought: thought
+                                thought: thoughtData.text,
+                                thoughtTimestamp: firebase.firestore.FieldValue.serverTimestamp()
                             });
+                            
+                            // Clear input after sending
+                            setThought('');
                         } catch (error) {
                             console.error('Error updating thought:', error);
                         }
                     }
                 }
+            };
+            
+            // Check if thought is expired (24 hours)
+            const isThoughtExpired = (timestamp) => {
+                if (!timestamp) return true;
+                const now = Date.now();
+                const thoughtTime = timestamp.toMillis ? timestamp.toMillis() : timestamp;
+                const hoursPassed = (now - thoughtTime) / (1000 * 60 * 60);
+                return hoursPassed >= 24;
             };
 
             const handleAvatarClick = (user) => {
@@ -1677,28 +1752,26 @@
                                         
                                         // Dynamic scale based on zoom level (radius)
                                         // At 5m radius: avatars larger (1.2x base)
+                                        // Dynamic scale based on zoom level (radius)
+                                        // At 5m radius: avatars larger (1.2x base)
                                         // At 50m radius: avatars smaller (0.6x base)
                                         let scale = 1.0;
                                         if (!isCenter) {
                                             const zoomFactor = 1.2 - (radius / 50) * 0.6; // 1.2 at 5m, 0.6 at 50m
                                             scale = zoomFactor;
-                                        } else {
-                                            // Center avatar scales inversely: smaller at 50m, normal at small radius
-                                            // At 5m: scale 1.0 (63px)
-                                            // At 50m: scale 0.6 (38px)
-                                            scale = 1.0 - (radius / 50) * 0.4; // 1.0 at 5m, 0.6 at 50m
                                         }
+                                        // Center avatar is always fixed size (no scaling)
                                         
                                         return (
                                             <div
                                                 key={user.id}
-                                                className="avatar-container"
-                                                style={{
+                                                className={`avatar-container ${isCenter ? 'center-avatar-fixed' : ''}`}
+                                                style={isCenter ? {} : {
                                                     left: `calc(50% + ${x}%)`,
                                                     top: `calc(50% + ${y}%)`,
                                                     transform: `scale(${scale})`,
                                                     opacity: user.distance <= radius ? 1 : 0,
-                                                    zIndex: isCenter ? 30 : 10 - Math.floor(user.distance / 10),
+                                                    zIndex: 10 - Math.floor(user.distance / 10),
                                                     transition: 'all 0.4s ease'
                                                 }}
                                                 onClick={() => handleAvatarClick(user)}
@@ -1771,31 +1844,25 @@
                     </div>
 
                     <div className="bottom-bar">
-                        <div className="btn-round">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                        </div>
-                        <input
-                            type="text"
-                            className="thought-input"
-                            placeholder="Escribe un pensamiento..."
-                            value={thought}
-                            onChange={(e) => setThought(e.target.value.slice(0, 50))}
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                    updateThought();
-                                    e.target.blur();
-                                }
-                            }}
-                            onBlur={updateThought}
-                            maxLength={50}
-                        />
-                        <div className="btn-round">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
+                        <div className="thought-input-container">
+                            <input
+                                type="text"
+                                className="thought-input"
+                                placeholder="Escribe un pensamiento..."
+                                value={thought}
+                                onChange={(e) => setThought(e.target.value.slice(0, 50))}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        updateThought();
+                                    }
+                                }}
+                                maxLength={50}
+                            />
+                            <div className="send-button" onClick={updateThought}>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
 
