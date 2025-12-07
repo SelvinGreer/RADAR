@@ -22,6 +22,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -2040,11 +2041,12 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.6 - Fixes Críticos + Imágenes');
+                console.log('🚀 RADAR SOCIAL v2.6.1 - Fix Pantalla Negra');
+                console.log('✅ FIX: Firebase Storage script agregado');
                 console.log('✅ FIX: Mensajes duplicados eliminados');
                 console.log('✅ FIX: Badge ONLINE reposicionado correctamente');
                 console.log('✅ Ícono + habilitado para enviar fotos');
-                console.log('📷 Firebase Storage configurado');
+                console.log('📷 Firebase Storage configurado y funcional');
                 console.log('🎨 Anillo de historia tipo Instagram (listo para usar)');
                 console.log('💚 Heartbeat cada 10s - Solo usuarios ONLINE activos');
                 console.log('📬 Inbox de mensajes disponible');
@@ -3604,7 +3606,7 @@
                                                 fontSize: '13px',
                                                 color: '#c9d1d9'
                                             }}>
-                                                {selectedImage.name}
+                                                {selectedImage?.name}
                                             </div>
                                             <div
                                                 onClick={() => setSelectedImage(null)}
@@ -3647,7 +3649,7 @@
                                     </div>
                                     <textarea
                                         className="chat-input"
-                                        placeholder={selectedImage ? `💬 Añade un mensaje (opcional)` : "Escribe tu respuesta..."}
+                                        placeholder={selectedImage ? "💬 Añade un mensaje (opcional)" : "Escribe tu respuesta..."}
                                         value={messageInput}
                                         onChange={(e) => setMessageInput(e.target.value)}
                                         rows="1"
