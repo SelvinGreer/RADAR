@@ -1340,21 +1340,24 @@
                                 },
                                 (error) => {
                                     console.error('Location error:', error);
+                                    
+                                    // Instead of alert, we could show a non-intrusive notification
+                                    // For now, just log it
                                     let errorMessage = 'No se pudo obtener tu ubicación.';
                                     
                                     switch(error.code) {
                                         case error.PERMISSION_DENIED:
-                                            errorMessage = 'Permiso de ubicación denegado. Por favor actívalo en la configuración.';
+                                            errorMessage = 'Permiso de ubicación denegado.';
                                             break;
                                         case error.POSITION_UNAVAILABLE:
-                                            errorMessage = 'Ubicación no disponible. Verifica que el GPS esté activado.';
+                                            errorMessage = 'Ubicación no disponible.';
                                             break;
                                         case error.TIMEOUT:
-                                            errorMessage = 'Tiempo de espera agotado. Intenta de nuevo.';
+                                            errorMessage = 'Tiempo de espera agotado.';
                                             break;
                                     }
                                     
-                                    alert(errorMessage);
+                                    console.warn('⚠️', errorMessage);
                                 },
                                 {
                                     enableHighAccuracy: true,  // ✅ Alta precisión GPS
@@ -1375,7 +1378,9 @@
                             };
                             
                         } else {
-                            alert('Tu dispositivo no soporta geolocalización');
+                            console.error('❌ Tu dispositivo no soporta geolocalización');
+                            // Redirect to error page or show elegant message
+                            window.location.href = 'auth.html';
                         }
                     } else {
                         // No user logged in, redirect to auth
