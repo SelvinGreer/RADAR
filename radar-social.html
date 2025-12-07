@@ -1694,7 +1694,7 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.2 - Inbox de Mensajes');
+                console.log('🚀 RADAR SOCIAL v2.3 - Fix hasNewMessage Persistente');
                 console.log('✅ Badge en esquina superior derecha');
                 console.log('✅ Sistema de mensajes Firestore activo');
                 console.log('✅ Auto-cleanup de audio implementado');
@@ -1702,6 +1702,7 @@
                 console.log('💚 Filtro lastSeen < 30s - Usuarios realmente conectados');
                 console.log('📬 Inbox de mensajes disponible');
                 console.log('🟢 Indicador online sutil debajo del menú');
+                console.log('💛 FIX: hasNewMessage se mantiene hasta abrir chat');
                 
                 // Initialize audio context
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1877,15 +1878,34 @@
                                                                     hasStory: false,
                                                                     distance: distance,
                                                                     angle: angle,
-                                                                    hasNewMessage: false,
+                                                                    hasNewMessage: false, // Se actualizará por el listener de mensajes
                                                                     latitude: userLat,
                                                                     longitude: userLon
                                                                 });
                                                             }
                                                         });
                                                         
-                                                        // Update users list (current user + others)
-                                                        setUsers([realUser, ...otherUsers]);
+                                                        // CRÍTICO: Preservar hasNewMessage de usuarios existentes
+                                                        setUsers(prevUsers => {
+                                                            const updatedUsers = [realUser, ...otherUsers.map(newUser => {
+                                                                // Buscar si este usuario ya existe en el estado
+                                                                const existingUser = prevUsers.find(u => u.id === newUser.id);
+                                                                
+                                                                // Si existe y tiene mensaje nuevo, PRESERVAR ese estado
+                                                                if (existingUser && existingUser.hasNewMessage) {
+                                                                    console.log(`💛 PRESERVANDO hasNewMessage=true para ${newUser.name}`);
+                                                                    return {
+                                                                        ...newUser,
+                                                                        hasNewMessage: true  // PRESERVAR estado de mensaje
+                                                                    };
+                                                                }
+                                                                
+                                                                return newUser;
+                                                            })];
+                                                            
+                                                            return updatedUsers;
+                                                        });
+                                                        
                                                         console.log(`👥 Usuarios actualizados: ${otherUsers.length} usuarios ONLINE activos`);
                                                         if (otherUsers.length > 0) {
                                                             console.log('Lista:', otherUsers.map(u => `${u.name} (${u.distance}m)`).join(', '));
