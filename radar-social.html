@@ -1241,16 +1241,16 @@
         .chat-header {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 16px 20px;
-            background: rgba(22, 27, 34, 0.95);
-            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+            gap: 12px;
+            padding: 10px 16px;
+            background: #1f2c33;
+            border-bottom: none;
         }
 
         .chat-header svg {
-            width: 26px;
-            height: 26px;
-            color: #8b949e;
+            width: 24px;
+            height: 24px;
+            color: #aebac1;
             cursor: pointer;
         }
 
@@ -1262,22 +1262,22 @@
         }
 
         .chat-user-avatar {
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             object-fit: cover;
         }
 
         .chat-user-details h3 {
             font-size: 16px;
-            font-weight: 600;
-            color: #f0f6fc;
-            margin-bottom: 2px;
+            font-weight: 400;
+            color: #e9edef;
+            margin-bottom: 0px;
         }
 
         .chat-user-details p {
             font-size: 13px;
-            color: #8b949e;
+            color: #8696a0;
         }
 
         .chat-content {
@@ -1306,7 +1306,17 @@
             padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 4px;
+            /* Fondo tipo WhatsApp */
+            background: #0b141a;
+            background-image: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(255, 255, 255, 0.02) 10px,
+                    rgba(255, 255, 255, 0.02) 20px
+                );
         }
 
         .chat-info {
@@ -1322,60 +1332,82 @@
 
         .message {
             max-width: 75%;
-            padding: 11px 15px;
-            border-radius: 16px;
-            font-size: 15px;
-            line-height: 1.4;
+            padding: 6px 7px 8px 9px;
+            border-radius: 8px;
+            font-size: 14.2px;
+            line-height: 19px;
             word-wrap: break-word;
+            position: relative;
+            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+            margin-bottom: 2px;
         }
 
         .message.sent {
-            background: rgba(88, 166, 255, 0.18);
-            color: #e6edf3;
+            background: #005c4b;
+            color: #e9edef;
             align-self: flex-end;
-            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 8px 8px 0 8px;
         }
 
         .message.received {
-            background: rgba(22, 27, 34, 0.9);
-            color: #e6edf3;
+            background: #1f2c33;
+            color: #e9edef;
             align-self: flex-start;
-            border: 1px solid rgba(48, 54, 61, 0.5);
+            border-radius: 0 8px 8px 8px;
+        }
+        
+        /* Timestamp en mensaje */
+        .message-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-left: 8px;
+            float: right;
+            margin-top: 4px;
+        }
+        
+        /* Checkmarks para mensajes enviados */
+        .message-status {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 16px;
+            color: #53bdeb;
+            vertical-align: middle;
         }
 
         .chat-input-container {
-            padding: 14px 16px 20px;
-            background: linear-gradient(180deg, rgba(13, 17, 23, 0) 0%, rgba(13, 17, 23, 0.98) 15%, rgba(13, 17, 23, 1) 100%);
+            padding: 5px 8px 5px 8px;
+            background: #1f2c33;
             display: flex;
-            gap: 10px;
-            align-items: flex-end;
+            gap: 6px;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .chat-input {
             flex: 1;
-            background: rgba(22, 27, 34, 0.7);
-            border: 1px solid rgba(48, 54, 61, 0.4);
+            background: #2a3942;
+            border: none;
             border-radius: 20px;
-            padding: 11px 16px;
-            color: #e6edf3;
+            padding: 10px 12px;
+            color: #e9edef;
             font-size: 15px;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             outline: none;
             resize: none;
-            min-height: 42px;
+            min-height: 40px;
             max-height: 100px;
         }
 
         .chat-input::placeholder {
-            color: #6e7681;
+            color: #8696a0;
         }
 
         .chat-send-btn {
-            width: 46px;
-            height: 46px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            background: rgba(88, 166, 255, 0.14);
-            border: 1px solid rgba(88, 166, 255, 0.18);
+            background: #00a884;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1385,17 +1417,46 @@
         }
 
         .chat-send-btn:disabled {
-            opacity: 0.4;
+            background: #182229;
             cursor: not-allowed;
         }
 
         .chat-send-btn:not(:disabled):active {
             transform: scale(0.95);
-            background: rgba(88, 166, 255, 0.2);
+            background: #06cf9c;
         }
 
         .chat-send-btn svg {
-            color: #58a6ff;
+            color: #0b141a;
+        }
+        
+        .chat-send-btn:disabled svg {
+            color: #8696a0;
+        }
+        
+        /* Botón redondo (emoji, adjuntar, etc) */
+        .btn-round {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            flex-shrink: 0;
+            color: #8696a0;
+        }
+        
+        .btn-round:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .btn-round svg {
+            width: 26px;
+            height: 26px;
         }
 
         /* Sidebar */
@@ -2041,17 +2102,20 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.6.1 - Fix Pantalla Negra');
+                console.log('🚀 RADAR SOCIAL v2.7 - Rediseño WhatsApp');
+                console.log('🎨 NUEVO: Interfaz de chat estilo WhatsApp');
+                console.log('✅ Burbujas verdes (enviados) / grises (recibidos)');
+                console.log('✅ Timestamps en cada mensaje');
+                console.log('✅ Checkmarks (✓✓) en mensajes enviados');
+                console.log('✅ Fondo con patrón sutil');
+                console.log('✅ Botón de enviar verde (#00a884)');
+                console.log('✅ Header oscuro tipo WhatsApp');
                 console.log('✅ FIX: Firebase Storage script agregado');
                 console.log('✅ FIX: Mensajes duplicados eliminados');
                 console.log('✅ FIX: Badge ONLINE reposicionado correctamente');
-                console.log('✅ Ícono + habilitado para enviar fotos');
-                console.log('📷 Firebase Storage configurado y funcional');
-                console.log('🎨 Anillo de historia tipo Instagram (listo para usar)');
+                console.log('📷 Envío de imágenes funcional');
                 console.log('💚 Heartbeat cada 10s - Solo usuarios ONLINE activos');
                 console.log('📬 Inbox de mensajes disponible');
-                console.log('💛 hasNewMessage se mantiene hasta abrir chat');
-                console.log('📜 AUTO-SCROLL: Chat siempre muestra últimos mensajes');
                 console.log('⚙️ PANEL TECNOLOGÍAS: Modo auto/manual disponible');
                 
                 // Initialize audio context
@@ -3543,28 +3607,51 @@
                                                     </div>
                                                 )}
                                                 
-                                                {chatMessages.map(msg => (
-                                                    <div
-                                                        key={msg.id}
-                                                        className={`message ${msg.sender === currentUser.id ? 'sent' : 'received'}`}
-                                                    >
-                                                        {msg.imageUrl && (
-                                                            <img 
-                                                                src={msg.imageUrl} 
-                                                                alt="Imagen enviada" 
-                                                                style={{
-                                                                    maxWidth: '200px',
-                                                                    maxHeight: '200px',
-                                                                    borderRadius: '8px',
-                                                                    marginBottom: msg.content ? '8px' : '0',
-                                                                    cursor: 'pointer'
-                                                                }}
-                                                                onClick={() => window.open(msg.imageUrl, '_blank')}
-                                                            />
-                                                        )}
-                                                        {msg.content && <div>{msg.content}</div>}
-                                                    </div>
-                                                ))}
+                                                {chatMessages.map(msg => {
+                                                    const messageTime = msg.timestamp ? 
+                                                        new Date(msg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) 
+                                                        : '';
+                                                    const isSent = msg.sender === currentUser.id;
+                                                    
+                                                    return (
+                                                        <div
+                                                            key={msg.id}
+                                                            className={`message ${isSent ? 'sent' : 'received'}`}
+                                                        >
+                                                            {msg.imageUrl && (
+                                                                <img 
+                                                                    src={msg.imageUrl} 
+                                                                    alt="Imagen enviada" 
+                                                                    style={{
+                                                                        maxWidth: '250px',
+                                                                        maxHeight: '250px',
+                                                                        borderRadius: '8px',
+                                                                        marginBottom: msg.content ? '6px' : '0',
+                                                                        cursor: 'pointer',
+                                                                        display: 'block'
+                                                                    }}
+                                                                    onClick={() => window.open(msg.imageUrl, '_blank')}
+                                                                />
+                                                            )}
+                                                            {msg.content && (
+                                                                <span style={{ 
+                                                                    display: 'inline',
+                                                                    marginRight: '50px' 
+                                                                }}>
+                                                                    {msg.content}
+                                                                </span>
+                                                            )}
+                                                            <span className="message-time">
+                                                                {messageTime}
+                                                                {isSent && (
+                                                                    <span className="message-status">
+                                                                        ✓✓
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
                                             </>
                                         );
                                     })()}
@@ -3630,13 +3717,6 @@
                                     )}
                                     <div 
                                         className="btn-round" 
-                                        style={{ 
-                                            width: '46px', 
-                                            height: '46px', 
-                                            cursor: 'pointer',
-                                            background: selectedImage ? 'rgba(56, 189, 98, 0.2)' : '',
-                                            borderColor: selectedImage ? 'rgba(56, 189, 98, 0.5)' : ''
-                                        }}
                                         onClick={() => document.getElementById(`image-input-${selectedUser?.id}`).click()}
                                     >
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3658,10 +3738,6 @@
                                         className="chat-send-btn"
                                         onClick={sendMessage}
                                         disabled={!messageInput.trim() && !selectedImage}
-                                        style={{
-                                            background: (messageInput.trim() || selectedImage) ? 'linear-gradient(135deg, #38bd62, #2d9250)' : '',
-                                            opacity: (messageInput.trim() || selectedImage) ? 1 : 0.5
-                                        }}
                                     >
                                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
