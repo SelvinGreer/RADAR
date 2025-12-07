@@ -1950,13 +1950,13 @@
                     console.log('❌ No hay usuarios a <5m, desactivando ultrasonido...');
                     stopUltrasonicDetector();
                 }
-            }, [users, currentUser]);
+            }, [users, currentUser, ultrasonicActive]);
 
             // ==========================================
             // ULTRASONIC EMISSION - Emitir señal periódicamente
             // ==========================================
             useEffect(() => {
-                if (!ultrasonicActive || !currentUser) return;
+                if (!ultrasonicActive || !currentUser || !audioContext) return;
                 
                 // Emitir señal cada 1 segundo
                 const emitInterval = setInterval(() => {
@@ -1967,17 +1967,15 @@
                 emitUltrasonicSignal(currentUser.id);
                 
                 return () => clearInterval(emitInterval);
-            }, [ultrasonicActive, currentUser]);
+            }, [ultrasonicActive, currentUser, audioContext]);
 
             // ==========================================
             // CLEANUP - Detener ultrasonido al desmontar
             // ==========================================
             useEffect(() => {
                 return () => {
-                    if (ultrasonicActive) {
-                        console.log('🧹 Cleanup: Deteniendo sistema ultrasónico');
-                        stopUltrasonicDetector();
-                    }
+                    console.log('🧹 Cleanup: Deteniendo sistema ultrasónico');
+                    stopUltrasonicDetector();
                 };
             }, []);
 
