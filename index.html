@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar Social - Encuentra personas cerca de ti</title>
+    <meta name="description" content="Conecta con personas cercanas usando nuestro radar geolocalizado en tiempo real">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            max-width: 500px;
+        }
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: radial-gradient(circle, rgba(18, 38, 26, 1) 0%, rgba(8, 18, 12, 1) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid rgba(56, 189, 98, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+        .radar-icon {
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(56, 189, 98, 0.5);
+            border-radius: 50%;
+            position: relative;
+        }
+        .radar-icon::before {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(56, 189, 98, 0.3);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .radar-icon::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(56, 189, 98, 0.8);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.2); }
+        }
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #58a6ff 0%, #79c0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        p {
+            font-size: 16px;
+            color: #8b949e;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #58a6ff 0%, #4a8fd9 100%);
+            color: #fff;
+            padding: 16px 40px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(88, 166, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(88, 166, 255, 0.4);
+        }
+        .features {
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            text-align: left;
+        }
+        .feature {
+            background: rgba(22, 27, 34, 0.6);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(48, 54, 61, 0.5);
+        }
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .feature h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #f0f6fc;
+        }
+        .feature p {
+            font-size: 14px;
+            margin: 0;
+            line-height: 1.5;
+        }
+        .countdown {
+            font-size: 48px;
+            font-weight: 700;
+            color: #58a6ff;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <div class="radar-icon"></div>
+        </div>
+        
+        <h1>Radar Social</h1>
+        <p>Descubre y conecta con personas cerca de ti en tiempo real usando nuestro innovador radar geolocalizado.</p>
+        
+        <div class="countdown" id="countdown">3</div>
+        
+        <a href="radar-social.html" class="cta-button" id="cta">Abrir Radar Social</a>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">📍</div>
+                <h3>Radar en Tiempo Real</h3>
+                <p>Visualiza personas cercanas en un radio configurable de 5 a 50 metros</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🧭</div>
+                <h3>Brújula Integrada</h3>
+                <p>Orientación real basada en los sensores de tu dispositivo</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">💬</div>
+                <h3>Mensajes y Estados</h3>
+                <p>Comparte pensamientos, envía mensajes y ve historias circulares</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🔊</div>
+                <h3>Alertas por Proximidad</h3>
+                <p>Sonidos tipo scouter cuando detecta mensajes nuevos</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-redirect countdown
+        let count = 3;
+        const countdownEl = document.getElementById('countdown');
+        
+        const interval = setInterval(() => {
+            count--;
+            countdownEl.textContent = count;
+            
+            if (count === 0) {
+                clearInterval(interval);
+                window.location.href = 'auth.html';
+            }
+        }, 1000);
+        
+        // Stop countdown if user clicks button
+        document.getElementById('cta').addEventListener('click', () => {
+            clearInterval(interval);
+        });
+    </script>
+</body>
+</html>
