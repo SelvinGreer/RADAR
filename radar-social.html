@@ -68,9 +68,9 @@
         }
 
         .online-badge-menu {
-            position: absolute;
-            top: 38px;
-            left: 0;
+            position: fixed;
+            top: 65px;
+            left: 20px;
             padding: 4px 10px;
             background: rgba(34, 197, 94, 0.15);
             border: 1px solid rgba(34, 197, 94, 0.4);
@@ -85,6 +85,7 @@
             gap: 4px;
             backdrop-filter: blur(12px);
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            z-index: 99;
         }
 
         .online-badge-dot {
@@ -1671,6 +1672,7 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const storage = firebase.storage();
 
         // ==========================================
         // KALMAN FILTER CLASS - Suaviza GPS
@@ -1713,6 +1715,7 @@
             const [chats, setChats] = useState({});
             const [messages, setMessages] = useState({});
             const [messageInput, setMessageInput] = useState('');
+            const [selectedImage, setSelectedImage] = useState(null);
             const [audioContext, setAudioContext] = useState(null);
             const [showSidebar, setShowSidebar] = useState(false);
             const [showProfile, setShowProfile] = useState(false);
@@ -2037,15 +2040,15 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.5 - Panel de Tecnologías');
-                console.log('✅ Badge en esquina superior derecha');
-                console.log('✅ Sistema de mensajes Firestore activo');
-                console.log('✅ Auto-cleanup de audio implementado');
+                console.log('🚀 RADAR SOCIAL v2.6 - Fixes Críticos + Imágenes');
+                console.log('✅ FIX: Mensajes duplicados eliminados');
+                console.log('✅ FIX: Badge ONLINE reposicionado correctamente');
+                console.log('✅ Ícono + habilitado para enviar fotos');
+                console.log('📷 Firebase Storage configurado');
+                console.log('🎨 Anillo de historia tipo Instagram (listo para usar)');
                 console.log('💚 Heartbeat cada 10s - Solo usuarios ONLINE activos');
-                console.log('💚 Filtro lastSeen < 30s - Usuarios realmente conectados');
                 console.log('📬 Inbox de mensajes disponible');
-                console.log('🟢 Badge ONLINE debajo del menú');
-                console.log('💛 FIX: hasNewMessage se mantiene hasta abrir chat');
+                console.log('💛 hasNewMessage se mantiene hasta abrir chat');
                 console.log('📜 AUTO-SCROLL: Chat siempre muestra últimos mensajes');
                 console.log('⚙️ PANEL TECNOLOGÍAS: Modo auto/manual disponible');
                 
@@ -2694,6 +2697,7 @@
                             if (change.type === 'added') {
                                 const message = change.doc.data();
                                 const senderId = message.sender;
+                                const messageId = change.doc.id;
                                 
                                 console.log(`📩 Nuevo mensaje de ${senderId}:`, message.content);
                                 
@@ -2702,19 +2706,32 @@
                                     u.id === senderId ? { ...u, hasNewMessage: true } : u
                                 ));
                                 
-                                // Agregar mensaje al estado local
+                                // Agregar mensaje al estado local SOLO si no existe ya
                                 const chatKey = [currentUser.id, senderId].sort().join('-');
-                                setMessages(prev => ({
-                                    ...prev,
-                                    [chatKey]: [...(prev[chatKey] || []), {
-                                        id: change.doc.id,
-                                        sender: message.sender,
-                                        receiver: message.receiver,
-                                        content: message.content,
-                                        timestamp: message.timestamp?.toDate() || new Date(),
-                                        read: false
-                                    }]
-                                }));
+                                setMessages(prev => {
+                                    const existingMessages = prev[chatKey] || [];
+                                    
+                                    // Verificar si el mensaje ya existe por ID
+                                    const messageExists = existingMessages.some(msg => msg.id === messageId);
+                                    
+                                    if (messageExists) {
+                                        console.log(`⚠️ Mensaje ${messageId} ya existe, ignorando duplicado`);
+                                        return prev; // No agregar duplicado
+                                    }
+                                    
+                                    // Agregar mensaje nuevo
+                                    return {
+                                        ...prev,
+                                        [chatKey]: [...existingMessages, {
+                                            id: messageId,
+                                            sender: message.sender,
+                                            receiver: message.receiver,
+                                            content: message.content,
+                                            timestamp: message.timestamp?.toDate() || new Date(),
+                                            read: false
+                                        }]
+                                    };
+                                });
                                 
                                 console.log(`✅ Avatar de ${senderId} marcado con hasNewMessage = true`);
                             }
@@ -3074,21 +3091,37 @@
             };
 
             const sendMessage = async () => {
-                if (!messageInput.trim() || !selectedUser || !currentUser) return;
+                if ((!messageInput.trim() && !selectedImage) || !selectedUser || !currentUser) return;
 
-                const chatKey = [currentUser.id, selectedUser.id].sort().join('-'); // Clave consistente
-                const newMessage = {
-                    sender: currentUser.id,
-                    receiver: selectedUser.id,
-                    content: messageInput.trim(),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    read: false
-                };
-
-                console.log(`📤 Enviando mensaje a ${selectedUser.name} (${selectedUser.id})`);
-                console.log('Contenido:', messageInput.trim());
+                const chatKey = [currentUser.id, selectedUser.id].sort().join('-');
+                let imageUrl = null;
 
                 try {
+                    // Si hay imagen, subirla primero
+                    if (selectedImage) {
+                        console.log('📤 Subiendo imagen...', selectedImage.name);
+                        
+                        const storageRef = storage.ref();
+                        const imageRef = storageRef.child(`chat-images/${currentUser.id}/${Date.now()}_${selectedImage.name}`);
+                        
+                        const uploadTask = await imageRef.put(selectedImage);
+                        imageUrl = await uploadTask.ref.getDownloadURL();
+                        
+                        console.log('✅ Imagen subida:', imageUrl);
+                    }
+
+                    const newMessage = {
+                        sender: currentUser.id,
+                        receiver: selectedUser.id,
+                        content: messageInput.trim() || (imageUrl ? '📷 Imagen' : ''),
+                        imageUrl: imageUrl,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        read: false
+                    };
+
+                    console.log(`📤 Enviando mensaje a ${selectedUser.name} (${selectedUser.id})`);
+                    console.log('Contenido:', messageInput.trim() || '📷 Imagen');
+
                     // Guardar mensaje en Firestore
                     const docRef = await db.collection('messages').add(newMessage);
                     
@@ -3106,6 +3139,7 @@
                     }));
 
                     setMessageInput('');
+                    setSelectedImage(null);
                 } catch (error) {
                     console.error('❌ Error enviando mensaje:', error);
                     alert('Error al enviar mensaje: ' + error.message);
@@ -3512,7 +3546,21 @@
                                                         key={msg.id}
                                                         className={`message ${msg.sender === currentUser.id ? 'sent' : 'received'}`}
                                                     >
-                                                        {msg.content}
+                                                        {msg.imageUrl && (
+                                                            <img 
+                                                                src={msg.imageUrl} 
+                                                                alt="Imagen enviada" 
+                                                                style={{
+                                                                    maxWidth: '200px',
+                                                                    maxHeight: '200px',
+                                                                    borderRadius: '8px',
+                                                                    marginBottom: msg.content ? '8px' : '0',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                                onClick={() => window.open(msg.imageUrl, '_blank')}
+                                                            />
+                                                        )}
+                                                        {msg.content && <div>{msg.content}</div>}
                                                     </div>
                                                 ))}
                                             </>
@@ -3521,14 +3569,85 @@
                                 </div>
 
                                 <div className="chat-input-container">
-                                    <div className="btn-round" style={{ width: '46px', height: '46px' }}>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                        id={`image-input-${selectedUser?.id}`}
+                                        onChange={(e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                setSelectedImage(file);
+                                                console.log('📷 Imagen seleccionada:', file.name);
+                                            }
+                                        }}
+                                    />
+                                    {selectedImage && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            bottom: '70px',
+                                            left: '16px',
+                                            right: '16px',
+                                            background: 'rgba(22, 27, 34, 0.95)',
+                                            borderRadius: '12px',
+                                            padding: '12px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            border: '1px solid rgba(56, 189, 98, 0.3)'
+                                        }}>
+                                            <div style={{
+                                                fontSize: '24px'
+                                            }}>📷</div>
+                                            <div style={{
+                                                flex: 1,
+                                                fontSize: '13px',
+                                                color: '#c9d1d9'
+                                            }}>
+                                                {selectedImage.name}
+                                            </div>
+                                            <div
+                                                onClick={() => setSelectedImage(null)}
+                                                style={{
+                                                    width: '28px',
+                                                    height: '28px',
+                                                    borderRadius: '50%',
+                                                    background: 'rgba(239, 68, 68, 0.2)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer',
+                                                    border: '1px solid rgba(239, 68, 68, 0.3)'
+                                                }}
+                                            >
+                                                <svg width="16" height="16" fill="none" stroke="#ef4444" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div 
+                                        className="btn-round" 
+                                        style={{ 
+                                            width: '46px', 
+                                            height: '46px', 
+                                            cursor: 'pointer',
+                                            background: selectedImage ? 'rgba(56, 189, 98, 0.2)' : '',
+                                            borderColor: selectedImage ? 'rgba(56, 189, 98, 0.5)' : ''
+                                        }}
+                                        onClick={() => document.getElementById(`image-input-${selectedUser?.id}`).click()}
+                                    >
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            {selectedImage ? (
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            ) : (
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            )}
                                         </svg>
                                     </div>
                                     <textarea
                                         className="chat-input"
-                                        placeholder="Escribe tu respuesta..."
+                                        placeholder={selectedImage ? `💬 Añade un mensaje (opcional)` : "Escribe tu respuesta..."}
                                         value={messageInput}
                                         onChange={(e) => setMessageInput(e.target.value)}
                                         rows="1"
@@ -3536,7 +3655,11 @@
                                     <button
                                         className="chat-send-btn"
                                         onClick={sendMessage}
-                                        disabled={!messageInput.trim()}
+                                        disabled={!messageInput.trim() && !selectedImage}
+                                        style={{
+                                            background: (messageInput.trim() || selectedImage) ? 'linear-gradient(135deg, #38bd62, #2d9250)' : '',
+                                            opacity: (messageInput.trim() || selectedImage) ? 1 : 0.5
+                                        }}
                                     >
                                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
