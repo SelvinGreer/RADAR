@@ -3,199 +3,516 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radar Social - Encuentra personas cerca de ti</title>
-    <meta name="description" content="Conecta con personas cercanas usando nuestro radar geolocalizado en tiempo real">
+    <title>Radar Social - Conecta con personas cerca de ti</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Descubre y conecta con personas cerca de ti en tiempo real usando geolocalización de precisión">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #0d1117;
             color: #e6edf3;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            overflow-x: hidden;
+            line-height: 1.6;
         }
+
         .container {
-            text-align: center;
-            max-width: 500px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
         }
-        .logo {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 30px;
-            background: radial-gradient(circle, rgba(18, 38, 26, 1) 0%, rgba(8, 18, 12, 1) 100%);
-            border-radius: 50%;
+
+        /* Header */
+        header {
+            padding: 24px 0;
+            position: sticky;
+            top: 0;
+            background: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+        }
+
+        .nav {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            border: 3px solid rgba(56, 189, 98, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
         }
-        .radar-icon {
-            width: 60px;
-            height: 60px;
-            border: 2px solid rgba(56, 189, 98, 0.5);
-            border-radius: 50%;
-            position: relative;
-        }
-        .radar-icon::before {
-            content: '';
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border: 2px solid rgba(56, 189, 98, 0.3);
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        .radar-icon::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: rgba(56, 189, 98, 0.8);
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.2); }
-        }
-        h1 {
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, #58a6ff 0%, #79c0ff 100%);
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #38bd62 0%, #2ea556 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        p {
-            font-size: 16px;
+
+        .nav-link {
             color: #8b949e;
-            line-height: 1.6;
-            margin-bottom: 40px;
-        }
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #58a6ff 0%, #4a8fd9 100%);
-            color: #fff;
-            padding: 16px 40px;
-            border-radius: 12px;
             text-decoration: none;
-            font-size: 18px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #e6edf3;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 0 80px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(56, 189, 98, 0.1);
+            border: 1px solid rgba(56, 189, 98, 0.3);
+            border-radius: 50px;
+            color: #38bd62;
+            font-size: 13px;
             font-weight: 600;
-            box-shadow: 0 8px 24px rgba(88, 166, 255, 0.3);
-            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+            margin-bottom: 32px;
+            text-transform: uppercase;
         }
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(88, 166, 255, 0.4);
+
+        h1 {
+            font-size: 72px;
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #f0f6fc 0%, #8b949e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .features {
-            margin-top: 60px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            text-align: left;
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 48px;
+            }
         }
-        .feature {
-            background: rgba(22, 27, 34, 0.6);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(48, 54, 61, 0.5);
-        }
-        .feature-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        .feature h3 {
-            font-size: 16px;
-            margin-bottom: 8px;
-            color: #f0f6fc;
-        }
-        .feature p {
-            font-size: 14px;
-            margin: 0;
+
+        .hero-subtitle {
+            font-size: 22px;
+            color: #8b949e;
+            max-width: 700px;
+            margin: 0 auto 48px;
+            font-weight: 400;
             line-height: 1.5;
         }
-        .countdown {
-            font-size: 48px;
-            font-weight: 700;
-            color: #58a6ff;
-            margin: 20px 0;
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
+
+        .btn {
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-block;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #38bd62 0%, #2ea556 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(56, 189, 98, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(56, 189, 98, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(22, 27, 34, 0.8);
+            color: #e6edf3;
+            border: 1px solid rgba(48, 54, 61, 0.6);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(22, 27, 34, 1);
+            border-color: rgba(48, 54, 61, 0.8);
+        }
+
+        /* Features */
+        .features {
+            padding: 80px 0;
+            background: linear-gradient(180deg, rgba(13, 17, 23, 0) 0%, rgba(22, 27, 34, 0.4) 100%);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 18px;
+            color: #8b949e;
+            margin-bottom: 64px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-top: 48px;
+        }
+
+        .feature-card {
+            background: rgba(22, 27, 34, 0.6);
+            border: 1px solid rgba(48, 54, 61, 0.4);
+            border-radius: 12px;
+            padding: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(56, 189, 98, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(56, 189, 98, 0.2) 0%, rgba(56, 189, 98, 0.1) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: #38bd62;
+        }
+
+        .feature-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #f0f6fc;
+        }
+
+        .feature-description {
+            color: #8b949e;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        /* Tech Stack */
+        .tech-stack {
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .tech-items {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            flex-wrap: wrap;
+            margin-top: 48px;
+        }
+
+        .tech-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tech-badge {
+            padding: 12px 24px;
+            background: rgba(22, 27, 34, 0.6);
+            border: 1px solid rgba(48, 54, 61, 0.4);
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #8b949e;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 120px 0;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(56, 189, 98, 0.05) 0%, rgba(13, 17, 23, 0) 100%);
+        }
+
+        .cta-title {
+            font-size: 52px;
+            font-weight: 900;
+            margin-bottom: 24px;
+            letter-spacing: -1.5px;
+        }
+
+        .cta-subtitle {
+            font-size: 20px;
+            color: #8b949e;
+            margin-bottom: 48px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        footer {
+            padding: 48px 0;
+            text-align: center;
+            border-top: 1px solid rgba(48, 54, 61, 0.4);
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        /* Radar Preview */
+        .radar-preview {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 48px auto;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(56, 189, 98, 0.05) 0%, transparent 70%);
+            border: 2px solid rgba(56, 189, 98, 0.2);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+
+        .radar-sweep {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #38bd62 100%);
+            transform-origin: left center;
+            animation: sweep 4s linear infinite;
+        }
+
+        @keyframes sweep {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .radar-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #38bd62;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(56, 189, 98, 0.8);
+        }
+
+        .dot-1 { top: 30%; left: 60%; }
+        .dot-2 { top: 60%; left: 70%; }
+        .dot-3 { top: 70%; left: 40%; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
-            <div class="radar-icon"></div>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">⚡ Radar Social</div>
+                <a href="auth.html" class="nav-link">Iniciar Sesión</a>
+            </nav>
         </div>
-        
-        <h1>Radar Social</h1>
-        <p>Descubre y conecta con personas cerca de ti en tiempo real usando nuestro innovador radar geolocalizado.</p>
-        
-        <div class="countdown" id="countdown">3</div>
-        
-        <a href="radar-social.html" class="cta-button" id="cta">Abrir Radar Social</a>
-        
-        <div class="features">
-            <div class="feature">
-                <div class="feature-icon">📍</div>
-                <h3>Radar en Tiempo Real</h3>
-                <p>Visualiza personas cercanas en un radio configurable de 5 a 50 metros</p>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">🎯 Geolocalización en Tiempo Real</div>
+            <h1>Conecta con personas<br>cerca de ti</h1>
+            <p class="hero-subtitle">
+                Descubre quién está a tu alrededor en tiempo real. Radar Social usa GPS de alta precisión 
+                para mostrarte personas dentro de 5 a 50 metros de distancia.
+            </p>
+            <div class="cta-buttons">
+                <a href="auth.html" class="btn btn-primary">Empezar Ahora</a>
+                <a href="#features" class="btn btn-secondary">Ver Características</a>
             </div>
             
-            <div class="feature">
-                <div class="feature-icon">🧭</div>
-                <h3>Brújula Integrada</h3>
-                <p>Orientación real basada en los sensores de tu dispositivo</p>
-            </div>
-            
-            <div class="feature">
-                <div class="feature-icon">💬</div>
-                <h3>Mensajes y Estados</h3>
-                <p>Comparte pensamientos, envía mensajes y ve historias circulares</p>
-            </div>
-            
-            <div class="feature">
-                <div class="feature-icon">🔊</div>
-                <h3>Alertas por Proximidad</h3>
-                <p>Sonidos tipo scouter cuando detecta mensajes nuevos</p>
+            <!-- Radar Preview -->
+            <div class="radar-preview">
+                <div class="radar-sweep"></div>
+                <div class="radar-dot dot-1"></div>
+                <div class="radar-dot dot-2"></div>
+                <div class="radar-dot dot-3"></div>
             </div>
         </div>
-    </div>
-    
-    <script>
-        // Auto-redirect countdown
-        let count = 3;
-        const countdownEl = document.getElementById('countdown');
-        
-        const interval = setInterval(() => {
-            count--;
-            countdownEl.textContent = count;
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Características Principales</h2>
+            <p class="section-subtitle">
+                Todo lo que necesitas para conectar con personas cerca de ti
+            </p>
             
-            if (count === 0) {
-                clearInterval(interval);
-                window.location.href = 'auth.html';
-            }
-        }, 1000);
-        
-        // Stop countdown if user clicks button
-        document.getElementById('cta').addEventListener('click', () => {
-            clearInterval(interval);
-        });
-    </script>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">GPS de Alta Precisión</h3>
+                    <p class="feature-description">
+                        Actualización cada 3 segundos con precisión de 5-20 metros. Tecnología watchPosition 
+                        para tracking continuo y suave.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Radar con Brújula</h3>
+                    <p class="feature-description">
+                        Visualización tipo Dragon Ball con puntero que sigue la orientación de tu celular. 
+                        Radio ajustable de 5m a 50m.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Chat en Tiempo Real</h3>
+                    <p class="feature-description">
+                        Mensajería instantánea con personas cercanas. Sistema de notificaciones y estados 
+                        de lectura integrado.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Pensamientos Efímeros</h3>
+                    <p class="feature-description">
+                        Comparte pensamientos que expiran en 24 horas. Perfecto para estados de ánimo, 
+                        intereses del momento o planes.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">100% Privado</h3>
+                    <p class="feature-description">
+                        Autenticación con Google. Tu ubicación solo se comparte cuando la app está abierta. 
+                        Datos encriptados en Firebase.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">PWA Instalable</h3>
+                    <p class="feature-description">
+                        Instala como app nativa en iOS y Android. Funciona offline, notificaciones push, 
+                        sin usar la tienda de apps.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="tech-stack">
+        <div class="container">
+            <h2 class="section-title">Tecnología de Punta</h2>
+            <p class="section-subtitle">
+                Construido con las mejores herramientas para rendimiento y precisión
+            </p>
+            <div class="tech-items">
+                <div class="tech-item">
+                    <div class="tech-badge">⚛️ React 18</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-badge">🔥 Firebase</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-badge">📍 Geolocation API</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-badge">🧭 Device Orientation</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-badge">⚡ Real-time Sync</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="cta-title">¿Listo para conectar?</h2>
+            <p class="cta-subtitle">
+                Únete ahora y descubre quién está cerca de ti en este momento
+            </p>
+            <a href="auth.html" class="btn btn-primary">Empezar Gratis</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>© 2024 Radar Social. Hecho con 💚 usando React y Firebase.</p>
+        </div>
+    </footer>
 </body>
 </html>
