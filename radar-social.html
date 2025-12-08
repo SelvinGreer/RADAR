@@ -1792,6 +1792,11 @@
                 deadReckoning: true,
                 ultrasonic: true
             });
+            const [activeTech, setActiveTech] = useState({
+                name: 'GPS',
+                icon: '📍',
+                precision: 5.0
+            });
             const [viewingStory, setViewingStory] = useState(null);
             const [deviceHeading, setDeviceHeading] = useState(0); // Phone compass direction
             const [lastKnownPositions, setLastKnownPositions] = useState({}); // For GPS smoothing
@@ -2102,21 +2107,16 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.7 - Rediseño WhatsApp');
-                console.log('🎨 NUEVO: Interfaz de chat estilo WhatsApp');
-                console.log('✅ Burbujas verdes (enviados) / grises (recibidos)');
-                console.log('✅ Timestamps en cada mensaje');
-                console.log('✅ Checkmarks (✓✓) en mensajes enviados');
-                console.log('✅ Fondo con patrón sutil');
-                console.log('✅ Botón de enviar verde (#00a884)');
-                console.log('✅ Header oscuro tipo WhatsApp');
-                console.log('✅ FIX: Firebase Storage script agregado');
-                console.log('✅ FIX: Mensajes duplicados eliminados');
-                console.log('✅ FIX: Badge ONLINE reposicionado correctamente');
+                console.log('🚀 RADAR SOCIAL v2.9 - Sync Panel Tecnologías → Badge');
+                console.log('✅ FIX: Badge de precisión se actualiza según selección manual');
+                console.log('✅ Badge muestra tecnología activa en tiempo real');
+                console.log('✅ Modo AUTO: Sistema decide automáticamente');
+                console.log('✅ Modo MANUAL: Usuario controla tecnologías');
+                console.log('⚙️ Tooltip muestra nombre de tecnología y modo');
+                console.log('🎨 Interfaz de chat estilo WhatsApp');
                 console.log('📷 Envío de imágenes funcional');
-                console.log('💚 Heartbeat cada 10s - Solo usuarios ONLINE activos');
+                console.log('💬 Mensajes persisten aunque usuario se desconecte');
                 console.log('📬 Inbox de mensajes disponible');
-                console.log('⚙️ PANEL TECNOLOGÍAS: Modo auto/manual disponible');
                 
                 // Initialize audio context
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2245,16 +2245,18 @@
                                                             // Skip current user
                                                             if (userData.uid === firebaseUser.uid) return;
                                                             
-                                                            // FILTRO ADICIONAL: Verificar que lastSeen sea reciente (últimos 30 segundos)
+                                                            // VERIFICAR ESTADO ONLINE (pero NO filtrar aún)
+                                                            let isOnline = false;
                                                             if (userData.lastSeen) {
                                                                 const lastSeenTime = userData.lastSeen.toMillis ? userData.lastSeen.toMillis() : userData.lastSeen;
                                                                 const now = Date.now();
                                                                 const timeSinceLastSeen = now - lastSeenTime;
                                                                 
-                                                                // Si no ha actualizado en 30 segundos, ignorar
-                                                                if (timeSinceLastSeen > 30000) {
-                                                                    console.log(`⏰ Usuario ${userData.displayName} sin actividad (${Math.round(timeSinceLastSeen/1000)}s) - ignorando`);
-                                                                    return;
+                                                                isOnline = timeSinceLastSeen <= 30000; // Últimos 30 segundos
+                                                                
+                                                                if (!isOnline) {
+                                                                    console.log(`⏸️ Usuario ${userData.displayName} offline (${Math.round(timeSinceLastSeen/1000)}s)`);
+                                                                    // NO hacer return aquí - el usuario podría tener mensajes pendientes
                                                                 }
                                                             }
                                                             
@@ -2293,25 +2295,30 @@
                                                                     distance: distance,
                                                                     angle: angle,
                                                                     hasNewMessage: false, // Se actualizará por el listener de mensajes
+                                                                    isOnline: isOnline, // Estado de conexión
                                                                     latitude: userLat,
                                                                     longitude: userLon
                                                                 });
                                                             }
                                                         });
                                                         
-                                                        // CRÍTICO: Preservar hasNewMessage de usuarios existentes
+                                                        // CRÍTICO: Preservar hasNewMessage e isOnline de usuarios existentes
                                                         setUsers(prevUsers => {
                                                             const updatedUsers = [realUser, ...otherUsers.map(newUser => {
                                                                 // Buscar si este usuario ya existe en el estado
                                                                 const existingUser = prevUsers.find(u => u.id === newUser.id);
                                                                 
-                                                                // Si existe y tiene mensaje nuevo, PRESERVAR ese estado
-                                                                if (existingUser && existingUser.hasNewMessage) {
-                                                                    console.log(`💛 PRESERVANDO hasNewMessage=true para ${newUser.name}`);
-                                                                    return {
-                                                                        ...newUser,
-                                                                        hasNewMessage: true  // PRESERVAR estado de mensaje
-                                                                    };
+                                                                // Preservar estados importantes
+                                                                if (existingUser) {
+                                                                    const preservedUser = { ...newUser };
+                                                                    
+                                                                    // Preservar hasNewMessage si existe
+                                                                    if (existingUser.hasNewMessage) {
+                                                                        console.log(`💛 PRESERVANDO hasNewMessage=true para ${newUser.name}`);
+                                                                        preservedUser.hasNewMessage = true;
+                                                                    }
+                                                                    
+                                                                    return preservedUser;
                                                                 }
                                                                 
                                                                 return newUser;
@@ -2580,6 +2587,88 @@
                     stopUltrasonicDetector();
                 }
             }, [users, currentUser, ultrasonicActive]);
+
+            // ==========================================
+            // ACTIVE TECHNOLOGY CALCULATOR - Determina qué tech está activa
+            // ==========================================
+            useEffect(() => {
+                // Determinar tecnología activa según modo y condiciones
+                let tech = {
+                    name: 'GPS',
+                    icon: '📍',
+                    precision: 5.0
+                };
+
+                if (techSettings.mode === 'auto') {
+                    // MODO AUTOMÁTICO: Sistema decide según condiciones
+                    
+                    // Prioridad 1: Ultrasónico si hay usuarios muy cerca
+                    if (ultrasonicActive && ultrasonicDetections.nearby) {
+                        tech = {
+                            name: 'Ultrasónico',
+                            icon: '🔊',
+                            precision: ultrasonicDetections.nearby < 1 ? 0.5 : parseFloat(ultrasonicDetections.nearby.toFixed(1))
+                        };
+                    }
+                    // Prioridad 2: Dead Reckoning si está en movimiento
+                    else if (sensorData.isMoving) {
+                        tech = {
+                            name: 'Dead Reckoning',
+                            icon: '🧠',
+                            precision: 3.0
+                        };
+                    }
+                    // Prioridad 3: Kalman Filter si está estático
+                    else {
+                        tech = {
+                            name: 'Kalman Filter',
+                            icon: '🎯',
+                            precision: 2.5
+                        };
+                    }
+                } else {
+                    // MODO MANUAL: Usuario decide qué tecnologías usar
+                    
+                    // Verificar en orden de precisión
+                    if (techSettings.ultrasonic && ultrasonicActive && ultrasonicDetections.nearby) {
+                        tech = {
+                            name: 'Ultrasónico',
+                            icon: '🔊',
+                            precision: ultrasonicDetections.nearby < 1 ? 0.5 : parseFloat(ultrasonicDetections.nearby.toFixed(1))
+                        };
+                    } else if (techSettings.deadReckoning && sensorData.isMoving) {
+                        tech = {
+                            name: 'Dead Reckoning',
+                            icon: '🧠',
+                            precision: 3.0
+                        };
+                    } else if (techSettings.kalman) {
+                        tech = {
+                            name: 'Kalman Filter',
+                            icon: '🎯',
+                            precision: 2.5
+                        };
+                    } else if (techSettings.gps) {
+                        tech = {
+                            name: 'GPS',
+                            icon: '📍',
+                            precision: parseFloat(locationAccuracy.toFixed(1))
+                        };
+                    } else {
+                        // Si nada está habilitado, mostrar GPS por defecto
+                        tech = {
+                            name: 'Ninguno',
+                            icon: '❌',
+                            precision: 0
+                        };
+                    }
+                }
+
+                setActiveTech(tech);
+                console.log(`⚙️ Tecnología activa: ${tech.name} ${tech.icon} ±${tech.precision}m (Modo: ${techSettings.mode})`);
+                
+            }, [techSettings, ultrasonicActive, ultrasonicDetections.nearby, sensorData.isMoving, locationAccuracy]);
+
 
             // ==========================================
             // ULTRASONIC EMISSION - Emitir señal periódicamente
@@ -3278,12 +3367,11 @@
                     <div className="main-container">
                         {/* Precision Badge - Top Right Corner */}
                         <div className="tech-badges-container">
-                            <div className={`tech-badge precision ${ultrasonicActive && ultrasonicDetections.nearby ? 'ultrasonic-active' : ''}`}>
-                                {ultrasonicActive && ultrasonicDetections.nearby ? '🔊' : (sensorData.isMoving ? '🧠' : '📍')} 
-                                {' '}±{ultrasonicActive && ultrasonicDetections.nearby ? 
-                                    (ultrasonicDetections.nearby < 1 ? '0.5' : ultrasonicDetections.nearby.toFixed(1)) : 
-                                    locationAccuracy.toFixed(1)
-                                }m
+                            <div 
+                                className={`tech-badge precision ${activeTech.icon === '🔊' ? 'ultrasonic-active' : ''}`}
+                                title={`${activeTech.name} - Modo: ${techSettings.mode === 'auto' ? 'Automático' : 'Manual'}`}
+                            >
+                                {activeTech.icon} ±{activeTech.precision}m
                             </div>
                         </div>
                         
@@ -3291,7 +3379,11 @@
                             {/* People Counter */}
                             <div className="radar-info">
                                 <div className="radar-info-count">
-                                    {currentUser ? users.filter(u => u.id !== currentUser.id && u.distance <= radius).length : 0}
+                                    {currentUser ? users.filter(u => 
+                                        u.id !== currentUser.id && 
+                                        u.distance <= radius && 
+                                        (u.isOnline || u.hasNewMessage)
+                                    ).length : 0}
                                 </div>
                                 <div className="radar-info-title">Personas cerca de ti</div>
                             </div>
@@ -3345,7 +3437,18 @@
                                 </div>
 
                                 {users
-                                    .filter(user => currentUser && (user.id === currentUser.id || user.distance <= radius))
+                                    .filter(user => {
+                                        if (!currentUser) return false;
+                                        
+                                        // Siempre mostrar el usuario actual (centro)
+                                        if (user.id === currentUser.id) return true;
+                                        
+                                        // Solo mostrar usuarios dentro del radio
+                                        if (user.distance > radius) return false;
+                                        
+                                        // Mostrar si está online O tiene mensajes pendientes
+                                        return user.isOnline || user.hasNewMessage;
+                                    })
                                     .map(user => {
                                         const isCenter = currentUser && user.id === currentUser.id;
                                         
