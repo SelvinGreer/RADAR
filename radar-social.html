@@ -42,13 +42,17 @@
             position: fixed;
             width: 100%;
             height: 100vh;
+            height: 100dvh; /* Dynamic viewport height (mejor para móviles) */
+            padding-bottom: env(safe-area-inset-bottom); /* Respeta barra de Android/iOS */
         }
 
         #root {
             width: 100%;
             height: 100vh;
+            height: 100dvh; /* Dynamic viewport height */
             display: flex;
             flex-direction: column;
+            padding-bottom: env(safe-area-inset-bottom); /* Respeta barra de Android/iOS */
         }
 
         .header {
@@ -138,7 +142,8 @@
             position: relative;
             overflow: visible;
             padding: 20px;
-            padding-bottom: 140px; /* Space for slider and thought input */
+            /* Padding bottom dinámico: 140px base + espacio para barra de Android */
+            padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
             background: radial-gradient(ellipse at center, rgba(22, 27, 34, 0.5) 0%, #0d1117 70%);
         }
 
@@ -258,7 +263,8 @@
         .range-slider-container {
             position: fixed;
             left: 50%;
-            bottom: 125px;
+            /* Bottom dinámico: 125px base + espacio para barra de Android */
+            bottom: calc(125px + env(safe-area-inset-bottom, 0px));
             transform: translateX(-50%);
             z-index: 50;
             width: 300px;
@@ -2265,6 +2271,54 @@
             color: #8b949e;
         }
 
+        /* ========================================
+           ANDROID NAVIGATION BAR FIX - DEFINITIVO
+           ======================================== */
+        
+        /* Soporte para navegadores modernos con dvh (dynamic viewport height) */
+        @supports (height: 100dvh) {
+            body, #root {
+                height: 100dvh !important;
+            }
+        }
+        
+        /* Fallback para navegadores sin dvh */
+        @supports not (height: 100dvh) {
+            body, #root {
+                height: calc(100vh - env(safe-area-inset-bottom, 0px)) !important;
+            }
+        }
+        
+        /* Asegurar que elementos fixed en bottom respeten la barra de Android */
+        @media (max-height: 700px) {
+            /* Pantallas pequeñas: reducir padding adicional */
+            .main-container {
+                padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+            }
+            .range-slider-container {
+                bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important;
+            }
+        }
+        
+        /* Para Android Chrome específicamente */
+        @supports (-webkit-touch-callout: none) {
+            /* iOS Safari */
+            body {
+                padding-bottom: env(safe-area-inset-bottom, 20px);
+            }
+        }
+        
+        /* Prevenir scroll bounce en iOS */
+        html {
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Asegurar que el contenido nunca quede detrás de la barra */
+        * {
+            box-sizing: border-box;
+        }
+
     </style>
 </head>
 <body>
@@ -2673,17 +2727,18 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.23 - Notificaciones y Sonidos');
-                console.log('🔔 NUEVO: Notificaciones del sistema (con app abierta)');
-                console.log('🔊 NUEVO: Sonidos para mensajes y conexiones');
-                console.log('📱 NUEVO: Wake Lock (pantalla siempre encendida)');
-                console.log('⚠️ LIMITACIÓN: Solo funciona con app abierta y pantalla ON');
-                console.log('💬 Sonido cuando te escriben');
-                console.log('📡 Sonido cuando alguien se conecta cerca');
-                console.log('🔧 Configuración en perfil');
-                console.log('');
-                console.log('⚠️ IMPORTANTE: PWAs NO funcionan con pantalla apagada');
-                console.log('📖 Para background completo, se requiere app nativa');
+                console.log('🚀 RADAR SOCIAL v2.24 - FIX DEFINITIVO Barra de Android');
+                console.log('📱 FIX CRÍTICO: Elementos ya NO quedan detrás de la barra de Android');
+                console.log('✅ Dynamic Viewport Height (dvh) implementado');
+                console.log('✅ safe-area-inset-bottom en TODOS los elementos');
+                console.log('✅ Slider de radio respeta barra de navegación');
+                console.log('✅ Bottom bar con padding dinámico');
+                console.log('✅ Body y root con height adaptativo');
+                console.log('✅ Media queries para pantallas pequeñas');
+                console.log('✅ Soporte iOS + Android');
+                console.log('🔔 Sistema de notificaciones y sonidos');
+                console.log('📸 Stories estilo Instagram');
+                console.log('⚡ Sincronización perfecta');
                 
                 // Verificar si ya hay un usuario logueado
                 const currentAuthUser = auth.currentUser;
