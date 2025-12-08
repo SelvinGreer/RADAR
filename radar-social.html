@@ -2211,6 +2211,7 @@
             const [uploadingStory, setUploadingStory] = useState(false);
             const [socialNotifications, setSocialNotifications] = useState([]);
             const [previousNearbyUsers, setPreviousNearbyUsers] = useState([]);
+            const [notifiedUsers, setNotifiedUsers] = useState({}); // { userId: timestamp }
             const [viewingStory, setViewingStory] = useState(null);
             const [deviceHeading, setDeviceHeading] = useState(0); // Phone compass direction
             const [lastKnownPositions, setLastKnownPositions] = useState({}); // For GPS smoothing
@@ -2521,18 +2522,20 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.15 - Fix Completo Login Google');
-                console.log('✅ FIX CRÍTICO: Eliminado error "realUser is not defined"');
-                console.log('✅ FIX: Separación de currentUser y users[]');
-                console.log('✅ FIX: Usuario actual se renderiza independientemente');
-                console.log('✅ FIX: Otros usuarios se renderizan desde users[]');
-                console.log('⚡ Usuario aparece inmediatamente al login');
-                console.log('🔔 Notificaciones sociales cuando alguien se acerca');
+                console.log('🚀 RADAR SOCIAL v2.17 - Correcciones Múltiples');
+                console.log('✅ FIX: setShowMenu → setShowSidebar (botón Aplicar funcional)');
+                console.log('🔄 CAMBIO: Botón "+" movido del avatar central al perfil');
+                console.log('📸 Ahora sube estados desde tu foto de perfil');
+                console.log('⏰ Sistema de cooldown de notificaciones (10 min)');
+                console.log('⚡ Login instantáneo');
+                console.log('🔔 Notificaciones sociales inteligentes');
                 console.log('📱 Barra de texto ajustada para Android');
                 console.log('⚙️ Botón "Aplicar Cambios" con permisos');
-                console.log('📸 Estados/Stories (24h)');
                 console.log('💬 Mensajes persisten offline');
                 console.log('🎨 Chat estilo WhatsApp');
+                console.log('');
+                console.log('⚠️ IMPORTANTE: Configura Firebase Storage para subir estados');
+                console.log('📖 Ver: FIREBASE-STORAGE-SETUP.md');
                 
                 // Initialize audio context
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -3149,6 +3152,9 @@
                 }
 
                 try {
+                    const now = Date.now();
+                    const COOLDOWN_TIME = 10 * 60 * 1000; // 10 minutos en milisegundos
+                    
                     // Filtrar usuarios cercanos (dentro de 50m)
                     const nearbyUsers = users.filter(u => 
                         u && 
@@ -3160,10 +3166,26 @@
                     );
 
                     // Detectar nuevos usuarios que acaban de entrar al rango
+                    // Y que NO han sido notificados recientemente (cooldown)
                     const newUsers = nearbyUsers.filter(newUser => {
                         // Verificar si no estaba en la lista anterior
                         const wasNearbyBefore = previousNearbyUsers.some(prevUser => prevUser.id === newUser.id);
-                        return !wasNearbyBefore;
+                        
+                        if (wasNearbyBefore) {
+                            return false; // Ya estaba cerca, no notificar
+                        }
+                        
+                        // Verificar cooldown: ¿Ya notificamos a este usuario recientemente?
+                        const lastNotified = notifiedUsers[newUser.id];
+                        if (lastNotified) {
+                            const timeSinceLastNotification = now - lastNotified;
+                            if (timeSinceLastNotification < COOLDOWN_TIME) {
+                                console.log(`⏰ Cooldown activo para ${newUser.name} (${Math.round(timeSinceLastNotification / 1000)}s desde última notificación)`);
+                                return false; // Aún en cooldown, no notificar
+                            }
+                        }
+                        
+                        return true; // Es nuevo Y no está en cooldown
                     });
 
                     // Si hay nuevos usuarios, mostrar notificaciones
@@ -3189,6 +3211,12 @@
                                 };
 
                                 setSocialNotifications(prev => [...prev, notification]);
+                                
+                                // Marcar usuario como notificado
+                                setNotifiedUsers(prev => ({
+                                    ...prev,
+                                    [user.id]: now
+                                }));
 
                                 console.log(`📢 Nueva notificación: ${user.name} detectado a ${Math.round(user.distance)}m`);
 
@@ -3967,7 +3995,7 @@
 
                     // CERRAR PANELES
                     setShowTechSettings(false);
-                    setShowMenu(false);
+                    setShowSidebar(false);
 
                     console.log('✅ Configuración aplicada exitosamente');
                     console.log('📊 Tecnología activa actual:', activeTech.name);
@@ -4186,15 +4214,6 @@
                                                     <img src={currentUser.photo} alt={currentUser.name} className="avatar-img" />
                                                 </div>
                                                 <div className="direction-indicator" />
-                                                <div 
-                                                    className="add-story-btn" 
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setShowStoryUpload(true);
-                                                    }}
-                                                >
-                                                    +
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -4654,7 +4673,24 @@
                         </div>
                         <div className="profile-content">
                             <div className="profile-avatar-section">
-                                <img src={currentUser?.photo || 'https://i.pravatar.cc/150?img=33'} alt="Profile" className="profile-avatar-large" />
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <img src={currentUser?.photo || 'https://i.pravatar.cc/150?img=33'} alt="Profile" className="profile-avatar-large" />
+                                    {/* Botón para subir estado */}
+                                    <div 
+                                        className="add-story-btn" 
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: '8px',
+                                            right: '8px'
+                                        }}
+                                        onClick={() => {
+                                            setShowProfile(false);
+                                            setShowStoryUpload(true);
+                                        }}
+                                    >
+                                        +
+                                    </div>
+                                </div>
                                 <div className="profile-name">{currentUser?.name || 'Usuario'}</div>
                                 <div className="profile-bio">{currentUser?.thought || 'Sin estado'}</div>
                             </div>
