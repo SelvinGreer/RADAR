@@ -610,6 +610,21 @@
                 opacity: 0.7;
             }
         }
+        
+        @keyframes reactionPop {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+        }
 
         .precision-badge-corner {
             position: fixed !important;
@@ -1337,6 +1352,18 @@
             align-items: center;
             gap: 6px;
         }
+        
+        .unread-count-badge {
+            background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(244, 63, 94, 0.3);
+        }
 
         .inbox-preview {
             font-size: 13px;
@@ -1789,9 +1816,21 @@
         .message-status {
             display: inline-block;
             margin-left: 4px;
-            font-size: 16px;
-            color: #53bdeb;
+            font-size: 14px;
             vertical-align: middle;
+            transition: color 0.3s ease;
+        }
+        
+        .message-status.sent {
+            color: rgba(255, 255, 255, 0.4); /* Gris - enviado */
+        }
+        
+        .message-status.delivered {
+            color: rgba(255, 255, 255, 0.4); /* Gris - entregado */
+        }
+        
+        .message-status.read {
+            color: #53bdeb; /* Azul - leído */
         }
 
         .chat-input-container {
@@ -2184,6 +2223,43 @@
         .story-message-btn:active {
             transform: translateX(-50%) translateY(0px);
         }
+        
+        /* Story Reactions */
+        .story-reactions {
+            position: absolute;
+            bottom: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 11;
+        }
+        
+        .story-reaction-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+        
+        .story-reaction-btn:hover {
+            transform: scale(1.2);
+            background: rgba(0, 0, 0, 0.8);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .story-reaction-btn:active {
+            transform: scale(0.9);
+        }
 
         .overlay-backdrop {
             position: fixed;
@@ -2405,7 +2481,7 @@
         function RadarSocialApp() {
             const [showLanding, setShowLanding] = useState(true); // Landing page con Google Sign In
             const [locationPermission, setLocationPermission] = useState(false);
-            const [radius, setRadius] = useState(50);
+            const [radius, setRadius] = useState(100); // Aumentado de 50m a 100m
             const [thought, setThought] = useState('');
             const [currentUser, setCurrentUser] = useState(null);
             const [userLocation, setUserLocation] = useState(null);
@@ -2417,6 +2493,7 @@
             const [messages, setMessages] = useState({});
             const [messageInput, setMessageInput] = useState('');
             const [selectedImage, setSelectedImage] = useState(null);
+            const [messageSentTimestamps, setMessageSentTimestamps] = useState([]); // Rate limiting
             const [audioContext, setAudioContext] = useState(null);
             const [showSidebar, setShowSidebar] = useState(false);
             const [showProfile, setShowProfile] = useState(false);
@@ -2448,6 +2525,7 @@
             const [previousNearbyUsers, setPreviousNearbyUsers] = useState([]);
             const [notifiedUsers, setNotifiedUsers] = useState({}); // { userId: timestamp }
             const [viewingStory, setViewingStory] = useState(null);
+            const [storyReactions, setStoryReactions] = useState({}); // { userId: 'emoji' }
             const [viewedStories, setViewedStories] = useState({}); // { userId: timestamp }
             const [deviceHeading, setDeviceHeading] = useState(0); // Phone compass direction
             const [lastKnownPositions, setLastKnownPositions] = useState({}); // For GPS smoothing
@@ -2758,16 +2836,22 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.29 - Header Optimizado');
-                console.log('📐 Header más delgado y elegante');
-                console.log('✨ Padding reducido: 16px → 12px');
-                console.log('📏 Íconos reducidos: 28px → 24px');
-                console.log('🔤 Título reducido: 22px → 20px');
-                console.log('📍 Badges reajustados para nueva altura');
-                console.log('🔊 Sonidos optimizados');
-                console.log('📬 Badge de inbox perfecto');
-                console.log('💬 Stories + Chat fluido');
-                console.log('⚡ Sincronización perfecta');
+                console.log('🚀 RADAR SOCIAL v3.1 - TRIPLE UPDATE');
+                console.log('═══════════════════════════════════════');
+                console.log('🔐 SEGURIDAD MEJORADA:');
+                console.log('   ✅ Límite de archivos: 5MB máximo');
+                console.log('   ✅ Rate limiting: 10 mensajes/minuto');
+                console.log('   ✅ Sanitización de inputs (anti-XSS)');
+                console.log('❤️ REACCIONES A STORIES:');
+                console.log('   ✅ 5 emojis: ❤️ 😂 😮 😢 🔥');
+                console.log('   ✅ Animación visual');
+                console.log('   ✅ Notificación al receptor');
+                console.log('💬 CONTADOR DE MENSAJES:');
+                console.log('   ✅ Badge en avatares del radar');
+                console.log('   ✅ Contador en inbox');
+                console.log('   ✅ Suma total en header');
+                console.log('📏 Radio: 100m | ✅ Timestamps | ⏰ Confirmación lectura');
+                console.log('═══════════════════════════════════════');
                 
                 // Verificar si ya hay un usuario logueado
                 const currentAuthUser = auth.currentUser;
@@ -2844,6 +2928,7 @@
                                 distance: 0,
                                 angle: 0,
                                 hasNewMessage: false,
+                                unreadCount: 0, // Nuevo: contador de mensajes sin leer
                                 email: firebaseUser.email,
                                 latitude: 0,  // Se actualizará con GPS
                                 longitude: 0  // Se actualizará con GPS
@@ -3046,6 +3131,7 @@
                                                                     distance: distance,
                                                                     angle: angle,
                                                                     hasNewMessage: false, // Se actualizará por el listener de mensajes
+                                                                    unreadCount: 0, // Nuevo: contador de mensajes sin leer
                                                                     isOnline: isOnline, // Estado de conexión
                                                                     latitude: userLat,
                                                                     longitude: userLon
@@ -3827,10 +3913,14 @@
                                 
                                 console.log(`📩 Nuevo mensaje de ${senderId}:`, message.content);
                                 
-                                // Marcar al remitente como que tiene mensaje nuevo
+                                // Marcar al remitente como que tiene mensaje nuevo E INCREMENTAR contador
                                 setUsers(prevUsers => {
                                     const updatedUsers = prevUsers.map(u => 
-                                        u.id === senderId ? { ...u, hasNewMessage: true } : u
+                                        u.id === senderId ? { 
+                                            ...u, 
+                                            hasNewMessage: true,
+                                            unreadCount: (u.unreadCount || 0) + 1  // Incrementar contador
+                                        } : u
                                     );
                                     
                                     // Obtener info del remitente para notificación
@@ -4128,8 +4218,8 @@
                 let position = (clientX - rect.left) / rect.width;
                 position = Math.max(0, Math.min(1, position)); // Clamp 0-1
                 
-                // Map 0-1 to 5-50 meters
-                const newRadius = Math.round(5 + position * 45);
+                // Map 0-1 to 5-100 meters
+                const newRadius = Math.round(5 + position * 95);
                 setRadius(newRadius);
             };
 
@@ -4425,7 +4515,7 @@
                         
                         // Marcar mensaje como leído localmente
                         setUsers(users.map(u => 
-                            u.id === user.id ? { ...u, hasNewMessage: false } : u
+                            u.id === user.id ? { ...u, hasNewMessage: false, unreadCount: 0 } : u
                         ));
                         
                         // Marcar mensajes como leídos en Firestore
@@ -4458,7 +4548,7 @@
                     
                     // Marcar mensaje como leído localmente
                     setUsers(users.map(u => 
-                        u.id === user.id ? { ...u, hasNewMessage: false } : u
+                        u.id === user.id ? { ...u, hasNewMessage: false, unreadCount: 0 } : u
                     ));
                     
                     // Marcar mensajes como leídos en Firestore
@@ -4482,8 +4572,33 @@
                 }
             };
 
+            // ==========================================
+            // SANITIZE INPUT - Limpia inputs para prevenir XSS
+            // ==========================================
+            const sanitizeInput = (input) => {
+                if (!input) return '';
+                
+                return input
+                    // Remover tags HTML
+                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                    .replace(/<[^>]*>/g, '')
+                    // Limitar longitud
+                    .substring(0, 500)
+                    .trim();
+            };
+
             const sendMessage = async () => {
                 if ((!messageInput.trim() && !selectedImage) || !selectedUser || !currentUser) return;
+
+                // RATE LIMITING: Máximo 10 mensajes por minuto
+                const now = Date.now();
+                const oneMinuteAgo = now - 60000;
+                const recentMessages = messageSentTimestamps.filter(t => t > oneMinuteAgo);
+                
+                if (recentMessages.length >= 10) {
+                    alert('⚠️ Espera un momento\n\nEstás enviando mensajes muy rápido. Por favor, espera unos segundos.');
+                    return;
+                }
 
                 const chatKey = [currentUser.id, selectedUser.id].sort().join('-');
                 let imageUrl = null;
@@ -4505,14 +4620,14 @@
                     const newMessage = {
                         sender: currentUser.id,
                         receiver: selectedUser.id,
-                        content: messageInput.trim() || (imageUrl ? '📷 Imagen' : ''),
+                        content: sanitizeInput(messageInput) || (imageUrl ? '📷 Imagen' : ''),
                         imageUrl: imageUrl,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                         read: false
                     };
 
                     console.log(`📤 Enviando mensaje a ${selectedUser.name} (${selectedUser.id})`);
-                    console.log('Contenido:', messageInput.trim() || '📷 Imagen');
+                    console.log('Contenido:', sanitizeInput(messageInput) || '📷 Imagen');
 
                     // Guardar mensaje en Firestore
                     const docRef = await db.collection('messages').add(newMessage);
@@ -4532,6 +4647,9 @@
 
                     setMessageInput('');
                     setSelectedImage(null);
+                    
+                    // Registrar timestamp para rate limiting
+                    setMessageSentTimestamps(prev => [...prev.filter(t => t > oneMinuteAgo), now]);
                 } catch (error) {
                     console.error('❌ Error enviando mensaje:', error);
                     alert('Error al enviar mensaje: ' + error.message);
@@ -4587,6 +4705,72 @@
                     console.error('❌ Error subiendo story:', error);
                     alert('Error al subir estado: ' + error.message);
                     setUploadingStory(false);
+                }
+            };
+
+            // ==========================================
+            // REACT TO STORY - Reaccionar a una historia
+            // ==========================================
+            const reactToStory = async (userId, emoji) => {
+                if (!currentUser) return;
+
+                try {
+                    console.log(`❤️ Reaccionando ${emoji} a story de ${userId}`);
+                    
+                    // Guardar reacción local
+                    setStoryReactions(prev => ({
+                        ...prev,
+                        [userId]: emoji
+                    }));
+                    
+                    // Guardar reacción en Firestore
+                    await db.collection('story_reactions').add({
+                        storyOwnerId: userId,
+                        reactorId: currentUser.id,
+                        reactorName: currentUser.name,
+                        reactorAvatar: currentUser.avatar,
+                        emoji: emoji,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Enviar notificación al dueño de la story
+                    if (userId !== currentUser.id) {
+                        const user = users.find(u => u.id === userId);
+                        if (user) {
+                            showSystemNotification(
+                                `${emoji} ${currentUser.name}`,
+                                {
+                                    body: `Reaccionó a tu historia`,
+                                    tag: 'reaction-' + userId,
+                                    renotify: true
+                                }
+                            );
+                        }
+                    }
+                    
+                    console.log(`✅ Reacción ${emoji} guardada`);
+                    
+                    // Mostrar feedback visual
+                    const feedback = document.createElement('div');
+                    feedback.textContent = emoji;
+                    feedback.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%) scale(0);
+                        font-size: 80px;
+                        z-index: 10000;
+                        animation: reactionPop 0.8s ease-out;
+                        pointer-events: none;
+                    `;
+                    document.body.appendChild(feedback);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(feedback);
+                    }, 800);
+                    
+                } catch (error) {
+                    console.error('❌ Error reaccionando a story:', error);
                 }
             };
 
@@ -4713,7 +4897,7 @@
                 
                 // Marcar mensaje como leído si existe
                 setUsers(prevUsers => prevUsers.map(u => 
-                    u.id === user.id ? { ...u, hasNewMessage: false } : u
+                    u.id === user.id ? { ...u, hasNewMessage: false, unreadCount: 0 } : u
                 ));
             };
 
@@ -4800,8 +4984,11 @@
                             </svg>
                             {/* Badge de mensajes sin leer */}
                             {(() => {
-                                const unreadCount = users.filter(u => u.hasNewMessage).length;
-                                return unreadCount > 0 ? (
+                                // Sumar TODOS los mensajes no leídos de TODOS los usuarios
+                                const totalUnreadCount = users.reduce((sum, u) => 
+                                    sum + (u.unreadCount || 0), 0
+                                );
+                                return totalUnreadCount > 0 ? (
                                     <div style={{
                                         position: 'absolute',
                                         top: -4,
@@ -4810,15 +4997,17 @@
                                         color: '#fff',
                                         fontSize: 9,
                                         fontWeight: 700,
-                                        width: 16,
+                                        minWidth: 16,
                                         height: 16,
-                                        borderRadius: '50%',
+                                        paddingLeft: totalUnreadCount > 9 ? 4 : 0,
+                                        paddingRight: totalUnreadCount > 9 ? 4 : 0,
+                                        borderRadius: '50px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         border: '2px solid #0d1117'
                                     }}>
-                                        {unreadCount}
+                                        {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
                                     </div>
                                 ) : null;
                             })()}
@@ -4978,7 +5167,7 @@
                                                             <img src={user.photo} alt={user.name} className="avatar-img" />
                                                         </div>
                                                         {user.hasNewMessage && (
-                                                            <div className="message-badge">1</div>
+                                                            <div className="message-badge">{user.unreadCount || 1}</div>
                                                         )}
                                                     </div>
                                                     <div className="avatar-name">{user.name}</div>
@@ -5014,19 +5203,19 @@
                                 >
                                     <div 
                                         className="range-slider-progress"
-                                        style={{ width: `${((radius - 5) / 45) * 100}%` }}
+                                        style={{ width: `${((radius - 5) / 95) * 100}%` }}
                                     />
                                     <div 
                                         className="range-slider-thumb"
-                                        style={{ left: `${((radius - 5) / 45) * 100}%` }}
+                                        style={{ left: `${((radius - 5) / 95) * 100}%` }}
                                     />
                                 </div>
                                 
                                 <div className="range-slider-marks">
                                     <div className="range-slider-mark">5m</div>
-                                    <div className="range-slider-mark">15m</div>
                                     <div className="range-slider-mark">30m</div>
-                                    <div className="range-slider-mark">50m</div>
+                                    <div className="range-slider-mark">60m</div>
+                                    <div className="range-slider-mark">100m</div>
                                 </div>
                             </div>
                         </div>
@@ -5108,7 +5297,7 @@
                                                     
                                                     // Marcar mensaje como leído localmente
                                                     setUsers(prevUsers => prevUsers.map(u => 
-                                                        u.id === user.id ? { ...u, hasNewMessage: false } : u
+                                                        u.id === user.id ? { ...u, hasNewMessage: false, unreadCount: 0 } : u
                                                     ));
                                                     
                                                     // Marcar mensajes como leídos en Firestore
@@ -5137,8 +5326,8 @@
                                                 <div className="inbox-info">
                                                     <div className="inbox-name">
                                                         {user.name}
-                                                        {user.hasNewMessage && (
-                                                            <span style={{ fontSize: 18 }}>💛</span>
+                                                        {user.unreadCount > 0 && (
+                                                            <span className="unread-count-badge">{user.unreadCount}</span>
                                                         )}
                                                     </div>
                                                     <div className="inbox-preview">
@@ -5148,7 +5337,7 @@
                                                 <div className="inbox-meta">
                                                     <div className="inbox-distance">{Math.round(user.distance)} m</div>
                                                     {user.hasNewMessage && (
-                                                        <div className="inbox-unread-badge">1</div>
+                                                        <div className="inbox-unread-badge">{user.unreadCount || 1}</div>
                                                     )}
                                                 </div>
                                             </div>
@@ -5202,9 +5391,22 @@
                                                 
                                                 {chatMessages.map(msg => {
                                                     const messageTime = msg.timestamp ? 
-                                                        new Date(msg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) 
+                                                        new Date(msg.timestamp.seconds ? msg.timestamp.seconds * 1000 : msg.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) 
                                                         : '';
                                                     const isSent = msg.sender === currentUser.id;
+                                                    
+                                                    // Determinar estado del mensaje
+                                                    let statusIcon = '';
+                                                    let statusClass = '';
+                                                    if (isSent) {
+                                                        if (msg.read) {
+                                                            statusIcon = '✓✓';
+                                                            statusClass = 'read';
+                                                        } else {
+                                                            statusIcon = '✓✓';
+                                                            statusClass = 'delivered';
+                                                        }
+                                                    }
                                                     
                                                     return (
                                                         <div
@@ -5236,9 +5438,9 @@
                                                             )}
                                                             <span className="message-time">
                                                                 {messageTime}
-                                                                {isSent && (
-                                                                    <span className="message-status">
-                                                                        ✓✓
+                                                                {isSent && statusIcon && (
+                                                                    <span className={`message-status ${statusClass}`}>
+                                                                        {statusIcon}
                                                                     </span>
                                                                 )}
                                                             </span>
@@ -5259,8 +5461,15 @@
                                         onChange={(e) => {
                                             const file = e.target.files[0];
                                             if (file) {
+                                                // Validar tamaño (máximo 5MB)
+                                                const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+                                                if (file.size > MAX_FILE_SIZE) {
+                                                    alert('⚠️ Imagen muy grande. Máximo 5MB.\n\nTamaño actual: ' + (file.size / (1024 * 1024)).toFixed(2) + 'MB');
+                                                    e.target.value = ''; // Reset input
+                                                    return;
+                                                }
                                                 setSelectedImage(file);
-                                                console.log('📷 Imagen seleccionada:', file.name);
+                                                console.log('📷 Imagen seleccionada:', file.name, '(' + (file.size / 1024).toFixed(0) + 'KB)');
                                             }
                                         }}
                                     />
@@ -5801,6 +6010,24 @@ NO funcionan con pantalla apagada.
                                     }}
                                 />
                                 
+                                {/* Botones de reacción (solo si NO es tu propia story) */}
+                                {currentUser && viewingStory.id !== currentUser.id && (
+                                    <div className="story-reactions">
+                                        {['❤️', '😂', '😮', '😢', '🔥'].map(emoji => (
+                                            <button
+                                                key={emoji}
+                                                className="story-reaction-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    reactToStory(viewingStory.id, emoji);
+                                                }}
+                                            >
+                                                {emoji}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                
                                 {/* Botón de mensaje (solo si NO es tu propia story) */}
                                 {currentUser && viewingStory.id !== currentUser.id && (
                                     <button 
@@ -5927,7 +6154,16 @@ NO funcionan con pantalla apagada.
                                     id="storyImageInput"
                                     onChange={(e) => {
                                         if (e.target.files && e.target.files[0]) {
-                                            setStoryImage(e.target.files[0]);
+                                            const file = e.target.files[0];
+                                            // Validar tamaño (máximo 5MB)
+                                            const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+                                            if (file.size > MAX_FILE_SIZE) {
+                                                alert('⚠️ Imagen muy grande. Máximo 5MB.\n\nTamaño actual: ' + (file.size / (1024 * 1024)).toFixed(2) + 'MB');
+                                                e.target.value = ''; // Reset input
+                                                return;
+                                            }
+                                            setStoryImage(file);
+                                            console.log('📸 Story imagen seleccionada:', file.name, '(' + (file.size / 1024).toFixed(0) + 'KB)');
                                         }
                                     }}
                                 />
