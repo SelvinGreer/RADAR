@@ -1713,6 +1713,39 @@
             height: 40px;
             border-radius: 50%;
             object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .chat-user-avatar:hover {
+            transform: scale(1.05);
+        }
+        
+        .chat-avatar-wrapper {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+        }
+        
+        .chat-avatar-ring {
+            position: absolute;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            top: -3px;
+            left: -3px;
+            pointer-events: none;
+        }
+        
+        .chat-avatar-ring.has-story {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            padding: 2px;
+        }
+        
+        .chat-avatar-ring.story-seen {
+            background: #8696a0;
+            padding: 2px;
         }
 
         .chat-user-details h3 {
@@ -2836,21 +2869,17 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v3.1 - TRIPLE UPDATE');
+                console.log('🚀 RADAR SOCIAL v3.4 - FIX: USUARIOS NUEVOS APARECEN INMEDIATAMENTE');
                 console.log('═══════════════════════════════════════');
-                console.log('🔐 SEGURIDAD MEJORADA:');
-                console.log('   ✅ Límite de archivos: 5MB máximo');
-                console.log('   ✅ Rate limiting: 10 mensajes/minuto');
-                console.log('   ✅ Sanitización de inputs (anti-XSS)');
-                console.log('❤️ REACCIONES A STORIES:');
-                console.log('   ✅ 5 emojis: ❤️ 😂 😮 😢 🔥');
-                console.log('   ✅ Animación visual');
-                console.log('   ✅ Notificación al receptor');
-                console.log('💬 CONTADOR DE MENSAJES:');
-                console.log('   ✅ Badge en avatares del radar');
-                console.log('   ✅ Contador en inbox');
-                console.log('   ✅ Suma total en header');
-                console.log('📏 Radio: 100m | ✅ Timestamps | ⏰ Confirmación lectura');
+                console.log('🐛 FIX CRÍTICO:');
+                console.log('   ✅ Usuarios aparecen INMEDIATAMENTE al conectarse');
+                console.log('   ✅ GPS temporal (0,0) mientras se obtiene ubicación real');
+                console.log('   ✅ Usuario nuevo se muestra en centro del radar (<15s)');
+                console.log('   ✅ Se actualiza automáticamente con GPS real (2-10s)');
+                console.log('═══════════════════════════════════════');
+                console.log('📸 Re-view stories | ⏰ Tiempo publicado/expira');
+                console.log('🗑️ Stories: 12h | 🧹 Auto-limpieza | 🔔 Notificaciones');
+                console.log('🔐 Seguridad | ❤️ Reacciones | 💬 Contador | 📏 100m');
                 console.log('═══════════════════════════════════════');
                 
                 // Verificar si ya hay un usuario logueado
@@ -2907,10 +2936,14 @@
                                     const storyTime = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
                                     const hoursPassed = (now - storyTime) / (1000 * 60 * 60);
                                     
-                                    if (hoursPassed < 24) {
+                                    // Stories duran 12 horas (como Instagram)
+                                    if (hoursPassed < 12) {
                                         hasActiveStory = true;
                                         storyUrl = userData.storyUrl;
                                         storyTimestamp = storyTime;
+                                    } else {
+                                        // Story expirado - limpiar de Firestore
+                                        console.log(`🗑️ Story de ${firebaseUser.displayName} expirado (${hoursPassed.toFixed(1)}h)`);
                                     }
                                 }
                             }
@@ -2942,6 +2975,7 @@
                             // MARCAR COMO ONLINE EN FIRESTORE INMEDIATAMENTE
                             // ==========================================
                             // Aunque no tengamos GPS aún, marcamos al usuario como online
+                            // CON UBICACIÓN TEMPORAL para que aparezca en el listener
                             // El GPS actualizará la ubicación en unos segundos
                             try {
                                 await db.collection('users').doc(firebaseUser.uid).set({
@@ -2951,11 +2985,13 @@
                                     photoURL: firebaseUser.photoURL,
                                     isOnline: true,
                                     lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-                                    // Mantener ubicación anterior si existe, o null si es primera vez
-                                    // El GPS la actualizará pronto
+                                    // TEMPORAL: Ubicación en (0, 0) para que aparezca en listener
+                                    // Se actualizará con GPS real en 2-10 segundos
+                                    location: new firebase.firestore.GeoPoint(0, 0),
+                                    pendingGPS: true, // Flag que indica que estamos esperando GPS real
                                 }, { merge: true });
                                 
-                                console.log('✅ Usuario marcado como ONLINE en Firestore (esperando GPS para ubicación)');
+                                console.log('✅ Usuario marcado como ONLINE en Firestore (esperando GPS para ubicación real)');
                             } catch (firestoreError) {
                                 console.error('⚠️ Error al marcar usuario como online:', firestoreError);
                                 // No bloqueamos el flujo si falla
@@ -3075,19 +3111,44 @@
                                                             
                                                             // Calculate distance and angle from current user
                                                             // SOLO procesar si el usuario tiene ubicación VÁLIDA
-                                                            if (userData.location && 
-                                                                userData.location.latitude !== 0 && 
-                                                                userData.location.longitude !== 0) {
+                                                            // EXCEPCIÓN: Si el usuario es NUEVO (pendingGPS=true o recién conectado < 15s),
+                                                            // lo mostramos en (0,0) temporalmente hasta que obtengamos GPS real
+                                                            
+                                                            let isNewUser = false;
+                                                            if (userData.pendingGPS || 
+                                                                (userData.lastSeen && 
+                                                                 (Date.now() - (userData.lastSeen.toMillis ? userData.lastSeen.toMillis() : userData.lastSeen)) < 15000)) {
+                                                                isNewUser = true;
+                                                            }
+                                                            
+                                                            if (userData.location) {
                                                                 const userLat = userData.location.latitude;
                                                                 const userLon = userData.location.longitude;
                                                                 
-                                                                const distance = Math.round(
-                                                                    calculateDistance(currentLat, currentLon, userLat, userLon)
-                                                                );
+                                                                // Si es usuario NUEVO con GPS temporal (0,0), lo mostramos en el centro
+                                                                // de lo contrario, solo mostramos usuarios con GPS válido (!= 0,0)
+                                                                // Si es usuario NUEVO con GPS temporal (0,0), lo mostramos en el centro
+                                                                // de lo contrario, solo mostramos usuarios con GPS válido (!= 0,0)
+                                                                if (isNewUser || (userLat !== 0 && userLon !== 0)) {
                                                                 
-                                                                const angle = Math.round(
-                                                                    calculateBearing(currentLat, currentLon, userLat, userLon)
-                                                                );
+                                                                let distance, angle;
+                                                                
+                                                                // Si es usuario nuevo con ubicación temporal (0,0)
+                                                                if (userLat === 0 && userLon === 0) {
+                                                                    // Mostrar en el centro del radar temporalmente
+                                                                    distance = 1; // 1 metro (muy cerca, casi en el centro)
+                                                                    angle = 0; // Norte
+                                                                    console.log(`🆕 Usuario NUEVO sin GPS aún: ${userData.displayName} - Mostrando en centro temporalmente`);
+                                                                } else {
+                                                                    // Usuario con GPS real - calcular distancia y ángulo normal
+                                                                    distance = Math.round(
+                                                                        calculateDistance(currentLat, currentLon, userLat, userLon)
+                                                                    );
+                                                                    
+                                                                    angle = Math.round(
+                                                                        calculateBearing(currentLat, currentLon, userLat, userLon)
+                                                                    );
+                                                                }
                                                                 
                                                                 // Check if thought is expired (24 hours)
                                                                 let displayThought = '';
@@ -3110,14 +3171,18 @@
                                                                     const storyTime = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
                                                                     const hoursPassed = (now - storyTime) / (1000 * 60 * 60);
                                                                     
-                                                                    if (hoursPassed < 24) {
+                                                                    // Stories duran 12 horas (como Instagram)
+                                                                    if (hoursPassed < 12) {
                                                                         hasActiveStory = true;
                                                                         storyUrl = userData.storyUrl;
                                                                         storyTimestamp = storyTime;
+                                                                    } else {
+                                                                        // Story expirado - limpiar de Firestore
+                                                                        console.log(`🗑️ Story de ${userData.displayName} expirado (${hoursPassed.toFixed(1)}h)`);
                                                                     }
                                                                 }
                                                                 
-                                                                console.log(`➕ Agregando ${userData.displayName} al radar: ${distance}m, ${angle}°, online:${isOnline}`);
+                                                                console.log(`➕ Agregando ${userData.displayName} al radar: ${distance}m, ${angle}°, online:${isOnline}${userLat === 0 && userLon === 0 ? ' [🆕 GPS TEMPORAL]' : ''}`);
                                                                 
                                                                 otherUsers.push({
                                                                     id: userData.uid,
@@ -3136,7 +3201,8 @@
                                                                     latitude: userLat,
                                                                     longitude: userLon
                                                                 });
-                                                            }
+                                                                } // Cierre del if (isNewUser || (userLat !== 0 && userLon !== 0))
+                                                            } // Cierre del if (userData.location)
                                                         });
                                                         
                                                         // ==========================================
@@ -3224,7 +3290,8 @@
                                                 location: new firebase.firestore.GeoPoint(fusedLocation.latitude, fusedLocation.longitude),
                                                 isOnline: true,
                                                 lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-                                                accuracy: fusedLocation.accuracy
+                                                accuracy: fusedLocation.accuracy,
+                                                pendingGPS: false // GPS real obtenido ✅
                                             }, { merge: true });
                                             
                                             // Update current user location in state
@@ -4775,6 +4842,68 @@
             };
 
             // ==========================================
+            // CLEAN EXPIRED STORIES - Limpiar stories expirados de Firestore
+            // ==========================================
+            const cleanExpiredStories = async () => {
+                if (!currentUser) return;
+
+                try {
+                    console.log('🧹 Verificando stories expirados...');
+                    
+                    const now = Date.now();
+                    const twelveHoursAgo = now - (12 * 60 * 60 * 1000); // 12 horas en ms
+                    
+                    // Obtener el documento del usuario actual
+                    const userDoc = await db.collection('users').doc(currentUser.id).get();
+                    
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        
+                        if (userData.storyUrl && userData.storyTimestamp) {
+                            const storyTime = userData.storyTimestamp.toMillis ? 
+                                userData.storyTimestamp.toMillis() : 
+                                userData.storyTimestamp;
+                            
+                            // Si el story tiene más de 12 horas, borrarlo
+                            if (storyTime < twelveHoursAgo) {
+                                await db.collection('users').doc(currentUser.id).update({
+                                    storyUrl: firebase.firestore.FieldValue.delete(),
+                                    storyTimestamp: firebase.firestore.FieldValue.delete()
+                                });
+                                
+                                console.log('✅ Story expirado eliminado de Firestore');
+                                
+                                // Actualizar estado local
+                                setUsers(prevUsers => prevUsers.map(u => 
+                                    u.id === currentUser.id ? {
+                                        ...u,
+                                        hasStory: false,
+                                        storyUrl: null,
+                                        storyTimestamp: null
+                                    } : u
+                                ));
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Error limpiando stories expirados:', error);
+                }
+            };
+
+            // Ejecutar limpieza de stories cada 30 minutos
+            useEffect(() => {
+                if (!currentUser) return;
+                
+                // Limpiar al inicio
+                cleanExpiredStories();
+                
+                // Limpiar cada 30 minutos
+                const cleanupInterval = setInterval(cleanExpiredStories, 30 * 60 * 1000);
+                
+                return () => clearInterval(cleanupInterval);
+            }, [currentUser]);
+
+            // ==========================================
             // APPLY TECH SETTINGS - Aplicar configuración de tecnologías
             // ==========================================
             const applyTechSettings = async () => {
@@ -5355,7 +5484,38 @@
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                                 </svg>
                                 <div className="chat-user-info">
-                                    <img src={selectedUser.photo} alt={selectedUser.name} className="chat-user-avatar" />
+                                    <div 
+                                        className="chat-avatar-wrapper"
+                                        onClick={() => {
+                                            // Si tiene story activo, abrirlo
+                                            if (selectedUser.hasStory) {
+                                                console.log(`📖 Abriendo story desde chat: ${selectedUser.name}`);
+                                                setViewingStory(selectedUser);
+                                            }
+                                        }}
+                                    >
+                                        {selectedUser.hasStory && (
+                                            <div 
+                                                className={`chat-avatar-ring ${
+                                                    viewedStories[selectedUser.id] && 
+                                                    (!selectedUser.storyTimestamp || selectedUser.storyTimestamp <= viewedStories[selectedUser.id])
+                                                    ? 'story-seen' 
+                                                    : 'has-story'
+                                                }`}
+                                            />
+                                        )}
+                                        <img 
+                                            src={selectedUser.photo} 
+                                            alt={selectedUser.name} 
+                                            className="chat-user-avatar" 
+                                            style={{
+                                                position: 'relative',
+                                                zIndex: 1,
+                                                backgroundColor: '#1f2c33',
+                                                borderRadius: '50%'
+                                            }}
+                                        />
+                                    </div>
                                     <div className="chat-user-details">
                                         <h3>{selectedUser.name}</h3>
                                         <p>{selectedUser.distance} m de distancia</p>
@@ -5990,7 +6150,41 @@ NO funcionan con pantalla apagada.
                                 <div className="story-header">
                                     <div className="story-user-info">
                                         <img src={viewingStory.photo} alt={viewingStory.name} className="story-user-avatar" />
-                                        <span className="story-user-name">{viewingStory.name}</span>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <span className="story-user-name">{viewingStory.name}</span>
+                                            {viewingStory.storyTimestamp && (() => {
+                                                const now = Date.now();
+                                                const storyTime = viewingStory.storyTimestamp;
+                                                const hoursAgo = (now - storyTime) / (1000 * 60 * 60);
+                                                const hoursLeft = 12 - hoursAgo;
+                                                
+                                                let timeAgo;
+                                                if (hoursAgo < 1) {
+                                                    const minutesAgo = Math.floor((now - storyTime) / (1000 * 60));
+                                                    timeAgo = minutesAgo < 1 ? 'hace un momento' : `hace ${minutesAgo}m`;
+                                                } else {
+                                                    timeAgo = `hace ${Math.floor(hoursAgo)}h`;
+                                                }
+                                                
+                                                let timeLeft;
+                                                if (hoursLeft < 1) {
+                                                    const minutesLeft = Math.floor(hoursLeft * 60);
+                                                    timeLeft = `expira en ${minutesLeft}m`;
+                                                } else {
+                                                    timeLeft = `expira en ${Math.floor(hoursLeft)}h`;
+                                                }
+                                                
+                                                return (
+                                                    <span style={{ 
+                                                        fontSize: '12px', 
+                                                        color: 'rgba(255, 255, 255, 0.7)',
+                                                        fontWeight: '400'
+                                                    }}>
+                                                        {timeAgo} • {timeLeft}
+                                                    </span>
+                                                );
+                                            })()}
+                                        </div>
                                     </div>
                                     <div className="story-close" onClick={() => setViewingStory(null)}>
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
