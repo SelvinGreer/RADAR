@@ -2163,6 +2163,108 @@
             opacity: 1;
             pointer-events: all;
         }
+        /* Landing Page - Pantalla de Bienvenida */
+        .landing-page {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .landing-content {
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .landing-logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .landing-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .landing-subtitle {
+            font-size: 16px;
+            color: #8b949e;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .google-signin-btn {
+            background: #fff;
+            color: #1f2937;
+            border: none;
+            border-radius: 50px;
+            padding: 16px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 0 auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .google-signin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .google-signin-btn:active {
+            transform: translateY(0px);
+        }
+
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .landing-features {
+            margin-top: 60px;
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .landing-feature {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.7;
+        }
+
+        .landing-feature-icon {
+            font-size: 32px;
+        }
+
+        .landing-feature-text {
+            font-size: 12px;
+            color: #8b949e;
+        }
+
     </style>
 </head>
 <body>
@@ -2217,6 +2319,7 @@
         }
 
         function RadarSocialApp() {
+            const [showLanding, setShowLanding] = useState(true); // Landing page con Google Sign In
             const [locationPermission, setLocationPermission] = useState(false);
             const [radius, setRadius] = useState(50);
             const [thought, setThought] = useState('');
@@ -2566,16 +2669,24 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.21 - Stories Estilo Instagram COMPLETO');
-                console.log('📸 NUEVO: Barra de progreso animada (5 segundos)');
-                console.log('📸 NUEVO: Auto-cierra story cuando termina');
-                console.log('📸 NUEVO: Anillo cambia a gris después de ver story');
-                console.log('👁️ Sistema de stories vistas (tracking)');
-                console.log('🎨 Anillos: Verde (no vista) → Gris (vista)');
-                console.log('⏱️ Timer de 5 segundos con animación');
-                console.log('✨ Experiencia idéntica a Instagram');
+                console.log('🚀 RADAR SOCIAL v2.22 - Landing Page + Permisos Simplificados');
+                console.log('🎨 NUEVO: Landing page con Google Sign In');
+                console.log('🔐 NUEVO: Login con Google directo');
+                console.log('✨ NUEVO: Diseño de bienvenida elegante');
+                console.log('⚙️ NUEVO: Sección de Permisos en menú');
+                console.log('🔧 Permisos manuales (GPS + Micrófono)');
+                console.log('📸 Stories completas estilo Instagram');
+                console.log('⏱️ Auto-cierre de stories (5s)');
+                console.log('👁️ Tracking de stories vistas');
                 console.log('⏳ Grace Period para avatares estables');
-                console.log('✅ Sincronización entre dispositivos');
+                console.log('✅ Sincronización perfecta');
+                
+                // Verificar si ya hay un usuario logueado
+                const currentAuthUser = auth.currentUser;
+                if (currentAuthUser) {
+                    console.log('👤 Usuario ya autenticado, ocultando landing');
+                    setShowLanding(false);
+                }
                 
                 // Initialize audio context
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2588,6 +2699,9 @@
                             console.log('✅ Firebase User logged in:', firebaseUser.displayName);
                             console.log('📧 Email:', firebaseUser.email);
                             console.log('📷 Photo URL:', firebaseUser.photoURL);
+                            
+                            // Ocultar landing page
+                            setShowLanding(false);
                             
                             // ==========================================
                             // CREAR USUARIO INMEDIATAMENTE (sin esperar GPS)
@@ -3938,6 +4052,42 @@
             };
 
             // ==========================================
+            // GOOGLE SIGN IN - Login con Google
+            // ==========================================
+            const handleGoogleSignIn = async () => {
+                try {
+                    console.log('🔐 Iniciando Google Sign In...');
+                    
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    provider.setCustomParameters({
+                        prompt: 'select_account'
+                    });
+                    
+                    const result = await auth.signInWithPopup(provider);
+                    const user = result.user;
+                    
+                    console.log('✅ Login exitoso:', user.displayName);
+                    console.log('📧 Email:', user.email);
+                    
+                    // Ocultar landing page
+                    setShowLanding(false);
+                    
+                    // El resto del flujo (crear usuario, GPS, etc.) lo maneja el onAuthStateChanged
+                    
+                } catch (error) {
+                    console.error('❌ Error en Google Sign In:', error);
+                    
+                    if (error.code === 'auth/popup-closed-by-user') {
+                        console.log('⚠️ Usuario cerró el popup de login');
+                    } else if (error.code === 'auth/cancelled-popup-request') {
+                        console.log('⚠️ Múltiples popups abiertos');
+                    } else {
+                        alert('Error al iniciar sesión: ' + error.message);
+                    }
+                }
+            };
+
+            // ==========================================
             // HELPER: Determinar clase del anillo del avatar
             // ==========================================
             const getAvatarRingClass = (user) => {
@@ -4263,6 +4413,44 @@
 
             return (
                 <>
+                    {/* Landing Page - Pantalla de Bienvenida */}
+                    {showLanding && (
+                        <div className="landing-page">
+                            <div className="landing-content">
+                                <div className="landing-logo">📡</div>
+                                <h1 className="landing-title">RADAR Social</h1>
+                                <p className="landing-subtitle">
+                                    Descubre personas cerca de ti con precisión militar
+                                </p>
+                                
+                                <button className="google-signin-btn" onClick={handleGoogleSignIn}>
+                                    <svg className="google-icon" viewBox="0 0 24 24">
+                                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                    </svg>
+                                    Continuar con Google
+                                </button>
+                                
+                                <div className="landing-features">
+                                    <div className="landing-feature">
+                                        <div className="landing-feature-icon">🎯</div>
+                                        <div className="landing-feature-text">Precisión ±0.5m</div>
+                                    </div>
+                                    <div className="landing-feature">
+                                        <div className="landing-feature-icon">💬</div>
+                                        <div className="landing-feature-text">Chat en tiempo real</div>
+                                    </div>
+                                    <div className="landing-feature">
+                                        <div className="landing-feature-icon">📸</div>
+                                        <div className="landing-feature-text">Stories 24h</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="header">
                         <div className="header-left">
                             <svg className="header-icon" onClick={() => setShowSidebar(true)} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4826,6 +5014,55 @@
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                                 </svg>
                                 <span>Tecnologías</span>
+                            </div>
+                            <div className="sidebar-item" onClick={async () => {
+                                setShowSidebar(false);
+                                
+                                // Mostrar info de permisos
+                                const permissionStatus = {
+                                    gps: locationPermission ? '✅ Concedido' : '❌ Denegado',
+                                    microphone: ultrasonicActive ? '✅ Activo' : '⚠️ Inactivo'
+                                };
+                                
+                                const message = `📍 **Ubicación GPS:** ${permissionStatus.gps}\n🎤 **Micrófono (Ultrasonido):** ${permissionStatus.microphone}\n\n¿Deseas solicitar los permisos necesarios?`;
+                                
+                                if (confirm(message)) {
+                                    // Solicitar permisos
+                                    try {
+                                        // GPS
+                                        if (!locationPermission) {
+                                            const result = await navigator.permissions.query({ name: 'geolocation' });
+                                            if (result.state === 'prompt' || result.state === 'denied') {
+                                                navigator.geolocation.getCurrentPosition(
+                                                    () => {
+                                                        setLocationPermission(true);
+                                                        alert('✅ Permiso de ubicación concedido');
+                                                    },
+                                                    (error) => {
+                                                        alert('❌ Permiso de ubicación denegado. Ve a Configuración del navegador para habilitarlo.');
+                                                    }
+                                                );
+                                            }
+                                        }
+                                        
+                                        // Micrófono
+                                        if (!ultrasonicActive) {
+                                            try {
+                                                await navigator.mediaDevices.getUserMedia({ audio: true });
+                                                alert('✅ Permiso de micrófono concedido');
+                                            } catch (err) {
+                                                alert('❌ Permiso de micrófono denegado');
+                                            }
+                                        }
+                                    } catch (error) {
+                                        console.error('Error solicitando permisos:', error);
+                                    }
+                                }
+                            }}>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                <span>Permisos</span>
                             </div>
                             <div className="sidebar-item">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
