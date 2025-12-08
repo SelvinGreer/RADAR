@@ -376,6 +376,11 @@
             background: linear-gradient(135deg, #f59e0b 0%, #f97316 35%, #ec4899 70%, #a855f7 100%);
         }
 
+        .avatar-ring.viewed-story {
+            background: rgba(71, 85, 105, 0.5);
+            opacity: 0.6;
+        }
+
         .avatar-ring.no-story {
             background: rgba(71, 85, 105, 0.5);
         }
@@ -2063,13 +2068,23 @@
             height: 3px;
             background: rgba(255, 255, 255, 0.3);
             z-index: 10;
+            overflow: hidden;
         }
 
         .story-progress-fill {
             height: 100%;
             background: #fff;
             width: 0%;
-            transition: width 0.1s linear;
+            animation: storyProgress 5s linear forwards;
+        }
+
+        @keyframes storyProgress {
+            from {
+                width: 0%;
+            }
+            to {
+                width: 100%;
+            }
         }
 
         .story-header {
@@ -2241,6 +2256,7 @@
             const [previousNearbyUsers, setPreviousNearbyUsers] = useState([]);
             const [notifiedUsers, setNotifiedUsers] = useState({}); // { userId: timestamp }
             const [viewingStory, setViewingStory] = useState(null);
+            const [viewedStories, setViewedStories] = useState({}); // { userId: timestamp }
             const [deviceHeading, setDeviceHeading] = useState(0); // Phone compass direction
             const [lastKnownPositions, setLastKnownPositions] = useState({}); // For GPS smoothing
             
@@ -2550,16 +2566,16 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.20 - Story Viewer Estilo Instagram');
-                console.log('📸 FIX CRÍTICO: Stories muestran imagen correcta (storyUrl, no photo)');
-                console.log('📸 FIX: Viewer fullscreen como Instagram');
-                console.log('📸 FIX: Botón X funciona correctamente');
-                console.log('📸 FIX: Puedes ver tu propia story');
-                console.log('📸 FIX: Click fuera del viewer cierra la story');
-                console.log('✨ NUEVO: Diseño limpio y profesional');
-                console.log('⏳ Grace Period 5s para avatares estables');
+                console.log('🚀 RADAR SOCIAL v2.21 - Stories Estilo Instagram COMPLETO');
+                console.log('📸 NUEVO: Barra de progreso animada (5 segundos)');
+                console.log('📸 NUEVO: Auto-cierra story cuando termina');
+                console.log('📸 NUEVO: Anillo cambia a gris después de ver story');
+                console.log('👁️ Sistema de stories vistas (tracking)');
+                console.log('🎨 Anillos: Verde (no vista) → Gris (vista)');
+                console.log('⏱️ Timer de 5 segundos con animación');
+                console.log('✨ Experiencia idéntica a Instagram');
+                console.log('⏳ Grace Period para avatares estables');
                 console.log('✅ Sincronización entre dispositivos');
-                console.log('🔧 Todos los botones funcionales');
                 
                 // Initialize audio context
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -3342,6 +3358,42 @@
 
             }, [users, currentUser]);
 
+            // ==========================================
+            // STORY AUTO-CLOSE - Timer de 5 segundos
+            // ==========================================
+            useEffect(() => {
+                if (!viewingStory) return;
+                
+                console.log(`👁️ Viendo story de ${viewingStory.name}`);
+                
+                // Timer de 5 segundos para cerrar automáticamente
+                const autoCloseTimer = setTimeout(() => {
+                    console.log(`⏱️ Story de ${viewingStory.name} completada - cerrando automáticamente`);
+                    
+                    // Marcar story como vista
+                    setViewedStories(prev => ({
+                        ...prev,
+                        [viewingStory.id]: Date.now()
+                    }));
+                    
+                    // Cerrar story
+                    setViewingStory(null);
+                }, 5000); // 5 segundos
+                
+                // Cleanup: cancelar timer si el usuario cierra manualmente
+                return () => {
+                    clearTimeout(autoCloseTimer);
+                    
+                    // Si cierra manualmente, también marcar como vista
+                    if (viewingStory) {
+                        setViewedStories(prev => ({
+                            ...prev,
+                            [viewingStory.id]: Date.now()
+                        }));
+                    }
+                };
+            }, [viewingStory]);
+
 
 
             // ==========================================
@@ -3885,6 +3937,36 @@
                 return hoursPassed >= 24;
             };
 
+            // ==========================================
+            // HELPER: Determinar clase del anillo del avatar
+            // ==========================================
+            const getAvatarRingClass = (user) => {
+                // Prioridad 1: Mensaje nuevo
+                if (user.hasNewMessage) {
+                    return 'new-message';
+                }
+                
+                // Prioridad 2: Story no vista
+                if (user.hasStory) {
+                    // Verificar si ya fue vista
+                    const viewedTimestamp = viewedStories[user.id];
+                    
+                    if (viewedTimestamp) {
+                        // Verificar si la story actual es más reciente que la vista
+                        // (en caso de que el usuario haya subido una nueva story)
+                        if (user.storyTimestamp && user.storyTimestamp > viewedTimestamp) {
+                            return 'has-story'; // Nueva story no vista
+                        }
+                        return 'viewed-story'; // Story ya vista
+                    }
+                    
+                    return 'has-story'; // Story no vista
+                }
+                
+                // Sin story
+                return 'no-story';
+            };
+
             const handleAvatarClick = async (user) => {
                 // Permitir ver story propia o de otros
                 if (user.hasStory) {
@@ -4308,10 +4390,7 @@
                                                 <div className="avatar-thought">{currentUser.thought}</div>
                                             )}
                                             <div 
-                                                className={`avatar-ring ${
-                                                    currentUser.hasNewMessage ? 'new-message' : 
-                                                    currentUser.hasStory ? 'has-story' : 'no-story'
-                                                }`}
+                                                className={`avatar-ring ${getAvatarRingClass(currentUser)}`}
                                                 style={{ transform: `rotate(${deviceHeading}deg)` }}
                                             >
                                                 <div className="avatar-img-wrapper" style={{ transform: `rotate(${-deviceHeading}deg)` }}>
@@ -4374,10 +4453,7 @@
                                                         <div className="avatar-thought">{user.thought}</div>
                                                     )}
                                                     <div 
-                                                        className={`avatar-ring ${
-                                                            user.hasNewMessage ? 'new-message' : 
-                                                            user.hasStory ? 'has-story' : 'no-story'
-                                                        }`}
+                                                        className={`avatar-ring ${getAvatarRingClass(user)}`}
                                                     >
                                                         <div className="avatar-img-wrapper">
                                                             <img src={user.photo} alt={user.name} className="avatar-img" />
