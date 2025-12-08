@@ -74,7 +74,7 @@
 
         .online-badge-menu {
             position: fixed;
-            top: 65px;
+            top: 75px; /* Mismo nivel que tech badge */
             left: 20px;
             padding: 4px 10px;
             background: rgba(34, 197, 94, 0.15);
@@ -553,7 +553,7 @@
 
         .tech-badges-container {
             position: fixed !important;
-            top: 80px !important;
+            top: 75px !important; /* Mismo nivel que online badge */
             right: 16px !important;
             z-index: 100 !important;
             display: flex;
@@ -2406,6 +2406,7 @@
                 icon: '📍',
                 precision: 5.0
             });
+            const [techRefreshTicker, setTechRefreshTicker] = useState(0); // Para forzar refresh de tecnologías
             const [showStoryUpload, setShowStoryUpload] = useState(false);
             const [storyImage, setStoryImage] = useState(null);
             const [uploadingStory, setUploadingStory] = useState(false);
@@ -2727,18 +2728,16 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.24 - FIX DEFINITIVO Barra de Android');
-                console.log('📱 FIX CRÍTICO: Elementos ya NO quedan detrás de la barra de Android');
-                console.log('✅ Dynamic Viewport Height (dvh) implementado');
-                console.log('✅ safe-area-inset-bottom en TODOS los elementos');
-                console.log('✅ Slider de radio respeta barra de navegación');
-                console.log('✅ Bottom bar con padding dinámico');
-                console.log('✅ Body y root con height adaptativo');
-                console.log('✅ Media queries para pantallas pequeñas');
-                console.log('✅ Soporte iOS + Android');
+                console.log('🚀 RADAR SOCIAL v2.25 - Auto-Refresh + Badges Alineados');
+                console.log('🔄 NUEVO: Auto-refresh de tecnologías cada 3 segundos');
+                console.log('🔄 FIX: Tecnologías ya NO se congelan');
+                console.log('📍 FIX: Badge ONLINE alineado con badge de tecnología');
+                console.log('✨ Badges al mismo nivel visual');
+                console.log('⚡ Actualización discreta en background');
+                console.log('📱 Fix definitivo de barra de Android');
                 console.log('🔔 Sistema de notificaciones y sonidos');
                 console.log('📸 Stories estilo Instagram');
-                console.log('⚡ Sincronización perfecta');
+                console.log('✅ Sincronización perfecta');
                 
                 // Verificar si ya hay un usuario logueado
                 const currentAuthUser = auth.currentUser;
@@ -3433,7 +3432,7 @@
                 setActiveTech(tech);
                 console.log(`⚙️ Tecnología activa: ${tech.name} ${tech.icon} ±${tech.precision}m (Modo: ${techSettings.mode})`);
                 
-            }, [techSettings, ultrasonicActive, ultrasonicDetections.nearby, sensorData.isMoving, locationAccuracy]);
+            }, [techSettings, ultrasonicActive, ultrasonicDetections.nearby, sensorData.isMoving, locationAccuracy, techRefreshTicker]);
 
             // ==========================================
             // SOCIAL NOTIFICATIONS - Detectar usuarios nuevos cerca
@@ -3596,6 +3595,19 @@
                     releaseWakeLock();
                 };
             }, [wakeLockEnabled]);
+
+            // ==========================================
+            // AUTO-REFRESH TECNOLOGÍAS - Evitar congelamiento
+            // ==========================================
+            useEffect(() => {
+                // Actualizar ticker cada 3 segundos para refrescar tecnologías
+                const refreshInterval = setInterval(() => {
+                    setTechRefreshTicker(prev => prev + 1);
+                    console.log('🔄 Auto-refresh de tecnologías');
+                }, 3000); // 3 segundos
+                
+                return () => clearInterval(refreshInterval);
+            }, []);
 
 
 
