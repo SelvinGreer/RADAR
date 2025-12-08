@@ -2356,6 +2356,10 @@
             const [storyImage, setStoryImage] = useState(null);
             const [uploadingStory, setUploadingStory] = useState(false);
             const [socialNotifications, setSocialNotifications] = useState([]);
+            const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+            const [soundEnabled, setSoundEnabled] = useState(true);
+            const [wakeLockEnabled, setWakeLockEnabled] = useState(false);
+            const wakeLockRef = useRef(null);
             const [previousNearbyUsers, setPreviousNearbyUsers] = useState([]);
             const [notifiedUsers, setNotifiedUsers] = useState({}); // { userId: timestamp }
             const [viewingStory, setViewingStory] = useState(null);
@@ -2669,17 +2673,17 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.22 - Landing Page + Permisos Simplificados');
-                console.log('🎨 NUEVO: Landing page con Google Sign In');
-                console.log('🔐 NUEVO: Login con Google directo');
-                console.log('✨ NUEVO: Diseño de bienvenida elegante');
-                console.log('⚙️ NUEVO: Sección de Permisos en menú');
-                console.log('🔧 Permisos manuales (GPS + Micrófono)');
-                console.log('📸 Stories completas estilo Instagram');
-                console.log('⏱️ Auto-cierre de stories (5s)');
-                console.log('👁️ Tracking de stories vistas');
-                console.log('⏳ Grace Period para avatares estables');
-                console.log('✅ Sincronización perfecta');
+                console.log('🚀 RADAR SOCIAL v2.23 - Notificaciones y Sonidos');
+                console.log('🔔 NUEVO: Notificaciones del sistema (con app abierta)');
+                console.log('🔊 NUEVO: Sonidos para mensajes y conexiones');
+                console.log('📱 NUEVO: Wake Lock (pantalla siempre encendida)');
+                console.log('⚠️ LIMITACIÓN: Solo funciona con app abierta y pantalla ON');
+                console.log('💬 Sonido cuando te escriben');
+                console.log('📡 Sonido cuando alguien se conecta cerca');
+                console.log('🔧 Configuración en perfil');
+                console.log('');
+                console.log('⚠️ IMPORTANTE: PWAs NO funcionan con pantalla apagada');
+                console.log('📖 Para background completo, se requiere app nativa');
                 
                 // Verificar si ya hay un usuario logueado
                 const currentAuthUser = auth.currentUser;
@@ -3446,6 +3450,20 @@
 
                                 setSocialNotifications(prev => [...prev, notification]);
                                 
+                                // Reproducir sonido de conexión
+                                playNotificationSound('connection');
+                                
+                                // Mostrar notificación del sistema
+                                showSystemNotification(
+                                    `📡 ${user.name} está cerca`,
+                                    {
+                                        body: `A ${Math.round(user.distance)} metros de distancia`,
+                                        tag: 'nearby-' + user.id,
+                                        renotify: true,
+                                        icon: user.photo
+                                    }
+                                );
+                                
                                 // Marcar usuario como notificado
                                 setNotifiedUsers(prev => ({
                                     ...prev,
@@ -3507,6 +3525,22 @@
                     }
                 };
             }, [viewingStory]);
+
+            // ==========================================
+            // WAKE LOCK - Mantener pantalla encendida
+            // ==========================================
+            useEffect(() => {
+                if (wakeLockEnabled) {
+                    requestWakeLock();
+                } else {
+                    releaseWakeLock();
+                }
+                
+                // Cleanup al desmontar
+                return () => {
+                    releaseWakeLock();
+                };
+            }, [wakeLockEnabled]);
 
 
 
@@ -3697,9 +3731,36 @@
                                 console.log(`📩 Nuevo mensaje de ${senderId}:`, message.content);
                                 
                                 // Marcar al remitente como que tiene mensaje nuevo
-                                setUsers(prevUsers => prevUsers.map(u => 
-                                    u.id === senderId ? { ...u, hasNewMessage: true } : u
-                                ));
+                                setUsers(prevUsers => {
+                                    const updatedUsers = prevUsers.map(u => 
+                                        u.id === senderId ? { ...u, hasNewMessage: true } : u
+                                    );
+                                    
+                                    // Obtener info del remitente para notificación
+                                    const sender = updatedUsers.find(u => u.id === senderId);
+                                    if (sender) {
+                                        // Reproducir sonido
+                                        playNotificationSound('message');
+                                        
+                                        // Mostrar notificación del sistema
+                                        const messagePreview = message.content.length > 50 
+                                            ? message.content.substring(0, 50) + '...' 
+                                            : message.content;
+                                        
+                                        showSystemNotification(
+                                            `💬 ${sender.name}`,
+                                            {
+                                                body: messagePreview,
+                                                tag: 'message-' + senderId,
+                                                renotify: true
+                                            }
+                                        );
+                                        
+                                        console.log(`🔔 Notificación enviada para mensaje de ${sender.name}`);
+                                    }
+                                    
+                                    return updatedUsers;
+                                });
                                 
                                 // Agregar mensaje al estado local SOLO si no existe ya
                                 const chatKey = [currentUser.id, senderId].sort().join('-');
@@ -4049,6 +4110,141 @@
                 const thoughtTime = timestamp.toMillis ? timestamp.toMillis() : timestamp;
                 const hoursPassed = (now - thoughtTime) / (1000 * 60 * 60);
                 return hoursPassed >= 24;
+            };
+
+            // ==========================================
+            // NOTIFICATIONS & SOUNDS SYSTEM
+            // ==========================================
+            
+            // Solicitar permiso de notificaciones
+            const requestNotificationPermission = async () => {
+                if (!('Notification' in window)) {
+                    console.warn('⚠️ Este navegador no soporta notificaciones');
+                    return false;
+                }
+                
+                if (Notification.permission === 'granted') {
+                    setNotificationsEnabled(true);
+                    console.log('✅ Permiso de notificaciones ya concedido');
+                    return true;
+                }
+                
+                if (Notification.permission !== 'denied') {
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                        setNotificationsEnabled(true);
+                        console.log('✅ Permiso de notificaciones concedido');
+                        return true;
+                    }
+                }
+                
+                console.warn('❌ Permiso de notificaciones denegado');
+                return false;
+            };
+            
+            // Reproducir sonido de notificación
+            const playNotificationSound = (type = 'message') => {
+                if (!soundEnabled) return;
+                
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    if (type === 'message') {
+                        // Sonido de mensaje: Tono doble
+                        oscillator.frequency.value = 800;
+                        gainNode.gain.value = 0.3;
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.1);
+                        
+                        setTimeout(() => {
+                            const osc2 = audioContext.createOscillator();
+                            const gain2 = audioContext.createGain();
+                            osc2.connect(gain2);
+                            gain2.connect(audioContext.destination);
+                            osc2.frequency.value = 1000;
+                            gain2.gain.value = 0.3;
+                            osc2.start(audioContext.currentTime);
+                            osc2.stop(audioContext.currentTime + 0.1);
+                        }, 100);
+                        
+                    } else if (type === 'connection') {
+                        // Sonido de conexión: Tono ascendente
+                        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.2);
+                        gainNode.gain.value = 0.2;
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.2);
+                    }
+                    
+                    console.log(`🔊 Sonido reproducido: ${type}`);
+                } catch (error) {
+                    console.error('❌ Error reproduciendo sonido:', error);
+                }
+            };
+            
+            // Mostrar notificación del sistema
+            const showSystemNotification = (title, options = {}) => {
+                if (!notificationsEnabled || Notification.permission !== 'granted') {
+                    console.log('⚠️ Notificaciones no habilitadas');
+                    return;
+                }
+                
+                try {
+                    const notification = new Notification(title, {
+                        icon: '/favicon.ico',
+                        badge: '/favicon.ico',
+                        vibrate: [200, 100, 200],
+                        ...options
+                    });
+                    
+                    // Auto-cerrar después de 5 segundos
+                    setTimeout(() => notification.close(), 5000);
+                    
+                    // Click en notificación enfoca la app
+                    notification.onclick = () => {
+                        window.focus();
+                        notification.close();
+                    };
+                    
+                    console.log('📬 Notificación mostrada:', title);
+                } catch (error) {
+                    console.error('❌ Error mostrando notificación:', error);
+                }
+            };
+            
+            // Wake Lock - Mantener pantalla encendida
+            const requestWakeLock = async () => {
+                if (!('wakeLock' in navigator)) {
+                    console.warn('⚠️ Wake Lock no soportado en este navegador');
+                    return false;
+                }
+                
+                try {
+                    wakeLockRef.current = await navigator.wakeLock.request('screen');
+                    console.log('✅ Wake Lock activado - Pantalla permanecerá encendida');
+                    
+                    wakeLockRef.current.addEventListener('release', () => {
+                        console.log('⚠️ Wake Lock liberado');
+                    });
+                    
+                    return true;
+                } catch (error) {
+                    console.error('❌ Error activando Wake Lock:', error);
+                    return false;
+                }
+            };
+            
+            const releaseWakeLock = async () => {
+                if (wakeLockRef.current) {
+                    await wakeLockRef.current.release();
+                    wakeLockRef.current = null;
+                    console.log('✅ Wake Lock desactivado');
+                }
             };
 
             // ==========================================
@@ -5151,6 +5347,66 @@
                             </div>
 
                             <div className="profile-section">
+                                <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#8b949e', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    Configuración
+                                </h3>
+                                
+                                {/* Notificaciones y Sonidos */}
+                                <button 
+                                    onClick={async () => {
+                                        setShowProfile(false);
+                                        
+                                        const status = `
+🔔 Notificaciones: ${notificationsEnabled ? '✅ ON' : '❌ OFF'}
+🔊 Sonidos: ${soundEnabled ? '✅ ON' : '❌ OFF'}
+📱 Pantalla Encendida: ${wakeLockEnabled ? '✅ ON' : '❌ OFF'}
+
+⚠️ LIMITACIÓN:
+Solo funcionan con app ABIERTA y pantalla ENCENDIDA.
+NO funcionan con pantalla apagada.
+
+¿Configurar?`;
+                                        
+                                        if (confirm(status)) {
+                                            const choice = prompt('1 = Notificaciones\n2 = Sonidos\n3 = Pantalla\n\nEscribe número:');
+                                            
+                                            if (choice === '1') {
+                                                const result = await requestNotificationPermission();
+                                                alert(result ? '✅ Notificaciones ON' : '❌ Permiso denegado');
+                                            } else if (choice === '2') {
+                                                setSoundEnabled(!soundEnabled);
+                                                alert(soundEnabled ? '🔇 Sonidos OFF' : '🔊 Sonidos ON');
+                                            } else if (choice === '3') {
+                                                setWakeLockEnabled(!wakeLockEnabled);
+                                                alert(wakeLockEnabled ? '🌙 Pantalla normal' : '📱 Pantalla siempre ON');
+                                            }
+                                        }
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '14px',
+                                        background: 'rgba(56, 189, 98, 0.1)',
+                                        border: '1px solid rgba(56, 189, 98, 0.3)',
+                                        borderRadius: '12px',
+                                        color: '#38bd62',
+                                        fontSize: '15px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        marginBottom: '12px'
+                                    }}
+                                >
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                    Notificaciones
+                                </button>
+                                
+                                {/* Cerrar Sesión */}
                                 <button 
                                     onClick={async () => {
                                         if (confirm('¿Cerrar sesión? Dejarás de aparecer en el radar.')) {
