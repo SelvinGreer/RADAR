@@ -2027,84 +2027,111 @@
         }
 
         /* Circular Story Viewer */
+        /* Story Viewer - Instagram Style */
         .story-viewer {
             position: fixed;
             inset: 0;
-            background: rgba(13, 17, 23, 0.98);
-            z-index: 400;
+            background: #000;
+            z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
-            transform: scale(0);
             opacity: 0;
-            transition: all 0.3s ease;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
 
         .story-viewer.active {
-            transform: scale(1);
             opacity: 1;
+            visibility: visible;
         }
 
-        .story-circle {
-            width: min(90vw, 400px);
-            height: min(90vw, 400px);
-            border-radius: 50%;
-            overflow: hidden;
-            position: relative;
-            border: 3px solid rgba(88, 166, 255, 0.3);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
-        }
-
-        .story-image {
+        .story-container {
             width: 100%;
             height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .story-progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 10;
+        }
+
+        .story-progress-fill {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .story-header {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .story-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .story-user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #fff;
             object-fit: cover;
         }
 
+        .story-user-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
         .story-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            background: rgba(22, 27, 34, 0.9);
-            border: 1px solid rgba(48, 54, 61, 0.6);
+            background: rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 10;
+            transition: background 0.2s ease;
+        }
+
+        .story-close:active {
+            background: rgba(0, 0, 0, 0.7);
         }
 
         .story-close svg {
             width: 20px;
             height: 20px;
-            color: #c9d1d9;
-        }
-
-        .story-user-info {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 10;
-        }
-
-        .story-user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-        }
-
-        .story-user-name {
-            font-size: 16px;
-            font-weight: 600;
             color: #fff;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+        }
+
+        .story-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
         }
 
         .overlay-backdrop {
@@ -2523,15 +2550,15 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.19 - Avatares Estables con Grace Period');
-                console.log('✨ NUEVO: Grace Period de 5 segundos para avatares');
-                console.log('🎯 FIX: Avatares NO parpadean durante detección ultrasónica');
-                console.log('🎯 FIX: Avatares permanecen visibles y tocables');
-                console.log('⏳ Usuarios se mantienen en radar 5s después de perder señal');
-                console.log('✅ Sincronización entre dispositivos funcional');
-                console.log('🔍 Logs: "⏳ GRACE PERIOD: Manteniendo..."');
-                console.log('⚡ Login instantáneo');
-                console.log('⏰ Cooldown de notificaciones (10 min)');
+                console.log('🚀 RADAR SOCIAL v2.20 - Story Viewer Estilo Instagram');
+                console.log('📸 FIX CRÍTICO: Stories muestran imagen correcta (storyUrl, no photo)');
+                console.log('📸 FIX: Viewer fullscreen como Instagram');
+                console.log('📸 FIX: Botón X funciona correctamente');
+                console.log('📸 FIX: Puedes ver tu propia story');
+                console.log('📸 FIX: Click fuera del viewer cierra la story');
+                console.log('✨ NUEVO: Diseño limpio y profesional');
+                console.log('⏳ Grace Period 5s para avatares estables');
+                console.log('✅ Sincronización entre dispositivos');
                 console.log('🔧 Todos los botones funcionales');
                 
                 // Initialize audio context
@@ -3859,35 +3886,35 @@
             };
 
             const handleAvatarClick = async (user) => {
-                if (currentUser && user.id !== currentUser.id) {
-                    if (user.hasStory) {
-                        setViewingStory(user);
-                    } else {
-                        setSelectedUser(user);
+                // Permitir ver story propia o de otros
+                if (user.hasStory) {
+                    setViewingStory(user);
+                } else if (currentUser && user.id !== currentUser.id) {
+                    // Solo abrir chat si es otro usuario y no tiene story
+                    setSelectedUser(user);
+                    
+                    // Marcar mensaje como leído localmente
+                    setUsers(users.map(u => 
+                        u.id === user.id ? { ...u, hasNewMessage: false } : u
+                    ));
+                    
+                    // Marcar mensajes como leídos en Firestore
+                    try {
+                        const messagesSnapshot = await db.collection('messages')
+                            .where('sender', '==', user.id)
+                            .where('receiver', '==', currentUser.id)
+                            .where('read', '==', false)
+                            .get();
                         
-                        // Marcar mensaje como leído localmente
-                        setUsers(users.map(u => 
-                            u.id === user.id ? { ...u, hasNewMessage: false } : u
-                        ));
+                        const batch = db.batch();
+                        messagesSnapshot.docs.forEach(doc => {
+                            batch.update(doc.ref, { read: true });
+                        });
+                        await batch.commit();
                         
-                        // Marcar mensajes como leídos en Firestore
-                        try {
-                            const messagesSnapshot = await db.collection('messages')
-                                .where('sender', '==', user.id)
-                                .where('receiver', '==', currentUser.id)
-                                .where('read', '==', false)
-                                .get();
-                            
-                            const batch = db.batch();
-                            messagesSnapshot.docs.forEach(doc => {
-                                batch.update(doc.ref, { read: true });
-                            });
-                            await batch.commit();
-                            
-                            console.log(`✅ Mensajes de ${user.name} marcados como leídos`);
-                        } catch (error) {
-                            console.error('Error marking messages as read:', error);
-                        }
+                        console.log(`✅ Mensajes de ${user.name} marcados como leídos`);
+                    } catch (error) {
+                        console.error('Error marking messages as read:', error);
                     }
                 }
             };
@@ -5006,22 +5033,37 @@
                     </div>
 
                     {/* Story Viewer */}
+                    {/* Story Viewer - Instagram Style */}
                     {viewingStory && (
-                        <div className={`story-viewer ${viewingStory ? 'active' : ''}`}>
-                            <div className="story-circle">
-                                <div className="story-close" onClick={() => setViewingStory(null)}>
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                        <div className={`story-viewer ${viewingStory ? 'active' : ''}`} onClick={() => setViewingStory(null)}>
+                            <div className="story-container" onClick={(e) => e.stopPropagation()}>
+                                {/* Progress Bar */}
+                                <div className="story-progress-bar">
+                                    <div className="story-progress-fill" style={{ width: '100%' }}></div>
                                 </div>
-                                <div className="story-user-info">
-                                    <img src={viewingStory.photo} alt={viewingStory.name} className="story-user-avatar" />
-                                    <span className="story-user-name">{viewingStory.name}</span>
+                                
+                                {/* Header */}
+                                <div className="story-header">
+                                    <div className="story-user-info">
+                                        <img src={viewingStory.photo} alt={viewingStory.name} className="story-user-avatar" />
+                                        <span className="story-user-name">{viewingStory.name}</span>
+                                    </div>
+                                    <div className="story-close" onClick={() => setViewingStory(null)}>
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </div>
                                 </div>
+                                
+                                {/* Story Image */}
                                 <img 
-                                    src={viewingStory.photo} 
+                                    src={viewingStory.storyUrl || viewingStory.photo} 
                                     alt={`${viewingStory.name}'s story`} 
                                     className="story-image"
+                                    onError={(e) => {
+                                        console.error('Error cargando story:', viewingStory.storyUrl);
+                                        e.target.src = viewingStory.photo; // Fallback a foto de perfil
+                                    }}
                                 />
                             </div>
                         </div>
