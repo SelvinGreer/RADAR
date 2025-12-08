@@ -59,7 +59,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 20px;
+            padding: 12px 20px; /* Reducido de 16px a 12px */
             background: linear-gradient(180deg, rgba(22, 27, 34, 0.98) 0%, rgba(17, 21, 27, 0.95) 100%);
             backdrop-filter: blur(20px);
             position: relative;
@@ -74,7 +74,7 @@
 
         .online-badge-menu {
             position: fixed;
-            top: 75px; /* Mismo nivel que tech badge */
+            top: 67px; /* Ajustado para header más delgado (75px - 8px) */
             left: 20px;
             padding: 4px 10px;
             background: rgba(34, 197, 94, 0.15);
@@ -113,8 +113,8 @@
         }
 
         .header-icon {
-            width: 28px;
-            height: 28px;
+            width: 24px; /* Reducido de 28px a 24px */
+            height: 24px; /* Reducido de 28px a 24px */
             cursor: pointer;
             color: #c9d1d9;
             transition: all 0.2s ease;
@@ -127,7 +127,7 @@
         }
 
         .header-title {
-            font-size: 22px;
+            font-size: 20px; /* Reducido de 22px a 20px */
             font-weight: 600;
             letter-spacing: -0.3px;
             color: #f0f6fc;
@@ -553,7 +553,7 @@
 
         .tech-badges-container {
             position: fixed !important;
-            top: 75px !important; /* Mismo nivel que online badge */
+            top: 67px !important; /* Ajustado para header más delgado (75px - 8px) */
             right: 16px !important;
             z-index: 100 !important;
             display: flex;
@@ -2758,15 +2758,15 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.26 - FIX UX Stories + Chat');
-                console.log('💬 FIX CRÍTICO: Click en avatar después de ver story abre CHAT');
-                console.log('📸 Primera vez: Click abre story');
-                console.log('💬 Segunda vez: Click abre chat (story ya vista)');
-                console.log('✨ NUEVO: Botón "Enviar mensaje" en story viewer');
-                console.log('🎯 UX mejorada: Fácil acceso al chat después de ver story');
-                console.log('🔄 Auto-refresh de tecnologías cada 3s');
-                console.log('📍 Badges alineados perfectamente');
-                console.log('📱 Fix definitivo de barra de Android');
+                console.log('🚀 RADAR SOCIAL v2.29 - Header Optimizado');
+                console.log('📐 Header más delgado y elegante');
+                console.log('✨ Padding reducido: 16px → 12px');
+                console.log('📏 Íconos reducidos: 28px → 24px');
+                console.log('🔤 Título reducido: 22px → 20px');
+                console.log('📍 Badges reajustados para nueva altura');
+                console.log('🔊 Sonidos optimizados');
+                console.log('📬 Badge de inbox perfecto');
+                console.log('💬 Stories + Chat fluido');
                 console.log('⚡ Sincronización perfecta');
                 
                 // Verificar si ya hay un usuario logueado
@@ -3836,8 +3836,9 @@
                                     // Obtener info del remitente para notificación
                                     const sender = updatedUsers.find(u => u.id === senderId);
                                     if (sender) {
-                                        // Reproducir sonido
-                                        playNotificationSound('message');
+                                        // Sonido eliminado por preferencia del usuario
+                                        // Solo suena cuando el sonar pasa por el avatar
+                                        // playNotificationSound('message');
                                         
                                         // Mostrar notificación del sistema
                                         const messagePreview = message.content.length > 50 
@@ -5096,9 +5097,40 @@
                                             <div
                                                 key={user.id}
                                                 className={`inbox-item ${user.hasNewMessage ? 'unread' : ''}`}
-                                                onClick={() => {
+                                                onClick={async () => {
+                                                    console.log(`📬 Abriendo chat desde inbox: ${user.name}`);
+                                                    
+                                                    // Cerrar inbox
                                                     setShowInbox(false);
+                                                    
+                                                    // Abrir chat
                                                     setSelectedUser(user);
+                                                    
+                                                    // Marcar mensaje como leído localmente
+                                                    setUsers(prevUsers => prevUsers.map(u => 
+                                                        u.id === user.id ? { ...u, hasNewMessage: false } : u
+                                                    ));
+                                                    
+                                                    // Marcar mensajes como leídos en Firestore
+                                                    try {
+                                                        const messagesSnapshot = await db.collection('messages')
+                                                            .where('sender', '==', user.id)
+                                                            .where('receiver', '==', currentUser.id)
+                                                            .where('read', '==', false)
+                                                            .get();
+                                                        
+                                                        if (messagesSnapshot.docs.length > 0) {
+                                                            const batch = db.batch();
+                                                            messagesSnapshot.docs.forEach(doc => {
+                                                                batch.update(doc.ref, { read: true });
+                                                            });
+                                                            await batch.commit();
+                                                            
+                                                            console.log(`✅ ${messagesSnapshot.docs.length} mensaje(s) de ${user.name} marcados como leídos`);
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('❌ Error marking messages as read:', error);
+                                                    }
                                                 }}
                                             >
                                                 <img src={user.photo} alt={user.name} className="inbox-avatar" />
