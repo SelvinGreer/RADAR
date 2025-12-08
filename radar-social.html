@@ -2521,11 +2521,12 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.13 - Fix Autenticación Google');
-                console.log('✅ FIX CRÍTICO: Usuario aparece INMEDIATAMENTE al login');
-                console.log('✅ Foto y datos visibles en menú sin esperar GPS');
-                console.log('✅ Avatar en centro del radar aparece al instante');
-                console.log('✅ GPS actualiza ubicación en segundo plano');
+                console.log('🚀 RADAR SOCIAL v2.15 - Fix Completo Login Google');
+                console.log('✅ FIX CRÍTICO: Eliminado error "realUser is not defined"');
+                console.log('✅ FIX: Separación de currentUser y users[]');
+                console.log('✅ FIX: Usuario actual se renderiza independientemente');
+                console.log('✅ FIX: Otros usuarios se renderizan desde users[]');
+                console.log('⚡ Usuario aparece inmediatamente al login');
                 console.log('🔔 Notificaciones sociales cuando alguien se acerca');
                 console.log('📱 Barra de texto ajustada para Android');
                 console.log('⚙️ Botón "Aplicar Cambios" con permisos');
@@ -2540,71 +2541,77 @@
                 // Load real user from Firebase
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
-                        console.log('✅ Firebase User logged in:', firebaseUser.displayName);
-                        console.log('📧 Email:', firebaseUser.email);
-                        console.log('📷 Photo URL:', firebaseUser.photoURL);
-                        
-                        // ==========================================
-                        // CREAR USUARIO INMEDIATAMENTE (sin esperar GPS)
-                        // ==========================================
-                        
-                        // Obtener datos del usuario de Firestore
-                        const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
-                        
-                        let thought = '';
-                        let hasActiveStory = false;
-                        let storyUrl = null;
-                        let storyTimestamp = null;
-                        
-                        if (userDoc.exists) {
-                            const userData = userDoc.data();
+                        try {
+                            console.log('✅ Firebase User logged in:', firebaseUser.displayName);
+                            console.log('📧 Email:', firebaseUser.email);
+                            console.log('📷 Photo URL:', firebaseUser.photoURL);
                             
-                            // Check thought expiration
-                            if (userData.thought && userData.thoughtTimestamp) {
-                                const now = Date.now();
-                                const thoughtTime = userData.thoughtTimestamp.toMillis ? userData.thoughtTimestamp.toMillis() : userData.thoughtTimestamp;
-                                const hoursPassed = (now - thoughtTime) / (1000 * 60 * 60);
+                            // ==========================================
+                            // CREAR USUARIO INMEDIATAMENTE (sin esperar GPS)
+                            // ==========================================
+                            
+                            // Obtener datos del usuario de Firestore
+                            const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
+                            
+                            let thought = '';
+                            let hasActiveStory = false;
+                            let storyUrl = null;
+                            let storyTimestamp = null;
+                            
+                            if (userDoc.exists) {
+                                const userData = userDoc.data();
                                 
-                                if (hoursPassed < 24) {
-                                    thought = userData.thought;
+                                // Check thought expiration
+                                if (userData.thought && userData.thoughtTimestamp) {
+                                    const now = Date.now();
+                                    const thoughtTime = userData.thoughtTimestamp.toMillis ? userData.thoughtTimestamp.toMillis() : userData.thoughtTimestamp;
+                                    const hoursPassed = (now - thoughtTime) / (1000 * 60 * 60);
+                                    
+                                    if (hoursPassed < 24) {
+                                        thought = userData.thought;
+                                    }
+                                }
+                                
+                                // Check story expiration
+                                if (userData.storyUrl && userData.storyTimestamp) {
+                                    const now = Date.now();
+                                    const storyTime = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
+                                    const hoursPassed = (now - storyTime) / (1000 * 60 * 60);
+                                    
+                                    if (hoursPassed < 24) {
+                                        hasActiveStory = true;
+                                        storyUrl = userData.storyUrl;
+                                        storyTimestamp = storyTime;
+                                    }
                                 }
                             }
                             
-                            // Check story expiration
-                            if (userData.storyUrl && userData.storyTimestamp) {
-                                const now = Date.now();
-                                const storyTime = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
-                                const hoursPassed = (now - storyTime) / (1000 * 60 * 60);
-                                
-                                if (hoursPassed < 24) {
-                                    hasActiveStory = true;
-                                    storyUrl = userData.storyUrl;
-                                    storyTimestamp = storyTime;
-                                }
-                            }
+                            // Crear usuario INMEDIATAMENTE con ubicación temporal (0, 0)
+                            const initialUser = {
+                                id: firebaseUser.uid,
+                                name: firebaseUser.displayName || 'Usuario',
+                                age: 25,
+                                photo: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'User')}&background=38bd62&color=fff&size=150`,
+                                thought: thought,
+                                hasStory: hasActiveStory,
+                                storyUrl: storyUrl,
+                                storyTimestamp: storyTimestamp,
+                                distance: 0,
+                                angle: 0,
+                                hasNewMessage: false,
+                                email: firebaseUser.email,
+                                latitude: 0,  // Se actualizará con GPS
+                                longitude: 0  // Se actualizará con GPS
+                            };
+                            
+                            console.log('👤 Usuario creado inmediatamente:', initialUser);
+                            setCurrentUser(initialUser);
+                            setThought(thought);
+                            
+                        } catch (error) {
+                            console.error('❌ Error crítico al crear usuario inicial:', error);
+                            alert('Error al iniciar sesión: ' + error.message);
                         }
-                        
-                        // Crear usuario INMEDIATAMENTE con ubicación temporal (0, 0)
-                        const initialUser = {
-                            id: firebaseUser.uid,
-                            name: firebaseUser.displayName || 'Usuario',
-                            age: 25,
-                            photo: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'User')}&background=38bd62&color=fff&size=150`,
-                            thought: thought,
-                            hasStory: hasActiveStory,
-                            storyUrl: storyUrl,
-                            storyTimestamp: storyTimestamp,
-                            distance: 0,
-                            angle: 0,
-                            hasNewMessage: false,
-                            email: firebaseUser.email,
-                            latitude: 0,  // Se actualizará con GPS
-                            longitude: 0  // Se actualizará con GPS
-                        };
-                        
-                        console.log('👤 Usuario creado inmediatamente:', initialUser);
-                        setCurrentUser(initialUser);
-                        setThought(thought);
                         
                         // ==========================================
                         // AHORA SÍ, OBTENER UBICACIÓN GPS
@@ -2765,8 +2772,9 @@
                                                         });
                                                         
                                                         // CRÍTICO: Preservar hasNewMessage e isOnline de usuarios existentes
+                                                        // NOTA: users contiene SOLO otros usuarios, NO el usuario actual
                                                         setUsers(prevUsers => {
-                                                            const updatedUsers = [realUser, ...otherUsers.map(newUser => {
+                                                            const updatedUsers = otherUsers.map(newUser => {
                                                                 // Buscar si este usuario ya existe en el estado
                                                                 const existingUser = prevUsers.find(u => u.id === newUser.id);
                                                                 
@@ -2784,7 +2792,7 @@
                                                                 }
                                                                 
                                                                 return newUser;
-                                                            })];
+                                                            });
                                                             
                                                             return updatedUsers;
                                                         });
@@ -3135,60 +3143,70 @@
             // SOCIAL NOTIFICATIONS - Detectar usuarios nuevos cerca
             // ==========================================
             useEffect(() => {
-                if (!currentUser || !users) return;
-
-                // Filtrar usuarios cercanos (dentro de 50m)
-                const nearbyUsers = users.filter(u => 
-                    u.id !== currentUser.id && 
-                    u.distance > 0 && 
-                    u.distance <= 50 &&
-                    u.isOnline
-                );
-
-                // Detectar nuevos usuarios que acaban de entrar al rango
-                const newUsers = nearbyUsers.filter(newUser => {
-                    // Verificar si no estaba en la lista anterior
-                    const wasNearbyBefore = previousNearbyUsers.some(prevUser => prevUser.id === newUser.id);
-                    return !wasNearbyBefore;
-                });
-
-                // Si hay nuevos usuarios, mostrar notificaciones
-                if (newUsers.length > 0) {
-                    newUsers.forEach((user, index) => {
-                        // Delay escalonado para múltiples notificaciones
-                        setTimeout(() => {
-                            // Mensajes aleatorios
-                            const messages = [
-                                `¡${user.name} está cerca! ${user.distance < 10 ? '¡Muy cerca!' : ''} ¿Por qué no saludas? 👋`,
-                                `${user.name} acaba de aparecer en tu radar. ¡Es un buen momento para conectar! 💬`,
-                                `¡Mira quién está por aquí! ${user.name} está a solo ${Math.round(user.distance)}m. ¿Conversamos? 🎯`,
-                                `${user.name} está cerca (${Math.round(user.distance)}m). ¡Envía un mensaje y rompe el hielo! ❄️`,
-                                `¡Nueva conexión disponible! ${user.name} está en tu área. ¿Te animas a escribir? ✨`
-                            ];
-
-                            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-
-                            const notification = {
-                                id: `notif-${user.id}-${Date.now()}`,
-                                user: user,
-                                message: randomMessage
-                            };
-
-                            setSocialNotifications(prev => [...prev, notification]);
-
-                            console.log(`📢 Nueva notificación: ${user.name} detectado a ${Math.round(user.distance)}m`);
-
-                            // Auto-remover después de 8 segundos
-                            setTimeout(() => {
-                                setSocialNotifications(prev => prev.filter(n => n.id !== notification.id));
-                            }, 8000);
-
-                        }, index * 400); // 400ms de delay entre notificaciones
-                    });
+                // Protección: Verificar que todo existe
+                if (!currentUser || !users || !Array.isArray(users) || users.length === 0) {
+                    return;
                 }
 
-                // Actualizar lista de usuarios cercanos
-                setPreviousNearbyUsers(nearbyUsers);
+                try {
+                    // Filtrar usuarios cercanos (dentro de 50m)
+                    const nearbyUsers = users.filter(u => 
+                        u && 
+                        u.id !== currentUser.id && 
+                        typeof u.distance === 'number' &&
+                        u.distance > 0 && 
+                        u.distance <= 50 &&
+                        u.isOnline
+                    );
+
+                    // Detectar nuevos usuarios que acaban de entrar al rango
+                    const newUsers = nearbyUsers.filter(newUser => {
+                        // Verificar si no estaba en la lista anterior
+                        const wasNearbyBefore = previousNearbyUsers.some(prevUser => prevUser.id === newUser.id);
+                        return !wasNearbyBefore;
+                    });
+
+                    // Si hay nuevos usuarios, mostrar notificaciones
+                    if (newUsers.length > 0) {
+                        newUsers.forEach((user, index) => {
+                            // Delay escalonado para múltiples notificaciones
+                            setTimeout(() => {
+                                // Mensajes aleatorios
+                                const messages = [
+                                    `¡${user.name} está cerca! ${user.distance < 10 ? '¡Muy cerca!' : ''} ¿Por qué no saludas? 👋`,
+                                    `${user.name} acaba de aparecer en tu radar. ¡Es un buen momento para conectar! 💬`,
+                                    `¡Mira quién está por aquí! ${user.name} está a solo ${Math.round(user.distance)}m. ¿Conversamos? 🎯`,
+                                    `${user.name} está cerca (${Math.round(user.distance)}m). ¡Envía un mensaje y rompe el hielo! ❄️`,
+                                    `¡Nueva conexión disponible! ${user.name} está en tu área. ¿Te animas a escribir? ✨`
+                                ];
+
+                                const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+                                const notification = {
+                                    id: `notif-${user.id}-${Date.now()}`,
+                                    user: user,
+                                    message: randomMessage
+                                };
+
+                                setSocialNotifications(prev => [...prev, notification]);
+
+                                console.log(`📢 Nueva notificación: ${user.name} detectado a ${Math.round(user.distance)}m`);
+
+                                // Auto-remover después de 8 segundos
+                                setTimeout(() => {
+                                    setSocialNotifications(prev => prev.filter(n => n.id !== notification.id));
+                                }, 8000);
+
+                            }, index * 400); // 400ms de delay entre notificaciones
+                        });
+                    }
+
+                    // Actualizar lista de usuarios cercanos
+                    setPreviousNearbyUsers(nearbyUsers);
+                    
+                } catch (error) {
+                    console.error('❌ Error en notificaciones sociales:', error);
+                }
 
             }, [users, currentUser]);
 
@@ -4146,12 +4164,46 @@
                                     <div className="radar-sweep"></div>
                                 </div>
 
+                                {/* Renderizar usuario actual (centro) */}
+                                {currentUser && (
+                                    <div
+                                        key={currentUser.id}
+                                        className="avatar-container center-avatar-fixed"
+                                        onClick={() => handleAvatarClick(currentUser)}
+                                    >
+                                        <div className="avatar-wrapper center-avatar">
+                                            {currentUser.thought && (
+                                                <div className="avatar-thought">{currentUser.thought}</div>
+                                            )}
+                                            <div 
+                                                className={`avatar-ring ${
+                                                    currentUser.hasNewMessage ? 'new-message' : 
+                                                    currentUser.hasStory ? 'has-story' : 'no-story'
+                                                }`}
+                                                style={{ transform: `rotate(${deviceHeading}deg)` }}
+                                            >
+                                                <div className="avatar-img-wrapper" style={{ transform: `rotate(${-deviceHeading}deg)` }}>
+                                                    <img src={currentUser.photo} alt={currentUser.name} className="avatar-img" />
+                                                </div>
+                                                <div className="direction-indicator" />
+                                                <div 
+                                                    className="add-story-btn" 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setShowStoryUpload(true);
+                                                    }}
+                                                >
+                                                    +
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Renderizar otros usuarios */}
                                 {users
                                     .filter(user => {
                                         if (!currentUser) return false;
-                                        
-                                        // Siempre mostrar el usuario actual (centro)
-                                        if (user.id === currentUser.id) return true;
                                         
                                         // Solo mostrar usuarios dentro del radio
                                         if (user.distance > radius) return false;
@@ -4160,44 +4212,31 @@
                                         return user.isOnline || user.hasNewMessage;
                                     })
                                     .map(user => {
-                                        const isCenter = currentUser && user.id === currentUser.id;
-                                        
                                         // Calculate position based on distance, angle, and current zoom (radius)
-                                        let x = 0, y = 0;
-                                        if (!isCenter) {
-                                            // IMPROVED POSITIONING ALGORITHM
-                                            // Dead zone: minimum 15% (prevents overlap with center avatar)
-                                            // Max zone: 45% (uses more radar space)
-                                            // Formula: maps distance to 15%-45% range
-                                            
-                                            const MIN_PERCENTAGE = 15; // Dead zone around center
-                                            const MAX_PERCENTAGE = 45; // Max usable area
-                                            
-                                            // Linear mapping: 0m → 15%, radius → 45%
-                                            let percentage = MIN_PERCENTAGE + (user.distance / radius) * (MAX_PERCENTAGE - MIN_PERCENTAGE);
-                                            percentage = Math.min(percentage, MAX_PERCENTAGE);
-                                            
-                                            const angleRad = (user.angle - 90) * (Math.PI / 180);
-                                            x = percentage * Math.cos(angleRad);
-                                            y = percentage * Math.sin(angleRad);
-                                        }
+                                        // IMPROVED POSITIONING ALGORITHM
+                                        // Dead zone: minimum 15% (prevents overlap with center avatar)
+                                        // Max zone: 45% (uses more radar space)
+                                        // Formula: maps distance to 15%-45% range
                                         
-                                        // Avatar sizing
-                                        // Center avatar: fixed medium size
-                                        // Other users: fixed small size (consistent regardless of zoom)
-                                        let scale = 1.0;
-                                        if (!isCenter) {
-                                            // Fixed small size for all other avatars (like when radius is at 50m)
-                                            scale = 0.6;
-                                        }
-                                        // Center avatar stays at normal size (scale = 1.0)
-                                        // Center avatar is always fixed size (no scaling)
+                                        const MIN_PERCENTAGE = 15; // Dead zone around center
+                                        const MAX_PERCENTAGE = 45; // Max usable area
+                                        
+                                        // Linear mapping: 0m → 15%, radius → 45%
+                                        let percentage = MIN_PERCENTAGE + (user.distance / radius) * (MAX_PERCENTAGE - MIN_PERCENTAGE);
+                                        percentage = Math.min(percentage, MAX_PERCENTAGE);
+                                        
+                                        const angleRad = (user.angle - 90) * (Math.PI / 180);
+                                        const x = percentage * Math.cos(angleRad);
+                                        const y = percentage * Math.sin(angleRad);
+                                        
+                                        // Avatar sizing - Fixed small size for all other avatars
+                                        const scale = 0.6;
                                         
                                         return (
                                             <div
                                                 key={user.id}
-                                                className={`avatar-container ${isCenter ? 'center-avatar-fixed' : ''}`}
-                                                style={isCenter ? {} : {
+                                                className="avatar-container"
+                                                style={{
                                                     left: `calc(50% + ${x}%)`,
                                                     top: `calc(50% + ${y}%)`,
                                                     transform: `scale(${scale})`,
@@ -4207,7 +4246,7 @@
                                                 }}
                                                 onClick={() => handleAvatarClick(user)}
                                             >
-                                                <div className={`avatar-wrapper ${isCenter ? 'center-avatar' : 'regular-avatar'}`}>
+                                                <div className="avatar-wrapper regular-avatar">
                                                     {user.thought && (
                                                         <div className="avatar-thought">{user.thought}</div>
                                                     )}
@@ -4216,40 +4255,21 @@
                                                             user.hasNewMessage ? 'new-message' : 
                                                             user.hasStory ? 'has-story' : 'no-story'
                                                         }`}
-                                                        style={isCenter ? { transform: `rotate(${deviceHeading}deg)` } : {}}
                                                     >
-                                                        <div className="avatar-img-wrapper" style={isCenter ? { transform: `rotate(${-deviceHeading}deg)` } : {}}>
+                                                        <div className="avatar-img-wrapper">
                                                             <img src={user.photo} alt={user.name} className="avatar-img" />
                                                         </div>
-                                                        {isCenter && (
-                                                            <div className="direction-indicator" />
-                                                        )}
-                                                        {isCenter && (
-                                                            <div 
-                                                                className="add-story-btn" 
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setShowStoryUpload(true);
-                                                                }}
-                                                            >
-                                                                +
-                                                            </div>
-                                                        )}
                                                         {user.hasNewMessage && (
                                                             <div className="message-badge">1</div>
                                                         )}
                                                     </div>
-                                                    {!isCenter && (
-                                                        <>
-                                                            <div className="avatar-name">{user.name}</div>
-                                                            <div className="avatar-distance">
-                                                                {user.distance < 1 && ultrasonicActive ? 
-                                                                    `${user.distance.toFixed(1)} m 🔊` : 
-                                                                    `${Math.round(user.distance)} m`
-                                                                }
-                                                            </div>
-                                                        </>
-                                                    )}
+                                                    <div className="avatar-name">{user.name}</div>
+                                                    <div className="avatar-distance">
+                                                        {user.distance < 1 && ultrasonicActive ? 
+                                                            `${user.distance.toFixed(1)} m 🔊` : 
+                                                            `${Math.round(user.distance)} m`
+                                                        }
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
