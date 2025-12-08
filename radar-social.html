@@ -2181,6 +2181,7 @@
             const [currentUser, setCurrentUser] = useState(null);
             const [userLocation, setUserLocation] = useState(null);
             const [users, setUsers] = useState([]); // Start empty - will load from Firebase
+            const [lastSeenUsers, setLastSeenUsers] = useState({}); // Track when we last saw each user
             const [isDraggingDial, setIsDraggingDial] = useState(false);
             const [selectedUser, setSelectedUser] = useState(null);
             const [chats, setChats] = useState({});
@@ -2522,17 +2523,16 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.18 - FIX CRÍTICO: Detección de Usuarios');
-                console.log('🎯 FIX: Cálculo de distancia ahora usa ubicación actualizada');
-                console.log('🎯 FIX: Usuarios se ven mutuamente en el radar correctamente');
-                console.log('🎯 PROBLEMA RESUELTO: "No aparezco en el radar del otro celular"');
+                console.log('🚀 RADAR SOCIAL v2.19 - Avatares Estables con Grace Period');
+                console.log('✨ NUEVO: Grace Period de 5 segundos para avatares');
+                console.log('🎯 FIX: Avatares NO parpadean durante detección ultrasónica');
+                console.log('🎯 FIX: Avatares permanecen visibles y tocables');
+                console.log('⏳ Usuarios se mantienen en radar 5s después de perder señal');
+                console.log('✅ Sincronización entre dispositivos funcional');
+                console.log('🔍 Logs: "⏳ GRACE PERIOD: Manteniendo..."');
                 console.log('⚡ Login instantáneo');
-                console.log('⏰ Sistema de cooldown de notificaciones (10 min)');
-                console.log('🔔 Notificaciones sociales inteligentes');
-                console.log('📱 Barra de texto ajustada para Android');
-                console.log('⚙️ Botón "Aplicar Cambios" funcional');
-                console.log('💬 Mensajes persisten offline');
-                console.log('🎨 Chat estilo WhatsApp');
+                console.log('⏰ Cooldown de notificaciones (10 min)');
+                console.log('🔧 Todos los botones funcionales');
                 
                 // Initialize audio context
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2808,18 +2808,33 @@
                                                             }
                                                         });
                                                         
-                                                        // CRÍTICO: Preservar hasNewMessage e isOnline de usuarios existentes
-                                                        // NOTA: users contiene SOLO otros usuarios, NO el usuario actual
+                                                        // ==========================================
+                                                        // GRACE PERIOD: Mantener usuarios visibles por 5 segundos
+                                                        // Esto previene parpadeo durante detección ultrasónica
+                                                        // ==========================================
+                                                        const GRACE_PERIOD = 5000; // 5 segundos
+                                                        const now = Date.now();
+                                                        
+                                                        // Actualizar timestamps de usuarios que acabamos de ver
+                                                        // y obtener el objeto actualizado
+                                                        let currentLastSeen = {};
+                                                        setLastSeenUsers(prev => {
+                                                            const updated = { ...prev };
+                                                            otherUsers.forEach(user => {
+                                                                updated[user.id] = now;
+                                                            });
+                                                            currentLastSeen = updated; // Capturar para usar abajo
+                                                            return updated;
+                                                        });
+                                                        
                                                         setUsers(prevUsers => {
-                                                            const updatedUsers = otherUsers.map(newUser => {
-                                                                // Buscar si este usuario ya existe en el estado
+                                                            // 1. Usuarios que acabamos de ver (activos ahora)
+                                                            const activeUsers = otherUsers.map(newUser => {
                                                                 const existingUser = prevUsers.find(u => u.id === newUser.id);
                                                                 
-                                                                // Preservar estados importantes
                                                                 if (existingUser) {
                                                                     const preservedUser = { ...newUser };
                                                                     
-                                                                    // Preservar hasNewMessage si existe
                                                                     if (existingUser.hasNewMessage) {
                                                                         console.log(`💛 PRESERVANDO hasNewMessage=true para ${newUser.name}`);
                                                                         preservedUser.hasNewMessage = true;
@@ -2831,7 +2846,31 @@
                                                                 return newUser;
                                                             });
                                                             
-                                                            return updatedUsers;
+                                                            // 2. Usuarios previos que están en grace period
+                                                            // (no están en lista activa pero los vimos recientemente)
+                                                            const activeUserIds = new Set(activeUsers.map(u => u.id));
+                                                            const gracePeriodUsers = prevUsers.filter(prevUser => {
+                                                                // Si ya está en lista activa, skip
+                                                                if (activeUserIds.has(prevUser.id)) return false;
+                                                                
+                                                                // Verificar si está en grace period
+                                                                const lastSeen = currentLastSeen[prevUser.id];
+                                                                if (!lastSeen) return false;
+                                                                
+                                                                const timeSinceLastSeen = now - lastSeen;
+                                                                const inGracePeriod = timeSinceLastSeen < GRACE_PERIOD;
+                                                                
+                                                                if (inGracePeriod) {
+                                                                    console.log(`⏳ GRACE PERIOD: Manteniendo ${prevUser.name} visible (${Math.round(timeSinceLastSeen/1000)}s ago)`);
+                                                                } else {
+                                                                    console.log(`⏰ GRACE PERIOD expiró: Removiendo ${prevUser.name} (${Math.round(timeSinceLastSeen/1000)}s ago)`);
+                                                                }
+                                                                
+                                                                return inGracePeriod;
+                                                            });
+                                                            
+                                                            // 3. Combinar usuarios activos + grace period
+                                                            return [...activeUsers, ...gracePeriodUsers];
                                                         });
                                                         
                                                         console.log(`👥 Usuarios actualizados: ${otherUsers.length} usuarios ONLINE activos`);
