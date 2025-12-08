@@ -468,6 +468,37 @@
             animation: messageBadgePulse 2s ease-in-out infinite;
         }
 
+        .add-story-btn {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #38bd62 0%, #2d9d51 100%);
+            border-radius: 50%;
+            border: 3px solid #0d1117;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 3px 12px rgba(56, 189, 98, 0.4);
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .add-story-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 16px rgba(56, 189, 98, 0.6);
+        }
+
+        .add-story-btn:active {
+            transform: scale(0.95);
+        }
+
+
         @keyframes messageBadgePulse {
             0%, 100% { 
                 transform: scale(1);
@@ -876,6 +907,173 @@
             transform: translateX(0);
         }
 
+        .story-upload-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 300;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .story-upload-overlay.active {
+            display: flex;
+        }
+
+        .story-upload-container {
+            width: 100%;
+            max-width: 500px;
+            background: #161b22;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .story-upload-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .story-upload-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin: 0;
+        }
+
+        .story-upload-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .story-upload-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .story-upload-close svg {
+            width: 20px;
+            height: 20px;
+            color: #8b949e;
+        }
+
+        .story-preview-area {
+            width: 100%;
+            aspect-ratio: 9/16;
+            max-height: 60vh;
+            background: #0d1117;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .story-preview-area img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .story-preview-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: #6e7681;
+        }
+
+        .story-preview-placeholder svg {
+            width: 64px;
+            height: 64px;
+        }
+
+        .story-upload-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .story-select-btn, .story-publish-btn {
+            flex: 1;
+            height: 48px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .story-select-btn {
+            background: rgba(56, 189, 98, 0.15);
+            color: #38bd62;
+            border: 1px solid rgba(56, 189, 98, 0.3);
+        }
+
+        .story-select-btn:hover {
+            background: rgba(56, 189, 98, 0.25);
+        }
+
+        .story-publish-btn {
+            background: linear-gradient(135deg, #38bd62 0%, #2d9d51 100%);
+            color: #fff;
+        }
+
+        .story-publish-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(56, 189, 98, 0.4);
+        }
+
+        .story-publish-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .story-remove-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+
+        .story-remove-btn:hover {
+            background: rgba(220, 38, 38, 0.9);
+        }
+
+        .story-remove-btn svg {
+            width: 20px;
+            height: 20px;
+            color: #fff;
+        }
+
+
         .inbox-header {
             display: flex;
             align-items: center;
@@ -1237,6 +1435,44 @@
             line-height: 1.5;
             margin: 0;
         }
+
+        .tech-apply-container {
+            margin-top: 24px;
+            padding: 0 4px 4px;
+        }
+
+        .tech-apply-btn {
+            width: 100%;
+            height: 52px;
+            background: linear-gradient(135deg, #38bd62 0%, #2d9d51 100%);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(56, 189, 98, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .tech-apply-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 98, 0.4);
+        }
+
+        .tech-apply-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(56, 189, 98, 0.3);
+        }
+
+        .tech-apply-btn svg {
+            flex-shrink: 0;
+        }
+
 
         .chat-header {
             display: flex;
@@ -1797,6 +2033,9 @@
                 icon: '📍',
                 precision: 5.0
             });
+            const [showStoryUpload, setShowStoryUpload] = useState(false);
+            const [storyImage, setStoryImage] = useState(null);
+            const [uploadingStory, setUploadingStory] = useState(false);
             const [viewingStory, setViewingStory] = useState(null);
             const [deviceHeading, setDeviceHeading] = useState(0); // Phone compass direction
             const [lastKnownPositions, setLastKnownPositions] = useState({}); // For GPS smoothing
@@ -2107,15 +2346,17 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.9 - Sync Panel Tecnologías → Badge');
-                console.log('✅ FIX: Badge de precisión se actualiza según selección manual');
-                console.log('✅ Badge muestra tecnología activa en tiempo real');
-                console.log('✅ Modo AUTO: Sistema decide automáticamente');
-                console.log('✅ Modo MANUAL: Usuario controla tecnologías');
-                console.log('⚙️ Tooltip muestra nombre de tecnología y modo');
-                console.log('🎨 Interfaz de chat estilo WhatsApp');
-                console.log('📷 Envío de imágenes funcional');
+                console.log('🚀 RADAR SOCIAL v2.10 - Estados/Stories Funcionales');
+                console.log('✨ NUEVO: Subir estados con imágenes (estilo Instagram)');
+                console.log('✨ Botón + en tu avatar para crear estado');
+                console.log('✨ Estados expiran automáticamente en 24 horas');
+                console.log('✨ Anillo de color en avatares con estado activo');
+                console.log('✨ Modal elegante para subir imagen');
+                console.log('✨ Click en avatar con estado para verlo');
+                console.log('⚙️ Badge de precisión sincronizado con panel');
                 console.log('💬 Mensajes persisten aunque usuario se desconecte');
+                console.log('🎨 Interfaz de chat estilo WhatsApp');
+                console.log('📷 Envío de imágenes en chat');
                 console.log('📬 Inbox de mensajes disponible');
                 
                 // Initialize audio context
@@ -2207,6 +2448,28 @@
                                                             });
                                                         }
                                                     }
+                                                    
+                                                    // Check if story is expired (24 hours)
+                                                    let hasActiveStory = false;
+                                                    let storyUrl = null;
+                                                    let storyTimestamp = null;
+                                                    if (userData.storyUrl && userData.storyTimestamp) {
+                                                        const now = Date.now();
+                                                        const storyTime = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
+                                                        const hoursPassed = (now - storyTime) / (1000 * 60 * 60);
+                                                        
+                                                        if (hoursPassed < 24) {
+                                                            hasActiveStory = true;
+                                                            storyUrl = userData.storyUrl;
+                                                            storyTimestamp = storyTime;
+                                                        } else {
+                                                            // Clear expired story
+                                                            await db.collection('users').doc(firebaseUser.uid).update({
+                                                                storyUrl: null,
+                                                                storyTimestamp: null
+                                                            });
+                                                        }
+                                                    }
                                                 }
                                                 
                                                 // Create current user object
@@ -2216,7 +2479,9 @@
                                                     age: 25,
                                                     photo: firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(firebaseUser.displayName || 'User') + '&background=38bd62&color=fff&size=150',
                                                     thought: thought,
-                                                    hasStory: false,
+                                                    hasStory: hasActiveStory,
+                                                    storyUrl: storyUrl,
+                                                    storyTimestamp: storyTimestamp,
                                                     distance: 0,
                                                     angle: 0,
                                                     hasNewMessage: false,
@@ -2285,13 +2550,31 @@
                                                                     }
                                                                 }
                                                                 
+                                                                // Check if story is expired (24 hours)
+                                                                let hasActiveStory = false;
+                                                                let storyUrl = null;
+                                                                let storyTimestamp = null;
+                                                                if (userData.storyUrl && userData.storyTimestamp) {
+                                                                    const now = Date.now();
+                                                                    const storyTime = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
+                                                                    const hoursPassed = (now - storyTime) / (1000 * 60 * 60);
+                                                                    
+                                                                    if (hoursPassed < 24) {
+                                                                        hasActiveStory = true;
+                                                                        storyUrl = userData.storyUrl;
+                                                                        storyTimestamp = storyTime;
+                                                                    }
+                                                                }
+                                                                
                                                                 otherUsers.push({
                                                                     id: userData.uid,
                                                                     name: userData.displayName || 'Usuario',
                                                                     age: 25,
                                                                     photo: userData.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.displayName || 'User') + '&background=38bd62&color=fff&size=150',
                                                                     thought: displayThought,
-                                                                    hasStory: false,
+                                                                    hasStory: hasActiveStory,
+                                                                    storyUrl: storyUrl,
+                                                                    storyTimestamp: storyTimestamp,
                                                                     distance: distance,
                                                                     angle: angle,
                                                                     hasNewMessage: false, // Se actualizará por el listener de mensajes
@@ -3301,6 +3584,58 @@
                 }
             };
 
+            // ==========================================
+            // UPLOAD STORY - Subir historia con imagen
+            // ==========================================
+            const uploadStory = async () => {
+                if (!storyImage || !currentUser) return;
+
+                setUploadingStory(true);
+                console.log('📸 Subiendo story...', storyImage.name);
+
+                try {
+                    // Subir imagen a Firebase Storage
+                    const storageRef = storage.ref();
+                    const storyRef = storageRef.child(`stories/${currentUser.id}/${Date.now()}_${storyImage.name}`);
+                    
+                    const uploadTask = await storyRef.put(storyImage);
+                    const storyUrl = await uploadTask.ref.getDownloadURL();
+                    
+                    console.log('✅ Story subida a Storage:', storyUrl);
+
+                    // Actualizar documento del usuario en Firestore
+                    await db.collection('users').doc(currentUser.id).update({
+                        storyUrl: storyUrl,
+                        storyTimestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    console.log('✅ Story guardada en Firestore');
+
+                    // Actualizar usuario local
+                    setUsers(prevUsers => prevUsers.map(u => 
+                        u.id === currentUser.id ? {
+                            ...u,
+                            hasStory: true,
+                            storyUrl: storyUrl,
+                            storyTimestamp: new Date()
+                        } : u
+                    ));
+
+                    // Cerrar modal
+                    setShowStoryUpload(false);
+                    setStoryImage(null);
+                    setUploadingStory(false);
+
+                    console.log('🎉 Story publicada exitosamente');
+
+                } catch (error) {
+                    console.error('❌ Error subiendo story:', error);
+                    alert('Error al subir estado: ' + error.message);
+                    setUploadingStory(false);
+                }
+            };
+
             if (!locationPermission) {
                 return (
                     <div className="location-permission">
@@ -3513,6 +3848,17 @@
                                                         </div>
                                                         {isCenter && (
                                                             <div className="direction-indicator" />
+                                                        )}
+                                                        {isCenter && (
+                                                            <div 
+                                                                className="add-story-btn" 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setShowStoryUpload(true);
+                                                                }}
+                                                            >
+                                                                +
+                                                            </div>
                                                         )}
                                                         {user.hasNewMessage && (
                                                             <div className="message-badge">1</div>
@@ -4135,6 +4481,19 @@
                                     En modo automático, el sistema combina todas las tecnologías inteligentemente para darte la mejor precisión posible según tu situación (interiores, exteriores, movimiento, etc.).
                                 </p>
                             </div>
+
+                            {/* Apply Button */}
+                            <div className="tech-apply-container">
+                                <button 
+                                    className="tech-apply-btn"
+                                    onClick={applyTechSettings}
+                                >
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Aplicar Cambios
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -4159,6 +4518,73 @@
                             </div>
                         </div>
                     )}
+
+                    {/* Story Upload Modal */}
+                    <div className={`story-upload-overlay ${showStoryUpload ? 'active' : ''}`}>
+                        <div className="story-upload-container">
+                            <div className="story-upload-header">
+                                <h2>Crear Estado</h2>
+                                <div className="story-upload-close" onClick={() => {
+                                    setShowStoryUpload(false);
+                                    setStoryImage(null);
+                                }}>
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <div className="story-preview-area">
+                                {storyImage ? (
+                                    <>
+                                        <img src={URL.createObjectURL(storyImage)} alt="Story preview" />
+                                        <div className="story-remove-btn" onClick={() => setStoryImage(null)}>
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="story-preview-placeholder">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <p>Selecciona una imagen para tu estado</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="story-upload-actions">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    id="storyImageInput"
+                                    onChange={(e) => {
+                                        if (e.target.files && e.target.files[0]) {
+                                            setStoryImage(e.target.files[0]);
+                                        }
+                                    }}
+                                />
+                                <button 
+                                    className="story-select-btn"
+                                    onClick={() => document.getElementById('storyImageInput').click()}
+                                >
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{width: '20px', height: '20px'}}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    Seleccionar Imagen
+                                </button>
+                                <button 
+                                    className="story-publish-btn"
+                                    disabled={!storyImage || uploadingStory}
+                                    onClick={uploadStory}
+                                >
+                                    {uploadingStory ? 'Publicando...' : 'Publicar Estado'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </>
             );
         }
