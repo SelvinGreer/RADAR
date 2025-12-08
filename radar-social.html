@@ -2522,20 +2522,17 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.17 - Correcciones Múltiples');
-                console.log('✅ FIX: setShowMenu → setShowSidebar (botón Aplicar funcional)');
-                console.log('🔄 CAMBIO: Botón "+" movido del avatar central al perfil');
-                console.log('📸 Ahora sube estados desde tu foto de perfil');
-                console.log('⏰ Sistema de cooldown de notificaciones (10 min)');
+                console.log('🚀 RADAR SOCIAL v2.18 - FIX CRÍTICO: Detección de Usuarios');
+                console.log('🎯 FIX: Cálculo de distancia ahora usa ubicación actualizada');
+                console.log('🎯 FIX: Usuarios se ven mutuamente en el radar correctamente');
+                console.log('🎯 PROBLEMA RESUELTO: "No aparezco en el radar del otro celular"');
                 console.log('⚡ Login instantáneo');
+                console.log('⏰ Sistema de cooldown de notificaciones (10 min)');
                 console.log('🔔 Notificaciones sociales inteligentes');
                 console.log('📱 Barra de texto ajustada para Android');
-                console.log('⚙️ Botón "Aplicar Cambios" con permisos');
+                console.log('⚙️ Botón "Aplicar Cambios" funcional');
                 console.log('💬 Mensajes persisten offline');
                 console.log('🎨 Chat estilo WhatsApp');
-                console.log('');
-                console.log('⚠️ IMPORTANTE: Configura Firebase Storage para subir estados');
-                console.log('📖 Ver: FIREBASE-STORAGE-SETUP.md');
                 
                 // Initialize audio context
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2610,6 +2607,29 @@
                             console.log('👤 Usuario creado inmediatamente:', initialUser);
                             setCurrentUser(initialUser);
                             setThought(thought);
+                            
+                            // ==========================================
+                            // MARCAR COMO ONLINE EN FIRESTORE INMEDIATAMENTE
+                            // ==========================================
+                            // Aunque no tengamos GPS aún, marcamos al usuario como online
+                            // El GPS actualizará la ubicación en unos segundos
+                            try {
+                                await db.collection('users').doc(firebaseUser.uid).set({
+                                    uid: firebaseUser.uid,
+                                    displayName: firebaseUser.displayName,
+                                    email: firebaseUser.email,
+                                    photoURL: firebaseUser.photoURL,
+                                    isOnline: true,
+                                    lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                                    // Mantener ubicación anterior si existe, o null si es primera vez
+                                    // El GPS la actualizará pronto
+                                }, { merge: true });
+                                
+                                console.log('✅ Usuario marcado como ONLINE en Firestore (esperando GPS para ubicación)');
+                            } catch (firestoreError) {
+                                console.error('⚠️ Error al marcar usuario como online:', firestoreError);
+                                // No bloqueamos el flujo si falla
+                            }
                             
                         } catch (error) {
                             console.error('❌ Error crítico al crear usuario inicial:', error);
@@ -2689,15 +2709,24 @@
                                                     .onSnapshot((snapshot) => {
                                                         const otherUsers = [];
                                                         
-                                                        // Get current location from state
-                                                        const currentLat = fusedLocation.latitude;
-                                                        const currentLon = fusedLocation.longitude;
+                                                        // CRÍTICO: Obtener ubicación actual del ESTADO, no de la variable local
+                                                        // Esto asegura que siempre usamos las coordenadas MÁS RECIENTES
+                                                        setCurrentUser(currentUserState => {
+                                                            if (!currentUserState || !currentUserState.latitude || !currentUserState.longitude) {
+                                                                console.warn('⚠️ currentUser sin ubicación válida');
+                                                                return currentUserState;
+                                                            }
+                                                            
+                                                            const currentLat = currentUserState.latitude;
+                                                            const currentLon = currentUserState.longitude;
                                                         
                                                         snapshot.forEach((doc) => {
                                                             const userData = doc.data();
                                                             
                                                             // Skip current user
                                                             if (userData.uid === firebaseUser.uid) return;
+                                                            
+                                                            console.log(`👀 Viendo usuario: ${userData.displayName || 'Unknown'}, location: ${userData.location ? 'Yes' : 'No'}, isOnline: ${userData.isOnline}`);
                                                             
                                                             // VERIFICAR ESTADO ONLINE (pero NO filtrar aún)
                                                             let isOnline = false;
@@ -2715,7 +2744,10 @@
                                                             }
                                                             
                                                             // Calculate distance and angle from current user
-                                                            if (userData.location) {
+                                                            // SOLO procesar si el usuario tiene ubicación VÁLIDA
+                                                            if (userData.location && 
+                                                                userData.location.latitude !== 0 && 
+                                                                userData.location.longitude !== 0) {
                                                                 const userLat = userData.location.latitude;
                                                                 const userLon = userData.location.longitude;
                                                                 
@@ -2754,6 +2786,8 @@
                                                                         storyTimestamp = storyTime;
                                                                     }
                                                                 }
+                                                                
+                                                                console.log(`➕ Agregando ${userData.displayName} al radar: ${distance}m, ${angle}°, online:${isOnline}`);
                                                                 
                                                                 otherUsers.push({
                                                                     id: userData.uid,
@@ -2804,6 +2838,10 @@
                                                         if (otherUsers.length > 0) {
                                                             console.log('Lista:', otherUsers.map(u => `${u.name} (${u.distance}m)`).join(', '));
                                                         }
+                                                        
+                                                        // Retornar currentUser sin cambios
+                                                        return currentUserState;
+                                                    }); // Cierre de setCurrentUser
                                                     });
                                             }
                                             
