@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
     
     <!-- PWA Meta Tags -->
@@ -651,6 +651,154 @@
             }
         }
 
+        .social-notification {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(22, 27, 34, 0.98);
+            border: 1px solid rgba(56, 189, 98, 0.3);
+            border-radius: 16px;
+            padding: 16px 20px;
+            max-width: 340px;
+            width: calc(100% - 40px);
+            z-index: 9998;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(56, 189, 98, 0.1);
+            animation: popupSlideIn 0.4s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .social-notification-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .social-notification-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid rgba(56, 189, 98, 0.5);
+            object-fit: cover;
+        }
+
+        .social-notification-info {
+            flex: 1;
+        }
+
+        .social-notification-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 2px;
+        }
+
+        .social-notification-distance {
+            font-size: 13px;
+            color: #8b949e;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .social-notification-message {
+            font-size: 14px;
+            color: #c9d1d9;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .social-notification-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .social-notification-btn {
+            flex: 1;
+            height: 38px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .social-notification-btn-primary {
+            background: linear-gradient(135deg, #38bd62 0%, #2d9d51 100%);
+            color: #fff;
+        }
+
+        .social-notification-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(56, 189, 98, 0.4);
+        }
+
+        .social-notification-btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #8b949e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .social-notification-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #c9d1d9;
+        }
+
+        .social-notification-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .social-notification-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .social-notification-close svg {
+            width: 14px;
+            height: 14px;
+            color: #8b949e;
+        }
+
+        @keyframes popupSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+        }
+
+        @keyframes popupSlideOut {
+            from {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-30px) scale(0.95);
+            }
+        }
+
+
 
         .radar-info-count {
             font-size: 32px;
@@ -768,10 +916,12 @@
 
         .bottom-bar {
             background: linear-gradient(180deg, rgba(13, 17, 23, 0) 0%, rgba(13, 17, 23, 0.98) 15%, rgba(13, 17, 23, 1) 100%);
-            padding: 16px 20px 28px;
+            padding: 16px 20px calc(28px + env(safe-area-inset-bottom, 0px));
             display: flex;
             gap: 12px;
             align-items: center;
+            position: relative;
+            z-index: 10;
         }
 
         .thought-input-container {
@@ -2059,6 +2209,8 @@
             const [showStoryUpload, setShowStoryUpload] = useState(false);
             const [storyImage, setStoryImage] = useState(null);
             const [uploadingStory, setUploadingStory] = useState(false);
+            const [socialNotifications, setSocialNotifications] = useState([]);
+            const [previousNearbyUsers, setPreviousNearbyUsers] = useState([]);
             const [viewingStory, setViewingStory] = useState(null);
             const [deviceHeading, setDeviceHeading] = useState(0); // Phone compass direction
             const [lastKnownPositions, setLastKnownPositions] = useState({}); // For GPS smoothing
@@ -2369,17 +2521,17 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v2.11 - Botón Aplicar Tecnologías');
-                console.log('✨ NUEVO: Botón "Aplicar Cambios" en panel de tecnologías');
-                console.log('✨ Solicita permisos necesarios (micrófono, sensores)');
-                console.log('✨ Cierra menú y actualiza badge automáticamente');
-                console.log('✨ Notificación visual de confirmación');
-                console.log('✨ Activa tecnologías seleccionadas en tiempo real');
-                console.log('📸 Subir estados con imágenes (24h)');
-                console.log('⚙️ Badge sincronizado con panel tecnologías');
+                console.log('🚀 RADAR SOCIAL v2.13 - Fix Autenticación Google');
+                console.log('✅ FIX CRÍTICO: Usuario aparece INMEDIATAMENTE al login');
+                console.log('✅ Foto y datos visibles en menú sin esperar GPS');
+                console.log('✅ Avatar en centro del radar aparece al instante');
+                console.log('✅ GPS actualiza ubicación en segundo plano');
+                console.log('🔔 Notificaciones sociales cuando alguien se acerca');
+                console.log('📱 Barra de texto ajustada para Android');
+                console.log('⚙️ Botón "Aplicar Cambios" con permisos');
+                console.log('📸 Estados/Stories (24h)');
                 console.log('💬 Mensajes persisten offline');
                 console.log('🎨 Chat estilo WhatsApp');
-                console.log('📬 Inbox de mensajes');
                 
                 // Initialize audio context
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2388,8 +2540,75 @@
                 // Load real user from Firebase
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
-                        console.log('Firebase User loaded:', firebaseUser);
-                        console.log('Photo URL:', firebaseUser.photoURL);
+                        console.log('✅ Firebase User logged in:', firebaseUser.displayName);
+                        console.log('📧 Email:', firebaseUser.email);
+                        console.log('📷 Photo URL:', firebaseUser.photoURL);
+                        
+                        // ==========================================
+                        // CREAR USUARIO INMEDIATAMENTE (sin esperar GPS)
+                        // ==========================================
+                        
+                        // Obtener datos del usuario de Firestore
+                        const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
+                        
+                        let thought = '';
+                        let hasActiveStory = false;
+                        let storyUrl = null;
+                        let storyTimestamp = null;
+                        
+                        if (userDoc.exists) {
+                            const userData = userDoc.data();
+                            
+                            // Check thought expiration
+                            if (userData.thought && userData.thoughtTimestamp) {
+                                const now = Date.now();
+                                const thoughtTime = userData.thoughtTimestamp.toMillis ? userData.thoughtTimestamp.toMillis() : userData.thoughtTimestamp;
+                                const hoursPassed = (now - thoughtTime) / (1000 * 60 * 60);
+                                
+                                if (hoursPassed < 24) {
+                                    thought = userData.thought;
+                                }
+                            }
+                            
+                            // Check story expiration
+                            if (userData.storyUrl && userData.storyTimestamp) {
+                                const now = Date.now();
+                                const storyTime = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
+                                const hoursPassed = (now - storyTime) / (1000 * 60 * 60);
+                                
+                                if (hoursPassed < 24) {
+                                    hasActiveStory = true;
+                                    storyUrl = userData.storyUrl;
+                                    storyTimestamp = storyTime;
+                                }
+                            }
+                        }
+                        
+                        // Crear usuario INMEDIATAMENTE con ubicación temporal (0, 0)
+                        const initialUser = {
+                            id: firebaseUser.uid,
+                            name: firebaseUser.displayName || 'Usuario',
+                            age: 25,
+                            photo: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'User')}&background=38bd62&color=fff&size=150`,
+                            thought: thought,
+                            hasStory: hasActiveStory,
+                            storyUrl: storyUrl,
+                            storyTimestamp: storyTimestamp,
+                            distance: 0,
+                            angle: 0,
+                            hasNewMessage: false,
+                            email: firebaseUser.email,
+                            latitude: 0,  // Se actualizará con GPS
+                            longitude: 0  // Se actualizará con GPS
+                        };
+                        
+                        console.log('👤 Usuario creado inmediatamente:', initialUser);
+                        setCurrentUser(initialUser);
+                        setThought(thought);
+                        
+                        // ==========================================
+                        // AHORA SÍ, OBTENER UBICACIÓN GPS
+                        // ==========================================
                         
                         // Get user's current location with HIGH PRECISION
                         if ('geolocation' in navigator) {
@@ -2434,6 +2653,13 @@
                                             latitude: fusedLocation.latitude, 
                                             longitude: fusedLocation.longitude 
                                         };
+                                        
+                                        // ✅ ACTUALIZAR USUARIO CON UBICACIÓN REAL
+                                        setCurrentUser(prev => ({
+                                            ...prev,
+                                            latitude: fusedLocation.latitude,
+                                            longitude: fusedLocation.longitude
+                                        }));
                                     } else {
                                         console.log(`📍 Movement ignored (< 3m)`);
                                     }
@@ -2443,78 +2669,9 @@
                                         lastUpdateTime = currentTime;
                                         
                                         try {
-                                            // First time setup
+                                            // First time setup - iniciar listener de usuarios
                                             if (!usersUnsubscribe) {
-                                                // Get user data from Firestore
-                                                const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
-                                                
-                                                let thought = '';
-                                                let thoughtTimestamp = null;
-                                                if (userDoc.exists) {
-                                                    const userData = userDoc.data();
-                                                    thoughtTimestamp = userData.thoughtTimestamp;
-                                                    
-                                                    // Check if thought is expired (24 hours)
-                                                    if (userData.thought && thoughtTimestamp) {
-                                                        const now = Date.now();
-                                                        const thoughtTime = thoughtTimestamp.toMillis ? thoughtTimestamp.toMillis() : thoughtTimestamp;
-                                                        const hoursPassed = (now - thoughtTime) / (1000 * 60 * 60);
-                                                        
-                                                        if (hoursPassed < 24) {
-                                                            thought = userData.thought;
-                                                        } else {
-                                                            // Clear expired thought
-                                                            await db.collection('users').doc(firebaseUser.uid).update({
-                                                                thought: '',
-                                                                thoughtTimestamp: null
-                                                            });
-                                                        }
-                                                    }
-                                                    
-                                                    // Check if story is expired (24 hours)
-                                                    let hasActiveStory = false;
-                                                    let storyUrl = null;
-                                                    let storyTimestamp = null;
-                                                    if (userData.storyUrl && userData.storyTimestamp) {
-                                                        const now = Date.now();
-                                                        const storyTime = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
-                                                        const hoursPassed = (now - storyTime) / (1000 * 60 * 60);
-                                                        
-                                                        if (hoursPassed < 24) {
-                                                            hasActiveStory = true;
-                                                            storyUrl = userData.storyUrl;
-                                                            storyTimestamp = storyTime;
-                                                        } else {
-                                                            // Clear expired story
-                                                            await db.collection('users').doc(firebaseUser.uid).update({
-                                                                storyUrl: null,
-                                                                storyTimestamp: null
-                                                            });
-                                                        }
-                                                    }
-                                                }
-                                                
-                                                // Create current user object
-                                                const realUser = {
-                                                    id: firebaseUser.uid,
-                                                    name: firebaseUser.displayName || 'Usuario',
-                                                    age: 25,
-                                                    photo: firebaseUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(firebaseUser.displayName || 'User') + '&background=38bd62&color=fff&size=150',
-                                                    thought: thought,
-                                                    hasStory: hasActiveStory,
-                                                    storyUrl: storyUrl,
-                                                    storyTimestamp: storyTimestamp,
-                                                    distance: 0,
-                                                    angle: 0,
-                                                    hasNewMessage: false,
-                                                    email: firebaseUser.email,
-                                                    latitude: latitude,
-                                                    longitude: longitude
-                                                };
-                                                
-                                                console.log('Real user created:', realUser);
-                                                setCurrentUser(realUser);
-                                                setThought(realUser.thought);
+                                                console.log('🔄 Iniciando listener de otros usuarios...');
                                                 
                                                 // Listen to all users in real-time
                                                 usersUnsubscribe = db.collection('users')
@@ -2523,8 +2680,8 @@
                                                         const otherUsers = [];
                                                         
                                                         // Get current location from state
-                                                        const currentLat = latitude;
-                                                        const currentLon = longitude;
+                                                        const currentLat = fusedLocation.latitude;
+                                                        const currentLon = fusedLocation.longitude;
                                                         
                                                         snapshot.forEach((doc) => {
                                                             const userData = doc.data();
@@ -2973,6 +3130,68 @@
                 console.log(`⚙️ Tecnología activa: ${tech.name} ${tech.icon} ±${tech.precision}m (Modo: ${techSettings.mode})`);
                 
             }, [techSettings, ultrasonicActive, ultrasonicDetections.nearby, sensorData.isMoving, locationAccuracy]);
+
+            // ==========================================
+            // SOCIAL NOTIFICATIONS - Detectar usuarios nuevos cerca
+            // ==========================================
+            useEffect(() => {
+                if (!currentUser || !users) return;
+
+                // Filtrar usuarios cercanos (dentro de 50m)
+                const nearbyUsers = users.filter(u => 
+                    u.id !== currentUser.id && 
+                    u.distance > 0 && 
+                    u.distance <= 50 &&
+                    u.isOnline
+                );
+
+                // Detectar nuevos usuarios que acaban de entrar al rango
+                const newUsers = nearbyUsers.filter(newUser => {
+                    // Verificar si no estaba en la lista anterior
+                    const wasNearbyBefore = previousNearbyUsers.some(prevUser => prevUser.id === newUser.id);
+                    return !wasNearbyBefore;
+                });
+
+                // Si hay nuevos usuarios, mostrar notificaciones
+                if (newUsers.length > 0) {
+                    newUsers.forEach((user, index) => {
+                        // Delay escalonado para múltiples notificaciones
+                        setTimeout(() => {
+                            // Mensajes aleatorios
+                            const messages = [
+                                `¡${user.name} está cerca! ${user.distance < 10 ? '¡Muy cerca!' : ''} ¿Por qué no saludas? 👋`,
+                                `${user.name} acaba de aparecer en tu radar. ¡Es un buen momento para conectar! 💬`,
+                                `¡Mira quién está por aquí! ${user.name} está a solo ${Math.round(user.distance)}m. ¿Conversamos? 🎯`,
+                                `${user.name} está cerca (${Math.round(user.distance)}m). ¡Envía un mensaje y rompe el hielo! ❄️`,
+                                `¡Nueva conexión disponible! ${user.name} está en tu área. ¿Te animas a escribir? ✨`
+                            ];
+
+                            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+                            const notification = {
+                                id: `notif-${user.id}-${Date.now()}`,
+                                user: user,
+                                message: randomMessage
+                            };
+
+                            setSocialNotifications(prev => [...prev, notification]);
+
+                            console.log(`📢 Nueva notificación: ${user.name} detectado a ${Math.round(user.distance)}m`);
+
+                            // Auto-remover después de 8 segundos
+                            setTimeout(() => {
+                                setSocialNotifications(prev => prev.filter(n => n.id !== notification.id));
+                            }, 8000);
+
+                        }, index * 400); // 400ms de delay entre notificaciones
+                    });
+                }
+
+                // Actualizar lista de usuarios cercanos
+                setPreviousNearbyUsers(nearbyUsers);
+
+            }, [users, currentUser]);
+
 
 
             // ==========================================
@@ -3765,6 +3984,31 @@
                     console.error('❌ Error aplicando configuración:', error);
                     alert('Error al aplicar configuración: ' + error.message);
                 }
+            };
+
+            // ==========================================
+            // SOCIAL NOTIFICATION ACTIONS
+            // ==========================================
+            const openChatFromNotification = (user, notificationId) => {
+                console.log(`💬 Abriendo chat con ${user.name} desde notificación`);
+                
+                // Cerrar notificación
+                setSocialNotifications(prev => prev.filter(n => n.id !== notificationId));
+                
+                // Abrir chat
+                setSelectedUser(user);
+                
+                // Marcar mensaje como leído si existe
+                setUsers(prevUsers => prevUsers.map(u => 
+                    u.id === user.id ? { ...u, hasNewMessage: false } : u
+                ));
+            };
+
+            const dismissNotification = (notificationId) => {
+                setSocialNotifications(prev => {
+                    const updated = prev.filter(n => n.id !== notificationId);
+                    return updated;
+                });
             };
 
             if (!locationPermission) {
@@ -4649,6 +4893,68 @@
                             </div>
                         </div>
                     )}
+
+                    {/* Social Notifications */}
+                    {socialNotifications.map((notification, index) => (
+                        <div 
+                            key={notification.id} 
+                            className="social-notification"
+                            style={{
+                                top: `${100 + (index * 10)}px`,
+                                zIndex: 9998 - index
+                            }}
+                        >
+                            <button 
+                                className="social-notification-close"
+                                onClick={() => dismissNotification(notification.id)}
+                            >
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                            
+                            <div className="social-notification-header">
+                                <img 
+                                    src={notification.user.photo} 
+                                    alt={notification.user.name}
+                                    className="social-notification-avatar"
+                                />
+                                <div className="social-notification-info">
+                                    <div className="social-notification-name">
+                                        {notification.user.name}
+                                    </div>
+                                    <div className="social-notification-distance">
+                                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                        </svg>
+                                        {Math.round(notification.user.distance)} metros de distancia
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="social-notification-message">
+                                {notification.message}
+                            </div>
+
+                            <div className="social-notification-actions">
+                                <button 
+                                    className="social-notification-btn social-notification-btn-primary"
+                                    onClick={() => openChatFromNotification(notification.user, notification.id)}
+                                >
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                    Enviar Mensaje
+                                </button>
+                                <button 
+                                    className="social-notification-btn social-notification-btn-secondary"
+                                    onClick={() => dismissNotification(notification.id)}
+                                >
+                                    Después
+                                </button>
+                            </div>
+                        </div>
+                    ))}
 
                     {/* Story Upload Modal */}
                     <div className={`story-upload-overlay ${showStoryUpload ? 'active' : ''}`}>
