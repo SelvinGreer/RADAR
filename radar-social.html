@@ -2959,16 +2959,20 @@
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
             
             // Crear marker personalizado (avatar) para un usuario en el mapa
-            const createUserMarker = (user, map, isCurrentUser = false) => {
+            const createUserMarker = (user, map, currentUserData, isCurrentUser = false) => {
                 // Crear elemento HTML del marker
                 const markerDiv = document.createElement('div');
                 markerDiv.className = 'map-marker';
+                
+                // Z-index dinámico: usuarios más cerca quedan detrás, más lejos adelante
+                const zIndex = calculateZIndex(user, currentUserData, isCurrentUser);
+                
                 markerDiv.style.cssText = `
                     width: ${isCurrentUser ? '60px' : '50px'};
                     height: ${isCurrentUser ? '60px' : '50px'};
                     cursor: pointer;
                     position: relative;
-                    z-index: ${isCurrentUser ? 1000 : 100};
+                    z-index: ${zIndex};
                 `;
                 
                 // Anillo (story o estado online)
@@ -3020,28 +3024,58 @@
                 if (user.thought && user.thought.trim() && (user.isOnline || Date.now() - (user.thoughtTime || 0) < 3600000)) {
                     const thoughtLabel = document.createElement('div');
                     thoughtLabel.textContent = user.thought;
-                    thoughtLabel.style.cssText = `
-                        position: absolute;
-                        bottom: 100%;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        background: rgba(13, 17, 23, 0.95);
-                        backdrop-filter: blur(12px);
-                        -webkit-backdrop-filter: blur(12px);
-                        color: #e6edf3;
-                        padding: 8px 12px;
-                        border-radius: 12px;
-                        font-size: 12px;
-                        font-weight: 500;
-                        white-space: nowrap;
-                        margin-bottom: 8px;
-                        border: 1px solid rgba(56, 189, 98, 0.3);
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-                        max-width: 150px;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        pointer-events: none;
-                    `;
+                    
+                    // Estilo diferente si es el usuario actual (más sutil)
+                    if (isCurrentUser) {
+                        thoughtLabel.style.cssText = `
+                            position: absolute;
+                            bottom: 100%;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            background: rgba(56, 189, 98, 0.15);
+                            backdrop-filter: blur(8px);
+                            -webkit-backdrop-filter: blur(8px);
+                            color: #38bd62;
+                            padding: 5px 10px;
+                            border-radius: 10px;
+                            font-size: 10px;
+                            font-weight: 600;
+                            white-space: nowrap;
+                            margin-bottom: 6px;
+                            border: 1px solid rgba(56, 189, 98, 0.4);
+                            box-shadow: 0 2px 6px rgba(56, 189, 98, 0.3);
+                            max-width: 120px;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            pointer-events: none;
+                            opacity: 0.9;
+                        `;
+                    } else {
+                        // Estilo normal para otros usuarios
+                        thoughtLabel.style.cssText = `
+                            position: absolute;
+                            bottom: 100%;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            background: rgba(13, 17, 23, 0.95);
+                            backdrop-filter: blur(12px);
+                            -webkit-backdrop-filter: blur(12px);
+                            color: #e6edf3;
+                            padding: 8px 12px;
+                            border-radius: 12px;
+                            font-size: 12px;
+                            font-weight: 500;
+                            white-space: nowrap;
+                            margin-bottom: 8px;
+                            border: 1px solid rgba(56, 189, 98, 0.3);
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+                            max-width: 150px;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            pointer-events: none;
+                        `;
+                    }
+                    
                     markerDiv.appendChild(thoughtLabel);
                 }
                 
@@ -3117,92 +3151,19 @@
             
             
             // ==========================================
-            // SISTEMA DE REPULSIÓN "AGUA Y ACEITE"
+            // Z-INDEX INTELIGENTE PARA EVITAR SUPERPOSICIÓN
             // ==========================================
-            // Evita que avatares se superpongan cuando están muy cerca
+            // Asigna z-index basado en distancia al usuario
             
-            const applyAvatarRepulsion = (markers, googleMap, currentUserId) => {
-                if (!googleMap || Object.keys(markers).length < 2) return;
+            const calculateZIndex = (user, currentUser, isCurrentUser) => {
+                if (isCurrentUser) return 1000; // Usuario actual siempre al frente
                 
-                const overlayProjection = googleMap.getProjection();
-                if (!overlayProjection) return;
+                // Usuarios más cerca tienen z-index MÁS BAJO (quedan detrás)
+                // Usuarios más lejos tienen z-index MÁS ALTO (quedan adelante)
+                const baseZIndex = 100;
+                const distanceBonus = Math.floor(user.distance); // 1 punto por metro
                 
-                // Obtener posiciones de todos los markers en píxeles
-                const markerPositions = {};
-                Object.entries(markers).forEach(([userId, marker]) => {
-                    const latLng = marker.position;
-                    const pixel = overlayProjection.fromLatLngToContainerPixel(latLng);
-                    if (pixel) {
-                        markerPositions[userId] = {
-                            marker: marker,
-                            pixel: { x: pixel.x, y: pixel.y },
-                            originalPixel: { x: pixel.x, y: pixel.y },
-                            isCurrentUser: userId === currentUserId
-                        };
-                    }
-                });
-                
-                // Radio de colisión (tamaño del avatar + margen)
-                const collisionRadius = 35; // 60px avatar + margen
-                const repulsionStrength = 0.8; // Fuerza de repulsión
-                const iterations = 5; // Iteraciones para suavizar
-                
-                // Aplicar repulsión en múltiples iteraciones
-                for (let iter = 0; iter < iterations; iter++) {
-                    Object.entries(markerPositions).forEach(([userId1, data1]) => {
-                        Object.entries(markerPositions).forEach(([userId2, data2]) => {
-                            if (userId1 >= userId2) return; // Evitar duplicados
-                            
-                            // Calcular distancia entre avatares
-                            const dx = data2.pixel.x - data1.pixel.x;
-                            const dy = data2.pixel.y - data1.pixel.y;
-                            const distance = Math.sqrt(dx * dx + dy * dy);
-                            
-                            // Si están muy cerca, aplicar repulsión
-                            if (distance < collisionRadius && distance > 0) {
-                                const overlap = collisionRadius - distance;
-                                const force = overlap * repulsionStrength;
-                                
-                                // Vector de repulsión normalizado
-                                const nx = dx / distance;
-                                const ny = dy / distance;
-                                
-                                // Aplicar fuerza (el usuario actual tiene prioridad)
-                                if (data1.isCurrentUser) {
-                                    // Solo mover el otro avatar
-                                    data2.pixel.x += nx * force;
-                                    data2.pixel.y += ny * force;
-                                } else if (data2.isCurrentUser) {
-                                    // Solo mover el otro avatar
-                                    data1.pixel.x -= nx * force;
-                                    data1.pixel.y -= ny * force;
-                                } else {
-                                    // Mover ambos avatares
-                                    data1.pixel.x -= nx * force * 0.5;
-                                    data1.pixel.y -= ny * force * 0.5;
-                                    data2.pixel.x += nx * force * 0.5;
-                                    data2.pixel.y += ny * force * 0.5;
-                                }
-                            }
-                        });
-                    });
-                }
-                
-                // Aplicar nuevas posiciones
-                Object.entries(markerPositions).forEach(([userId, data]) => {
-                    if (!data.isCurrentUser) { // Solo mover otros avatares, no el usuario actual
-                        const newPixel = new google.maps.Point(data.pixel.x, data.pixel.y);
-                        const newLatLng = overlayProjection.fromContainerPixelToLatLng(newPixel);
-                        
-                        if (newLatLng) {
-                            // Actualizar posición del marker
-                            data.marker.position = newLatLng;
-                            data.marker.draw();
-                        }
-                    }
-                });
-                
-                console.log(`🔄 Repulsión aplicada a ${Object.keys(markerPositions).length} avatares`);
+                return baseZIndex + distanceBonus;
             };
             
             // Actualizar markers de usuarios en el mapa
@@ -3219,7 +3180,7 @@
                 const newMarkers = {};
                 
                 // Marker del usuario actual (centro)
-                newMarkers[currentUser.id] = createUserMarker(currentUser, googleMap, true);
+                newMarkers[currentUser.id] = createUserMarker(currentUser, googleMap, currentUser, true);
                 
                 // Markers de otros usuarios (dentro del radio)
                 users
@@ -3229,32 +3190,14 @@
                         return user.isOnline || user.hasNewMessage;
                     })
                     .forEach(user => {
-                        newMarkers[user.id] = createUserMarker(user, googleMap, false);
+                        newMarkers[user.id] = createUserMarker(user, googleMap, currentUser, false);
                     });
                 
                 setMapMarkers(newMarkers);
                 
                 console.log(`✅ ${Object.keys(newMarkers).length} markers actualizados`);
                 
-                // Aplicar repulsión después de que los markers estén renderizados
-                setTimeout(() => {
-                    if (Object.keys(newMarkers).length > 1) {
-                        applyAvatarRepulsion(newMarkers, googleMap, currentUser.id);
-                    }
-                }, 100); // Pequeño delay para asegurar renderizado completo
-                
             }, [googleMap, currentUser, users, radius, viewedStories]);
-            
-            // Re-aplicar repulsión cuando cambia el zoom/radio
-            useEffect(() => {
-                if (!googleMap || !currentUser || Object.keys(mapMarkers).length < 2) return;
-                
-                const timeoutId = setTimeout(() => {
-                    applyAvatarRepulsion(mapMarkers, googleMap, currentUser.id);
-                }, 150);
-                
-                return () => clearTimeout(timeoutId);
-            }, [radius]); // Se ejecuta cuando cambia el radio (zoom)
 
             // ==========================================
             // ULTRASONIC SYSTEM - Audio Ultrasónico
