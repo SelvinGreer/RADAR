@@ -185,6 +185,9 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             padding: max(env(safe-area-inset-top), 12px) 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         
         /* Slider flotante en la parte inferior */
@@ -227,6 +230,77 @@
         .map-people-counter-text {
             font-size: 13px;
             color: rgba(230, 237, 243, 0.7);
+        }
+        
+        /* Contenedor de pensamientos flotantes */
+        .thoughts-container {
+            position: absolute;
+            top: calc(max(env(safe-area-inset-top), 12px) + 140px);
+            left: 16px;
+            right: 16px;
+            z-index: 10;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 12px 0;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
+        
+        .thoughts-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari */
+        }
+        
+        .thought-bubble {
+            flex-shrink: 0;
+            background: rgba(13, 17, 23, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(56, 189, 98, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            max-width: 280px;
+        }
+        
+        .thought-bubble:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+            border-color: rgba(56, 189, 98, 0.4);
+        }
+        
+        .thought-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #38bd62;
+        }
+        
+        .thought-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .thought-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #38bd62;
+            margin-bottom: 4px;
+        }
+        
+        .thought-text {
+            font-size: 13px;
+            color: rgba(230, 237, 243, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* OCULTAR estilos antiguos del radar circular (ya no se usan) */
@@ -2920,12 +2994,17 @@
             
             // Actualizar zoom del mapa cuando cambia el radio
             useEffect(() => {
-                if (googleMap && radius) {
+                if (googleMap && radius && currentUser) {
                     const newZoom = getZoomFromRadius(radius);
+                    // ✅ CENTRAR EN USUARIO al hacer zoom
+                    googleMap.setCenter({ 
+                        lat: currentUser.latitude, 
+                        lng: currentUser.longitude 
+                    });
                     googleMap.setZoom(newZoom);
-                    console.log(`🔍 Zoom actualizado a ${newZoom} (radio: ${radius}m)`);
+                    console.log(`🔍 Zoom actualizado a ${newZoom} (radio: ${radius}m) - Centrado en usuario`);
                 }
-            }, [radius, googleMap]);
+            }, [radius, googleMap, currentUser]);
             
             // Inicializar mapa cuando tengamos ubicación del usuario
             useEffect(() => {
@@ -3433,6 +3512,12 @@
                                     const { latitude, longitude, accuracy } = position.coords;
                                     const currentTime = Date.now();
                                     
+                                    // ✅ IGNORAR LECTURAS MUY IMPRECISAS (especialmente al inicio)
+                                    if (accuracy > 100) {
+                                        console.log(`⚠️ GPS impreciso ignorado: ±${accuracy.toFixed(1)}m (esperando mejor señal...)`);
+                                        return;
+                                    }
+                                    
                                     // ==========================================
                                     // APLICAR SENSOR FUSION 🧠
                                     // ==========================================
@@ -3743,8 +3828,8 @@
                                 },
                                 {
                                     enableHighAccuracy: true,  // ✅ Alta precisión GPS
-                                    timeout: 30000,            // 30 segundos timeout (aumentado para evitar errores)
-                                    maximumAge: 0              // No usar caché
+                                    timeout: 30000,            // 30 segundos timeout
+                                    maximumAge: 5000           // Usar caché de 5 segundos (evita ubicación inicial mala)
                                 }
                             );
                             
@@ -5536,8 +5621,6 @@
                                     </div>
                                 </div>
                                 
-                                <div style={{ width: 28 }}></div>
-                                
                                 <div style={{ position: 'relative' }}>
                                     <svg className="header-icon" onClick={() => setShowInbox(true)} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -5583,6 +5666,25 @@
                                 </div>
                                 <div className="map-people-counter-text">cerca</div>
                             </div>
+                            
+                            {/* Pensamientos flotantes - Mostrar pensamientos recientes */}
+                            {users.filter(u => u.thought && u.thought.trim() && u.distance <= radius && (u.isOnline || Date.now() - u.thoughtTime < 3600000)).length > 0 && (
+                                <div className="thoughts-container">
+                                    {users
+                                        .filter(u => u.thought && u.thought.trim() && u.distance <= radius && (u.isOnline || Date.now() - u.thoughtTime < 3600000))
+                                        .slice(0, 5)
+                                        .map(user => (
+                                            <div key={user.id} className="thought-bubble" onClick={() => handleAvatarClick(user)}>
+                                                <img src={user.photo} alt={user.name} className="thought-avatar" />
+                                                <div className="thought-content">
+                                                    <div className="thought-name">{user.name}</div>
+                                                    <div className="thought-text">{user.thought}</div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    }
+                                </div>
+                            )}
                             
                             {/* ELIMINADO: Radar circular, avatares renderizados manualmente */}
                             {/* Ahora los avatares son markers de Google Maps */}
