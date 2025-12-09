@@ -24,9 +24,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
-    <!-- Leaflet - Mapa gratuito sin API key -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBk2KGmLLvHlKC1rqCzYHXsQwGZdXnH7xE&libraries=places"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -159,8 +158,8 @@
             overflow: hidden;
         }
 
-        /* Leaflet Map Container - Pantalla completa */
-        #leaflet-map {
+        /* Google Map Container - Pantalla completa */
+        #google-map {
             position: absolute;
             top: 0;
             left: 0;
@@ -169,8 +168,9 @@
             z-index: 1;
         }
         
-        /* Ocultar atribución de Leaflet para estética limpia */
-        #leaflet-map .leaflet-control-attribution {
+        /* Ocultar controles de Google Maps para estética limpia */
+        #google-map .gm-style-cc,
+        #google-map .gm-style a[href^="https://maps.google.com/maps"] {
             display: none !important;
         }
         
@@ -238,12 +238,6 @@
         .radar-line,
         .radar-sweep {
             display: none;
-        }
-        
-        /* Leaflet custom markers */
-        .custom-marker {
-            background: none !important;
-            border: none !important;
         }
 
         .radar-bg {
@@ -2629,7 +2623,7 @@
             const [socialNotifications, setSocialNotifications] = useState([]);
             const [notificationsEnabled, setNotificationsEnabled] = useState(false);
             const [soundEnabled, setSoundEnabled] = useState(true);
-            const [leafletMap, setLeafletMap] = useState(null); // Instancia del mapa de Leaflet
+            const [googleMap, setGoogleMap] = useState(null); // Instancia del mapa de Google
             const [mapMarkers, setMapMarkers] = useState({}); // Markers de usuarios en el mapa
             const mapRef = useRef(null); // Referencia al div del mapa
             const [wakeLockEnabled, setWakeLockEnabled] = useState(false);
@@ -2787,35 +2781,136 @@
             };
 
             // ==========================================
-            // LEAFLET MAP - Mapa gratuito sin API key
+            // GOOGLE MAPS - Inicialización y Manejo
             // ==========================================
             
-            // Inicializar mapa de Leaflet con OpenStreetMap
-            const initializeLeafletMap = (lat, lng) => {
-                if (!mapRef.current || leafletMap) return;
+            // Inicializar mapa de Google Maps
+            const initializeGoogleMap = (lat, lng) => {
+                console.log('🗺️ initializeGoogleMap llamada con:', lat, lng);
+                console.log('   mapRef.current:', mapRef.current);
+                console.log('   googleMap:', googleMap);
+                console.log('   typeof google:', typeof google);
+                console.log('   typeof google.maps:', typeof google !== 'undefined' ? typeof google.maps : 'google undefined');
                 
-                console.log('🗺️ Inicializando Leaflet Map en:', lat, lng);
+                if (!mapRef.current) {
+                    console.error('❌ mapRef.current es null!');
+                    return;
+                }
+                
+                if (googleMap) {
+                    console.log('⚠️ googleMap ya existe, no reinicializar');
+                    return;
+                }
+                
+                if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+                    console.error('❌ Google Maps API no está cargada!');
+                    return;
+                }
+                
+                console.log('✅ Todas las verificaciones pasaron, creando mapa...');
+                
+                // Estilo dark/military para el mapa (como Instagram)
+                const darkStyle = [
+                    { elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
+                    { elementType: 'labels.text.stroke', stylers: [{ color: '#0d1117' }] },
+                    { elementType: 'labels.text.fill', stylers: [{ color: '#8696a0' }] },
+                    {
+                        featureType: 'administrative.locality',
+                        elementType: 'labels.text.fill',
+                        stylers: [{ color: '#a0a9b1' }]
+                    },
+                    {
+                        featureType: 'poi',
+                        elementType: 'labels.text.fill',
+                        stylers: [{ color: '#757c85' }]
+                    },
+                    {
+                        featureType: 'poi.park',
+                        elementType: 'geometry',
+                        stylers: [{ color: '#1a2a1f' }]
+                    },
+                    {
+                        featureType: 'poi.park',
+                        elementType: 'labels.text.fill',
+                        stylers: [{ color: '#5a7061' }]
+                    },
+                    {
+                        featureType: 'road',
+                        elementType: 'geometry',
+                        stylers: [{ color: '#1f2933' }]
+                    },
+                    {
+                        featureType: 'road',
+                        elementType: 'geometry.stroke',
+                        stylers: [{ color: '#2a3542' }]
+                    },
+                    {
+                        featureType: 'road',
+                        elementType: 'labels.text.fill',
+                        stylers: [{ color: '#9ca5af' }]
+                    },
+                    {
+                        featureType: 'road.highway',
+                        elementType: 'geometry',
+                        stylers: [{ color: '#2e3d4d' }]
+                    },
+                    {
+                        featureType: 'road.highway',
+                        elementType: 'geometry.stroke',
+                        stylers: [{ color: '#3a4a5c' }]
+                    },
+                    {
+                        featureType: 'transit',
+                        elementType: 'geometry',
+                        stylers: [{ color: '#1a2530' }]
+                    },
+                    {
+                        featureType: 'transit.station',
+                        elementType: 'labels.text.fill',
+                        stylers: [{ color: '#757c85' }]
+                    },
+                    {
+                        featureType: 'water',
+                        elementType: 'geometry',
+                        stylers: [{ color: '#0a1520' }]
+                    },
+                    {
+                        featureType: 'water',
+                        elementType: 'labels.text.fill',
+                        stylers: [{ color: '#4a5a68' }]
+                    },
+                    {
+                        featureType: 'water',
+                        elementType: 'labels.text.stroke',
+                        stylers: [{ color: '#0a1520' }]
+                    }
+                ];
                 
                 // Crear mapa
-                const map = L.map(mapRef.current, {
-                    center: [lat, lng],
+                const map = new google.maps.Map(mapRef.current, {
+                    center: { lat, lng },
                     zoom: getZoomFromRadius(radius),
-                    zoomControl: false, // Ocultar controles
-                    attributionControl: false // Ocultar atribución
+                    styles: darkStyle,
+                    disableDefaultUI: true, // Ocultar controles default
+                    gestureHandling: 'greedy', // Permitir arrastrar con un dedo
+                    clickableIcons: false, // No hacer POIs clickeables
+                    mapTypeControl: false,
+                    fullscreenControl: false,
+                    streetViewControl: false,
+                    zoomControl: false,
                 });
                 
-                // Agregar capa de OpenStreetMap (estilo dark)
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 20,
-                    attribution: ''
-                }).addTo(map);
-                
-                setLeafletMap(map);
-                console.log('✅ Leaflet Map inicializado');
+                setGoogleMap(map);
+                console.log('✅ Google Maps CREADO Y GUARDADO!');
+                console.log('   Mapa:', map);
+                console.log('   Centro:', map.getCenter());
+                console.log('   Zoom:', map.getZoom());
             };
             
-            // Convertir radio (metros) a nivel de zoom de Leaflet
+            // Convertir radio (metros) a nivel de zoom de Google Maps
             const getZoomFromRadius = (radiusInMeters) => {
+                // Fórmula aproximada para convertir radio a zoom
+                // Zoom 20 = ~50m, Zoom 19 = ~100m, Zoom 18 = ~200m, etc.
                 if (radiusInMeters <= 5) return 20;
                 if (radiusInMeters <= 30) return 19;
                 if (radiusInMeters <= 60) return 18;
@@ -2825,32 +2920,59 @@
             
             // Actualizar zoom del mapa cuando cambia el radio
             useEffect(() => {
-                if (leafletMap && radius) {
+                if (googleMap && radius) {
                     const newZoom = getZoomFromRadius(radius);
-                    leafletMap.setZoom(newZoom);
+                    googleMap.setZoom(newZoom);
                     console.log(`🔍 Zoom actualizado a ${newZoom} (radio: ${radius}m)`);
                 }
-            }, [radius, leafletMap]);
+            }, [radius, googleMap]);
             
             // Inicializar mapa cuando tengamos ubicación del usuario
             useEffect(() => {
-                if (currentUser && currentUser.latitude && currentUser.longitude && !leafletMap) {
-                    initializeLeafletMap(currentUser.latitude, currentUser.longitude);
+                console.log('🔄 useEffect de inicialización ejecutado');
+                console.log('   currentUser:', currentUser);
+                console.log('   currentUser.latitude:', currentUser?.latitude);
+                console.log('   currentUser.longitude:', currentUser?.longitude);
+                console.log('   googleMap:', googleMap);
+                
+                if (currentUser && currentUser.latitude && currentUser.longitude && !googleMap) {
+                    console.log('✅ Condiciones cumplidas, llamando initializeGoogleMap...');
+                    initializeGoogleMap(currentUser.latitude, currentUser.longitude);
+                } else {
+                    console.log('⏳ Esperando condiciones:', {
+                        tieneUsuario: !!currentUser,
+                        tieneLatitud: !!currentUser?.latitude,
+                        tieneLongitud: !!currentUser?.longitude,
+                        noTieneMapa: !googleMap
+                    });
                 }
-            }, [currentUser, leafletMap]);
+            }, [currentUser, googleMap]);
             
             // Centrar mapa en usuario cuando su ubicación cambie
             useEffect(() => {
-                if (leafletMap && currentUser && currentUser.latitude && currentUser.longitude) {
-                    leafletMap.panTo([currentUser.latitude, currentUser.longitude]);
+                if (googleMap && currentUser && currentUser.latitude && currentUser.longitude) {
+                    googleMap.panTo({
+                        lat: currentUser.latitude,
+                        lng: currentUser.longitude
+                    });
                 }
-            }, [currentUser?.latitude, currentUser?.longitude, leafletMap]);
+            }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
             
             // Crear marker personalizado (avatar) para un usuario en el mapa
             const createUserMarker = (user, map, isCurrentUser = false) => {
-                const size = isCurrentUser ? 60 : 50;
+                // Crear elemento HTML del marker
+                const markerDiv = document.createElement('div');
+                markerDiv.className = 'map-marker';
+                markerDiv.style.cssText = `
+                    width: ${isCurrentUser ? '60px' : '50px'};
+                    height: ${isCurrentUser ? '60px' : '50px'};
+                    cursor: pointer;
+                    position: relative;
+                    z-index: ${isCurrentUser ? 1000 : 100};
+                `;
                 
-                // Determinar color del anillo
+                // Anillo (story o estado online)
+                const ring = document.createElement('div');
                 const hasStory = user.hasStory;
                 const hasNewMessage = user.hasNewMessage;
                 const isOnline = user.isOnline;
@@ -2859,7 +2981,9 @@
                 if (hasStory) {
                     const alreadyViewed = viewedStories[user.id] && 
                                         (!user.storyTimestamp || user.storyTimestamp <= viewedStories[user.id]);
-                    ringColor = alreadyViewed ? 'rgba(139, 148, 158, 0.4)' : '#bc1888';
+                    ringColor = alreadyViewed 
+                        ? 'rgba(139, 148, 158, 0.4)' 
+                        : 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)';
                 } else if (hasNewMessage) {
                     ringColor = '#ffd700';
                 } else if (isOnline || isCurrentUser) {
@@ -2868,86 +2992,115 @@
                     ringColor = 'rgba(139, 148, 158, 0.4)';
                 }
                 
-                // Crear icono HTML personalizado
-                const iconHtml = `
-                    <div style="
-                        width: ${size}px;
-                        height: ${size}px;
-                        cursor: pointer;
-                        position: relative;
-                    ">
-                        <div style="
-                            position: absolute;
-                            width: 100%;
-                            height: 100%;
-                            border-radius: 50%;
-                            background: ${ringColor};
-                            padding: 3px;
-                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-                        ">
-                            <img src="${user.photo}" style="
-                                width: 100%;
-                                height: 100%;
-                                border-radius: 50%;
-                                object-fit: cover;
-                                border: 2px solid #0d1117;
-                            "/>
-                        </div>
-                        ${user.unreadCount > 0 ? `
-                            <div style="
-                                position: absolute;
-                                top: -4px;
-                                right: -4px;
-                                background: #ffd700;
-                                color: #0d1117;
-                                border-radius: 50%;
-                                width: 20px;
-                                height: 20px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-size: 11px;
-                                font-weight: 700;
-                                border: 2px solid #0d1117;
-                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-                            ">${user.unreadCount}</div>
-                        ` : ''}
-                    </div>
+                ring.style.cssText = `
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    background: ${ringColor};
+                    padding: 3px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
                 `;
                 
-                const icon = L.divIcon({
-                    html: iconHtml,
-                    className: 'custom-marker',
-                    iconSize: [size, size],
-                    iconAnchor: [size / 2, size / 2]
-                });
+                // Imagen del avatar
+                const avatarImg = document.createElement('img');
+                avatarImg.src = user.photo;
+                avatarImg.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 2px solid #0d1117;
+                `;
                 
-                const marker = L.marker([user.latitude, user.longitude], { icon: icon })
-                    .addTo(map);
+                ring.appendChild(avatarImg);
+                markerDiv.appendChild(ring);
+                
+                // Badge de mensajes no leídos
+                if (user.unreadCount > 0) {
+                    const badge = document.createElement('div');
+                    badge.textContent = user.unreadCount;
+                    badge.style.cssText = `
+                        position: absolute;
+                        top: -4px;
+                        right: -4px;
+                        background: #ffd700;
+                        color: #0d1117;
+                        border-radius: 50%;
+                        width: 20px;
+                        height: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 11px;
+                        font-weight: 700;
+                        border: 2px solid #0d1117;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+                    `;
+                    markerDiv.appendChild(badge);
+                }
                 
                 // Click handler
-                marker.on('click', () => {
+                markerDiv.addEventListener('click', () => {
                     handleAvatarClick(user);
                 });
+                
+                // Crear Custom Overlay
+                class CustomMarker extends google.maps.OverlayView {
+                    constructor(position, content) {
+                        super();
+                        this.position = position;
+                        this.content = content;
+                    }
+                    
+                    onAdd() {
+                        const pane = this.getPanes().overlayMouseTarget;
+                        pane.appendChild(this.content);
+                    }
+                    
+                    draw() {
+                        const overlayProjection = this.getProjection();
+                        const position = overlayProjection.fromLatLngToDivPixel(this.position);
+                        
+                        if (position) {
+                            this.content.style.left = position.x - (this.content.offsetWidth / 2) + 'px';
+                            this.content.style.top = position.y - (this.content.offsetHeight / 2) + 'px';
+                            this.content.style.position = 'absolute';
+                        }
+                    }
+                    
+                    onRemove() {
+                        if (this.content.parentElement) {
+                            this.content.parentElement.removeChild(this.content);
+                        }
+                    }
+                }
+                
+                const marker = new CustomMarker(
+                    new google.maps.LatLng(user.latitude, user.longitude),
+                    markerDiv
+                );
+                
+                marker.setMap(map);
                 
                 return marker;
             };
             
             // Actualizar markers de usuarios en el mapa
             useEffect(() => {
-                if (!leafletMap || !currentUser) return;
+                if (!googleMap || !currentUser) return;
                 
                 console.log('🎯 Actualizando markers en el mapa...');
                 
                 // Limpiar markers anteriores
                 Object.values(mapMarkers).forEach(marker => {
-                    leafletMap.removeLayer(marker);
+                    marker.setMap(null);
                 });
                 
                 const newMarkers = {};
                 
                 // Marker del usuario actual (centro)
-                newMarkers[currentUser.id] = createUserMarker(currentUser, leafletMap, true);
+                newMarkers[currentUser.id] = createUserMarker(currentUser, googleMap, true);
                 
                 // Markers de otros usuarios (dentro del radio)
                 users
@@ -2957,13 +3110,13 @@
                         return user.isOnline || user.hasNewMessage;
                     })
                     .forEach(user => {
-                        newMarkers[user.id] = createUserMarker(user, leafletMap, false);
+                        newMarkers[user.id] = createUserMarker(user, googleMap, false);
                     });
                 
                 setMapMarkers(newMarkers);
                 
                 console.log(`✅ ${Object.keys(newMarkers).length} markers actualizados`);
-            }, [leafletMap, currentUser, users, radius, viewedStories]);
+            }, [googleMap, currentUser, users, radius, viewedStories]);
 
             // ==========================================
             // ULTRASONIC SYSTEM - Audio Ultrasónico
@@ -3127,15 +3280,15 @@
 
             useEffect(() => {
                 // VERSION CHECK
-                console.log('🚀 RADAR SOCIAL v4.0 - LEAFLET MAP ✅ 100% FUNCIONAL');
+                console.log('🚀 RADAR SOCIAL v4.0 - GOOGLE MAPS (EN PROGRESO 90%)');
                 console.log('═══════════════════════════════════════');
-                console.log('🗺️ MAPA INTERACTIVO - OpenStreetMap:');
-                console.log('   ✅ SIN API KEY - Funciona siempre!');
-                console.log('   ✅ Pantalla completa con calles reales');
-                console.log('   ✅ Avatares como markers personalizados');
-                console.log('   ✅ Header flotante transparente');
-                console.log('   ✅ Slider con zoom automático');
-                console.log('   ✅ Estilo dark profesional');
+                console.log('🗺️ NUEVA INTERFAZ - Google Maps:');
+                console.log('   ✅ API integrada');
+                console.log('   ✅ Estados configurados');
+                console.log('   ✅ Funciones de mapa creadas');
+                console.log('   ✅ Markers personalizados (avatares)');
+                console.log('   ✅ Estilo dark/military');
+                console.log('   ⏳ FALTA: Modificar JSX (ver documentación)');
                 console.log('═══════════════════════════════════════');
                 console.log('📸 Re-view stories | ⏰ Tiempo | 🗑️ 12h');
                 console.log('🐛 Fix usuarios nuevos | 🔔 Notificaciones');
@@ -5367,8 +5520,8 @@
                         </div>
                         
                         <div className="radar-container">
-                            {/* Leaflet Map Container - Pantalla completa */}
-                            <div id="leaflet-map" ref={mapRef}></div>
+                            {/* Google Maps Container - Pantalla completa */}
+                            <div id="google-map" ref={mapRef}></div>
                             
                             {/* Header flotante sobre el mapa */}
                             <div className="map-header">
@@ -5433,158 +5586,6 @@
                             {/* ELIMINADO: Radar circular, avatares renderizados manualmente */}
                             {/* Ahora los avatares son markers de Google Maps */}
                             
-                            {/* Slider flotante en la parte inferior */}
-                            <div className="map-slider-container">
-                                    {(() => {
-                                        // Generate circles based on current radius
-                                        const circles = [];
-                                        const numCircles = 5;
-                                        const interval = radius / numCircles;
-                                        
-                                        for (let i = 1; i <= numCircles; i++) {
-                                            const meters = Math.round(interval * i);
-                                            const percent = (i / numCircles) * 100;
-                                            
-                                            circles.push(
-                                                <div key={`circle-${i}`}>
-                                                    <div
-                                                        className="radar-circle"
-                                                        style={{
-                                                            width: `${percent}%`,
-                                                            height: `${percent}%`,
-                                                            transition: 'all 0.4s ease'
-                                                        }}
-                                                    />
-                                                    <div 
-                                                        className="distance-label"
-                                                        style={{
-                                                            top: `${50 - (percent / 2)}%`,
-                                                            left: '50%',
-                                                            transition: 'all 0.4s ease'
-                                                        }}
-                                                    >
-                                                        {meters}m
-                                                    </div>
-                                                </div>
-                                            );
-                                        }
-                                        return circles;
-                                    })()}
-                                    {[0, 45, 90, 135].map(angle => (
-                                        <div
-                                            key={angle}
-                                            className="radar-line"
-                                            style={{ transform: `translateX(-50%) rotate(${angle}deg)` }}
-                                        />
-                                    ))}
-                                    
-                                    <div className="radar-sweep"></div>
-                                </div>
-
-                                {/* Renderizar usuario actual (centro) */}
-                                {currentUser && (
-                                    <div
-                                        key={currentUser.id}
-                                        className="avatar-container center-avatar-fixed"
-                                        onClick={() => handleAvatarClick(currentUser)}
-                                    >
-                                        <div className="avatar-wrapper center-avatar">
-                                            {currentUser.thought && (
-                                                <div className="avatar-thought">{currentUser.thought}</div>
-                                            )}
-                                            <div 
-                                                className={`avatar-ring ${getAvatarRingClass(currentUser)}`}
-                                                style={{ transform: `rotate(${deviceHeading}deg)` }}
-                                            >
-                                                <div className="avatar-img-wrapper" style={{ transform: `rotate(${-deviceHeading}deg)` }}>
-                                                    <img src={currentUser.photo} alt={currentUser.name} className="avatar-img" />
-                                                </div>
-                                                <div className="direction-indicator" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Renderizar otros usuarios */}
-                                {users
-                                    .filter(user => {
-                                        if (!currentUser) return false;
-                                        
-                                        // Solo mostrar usuarios dentro del radio
-                                        if (user.distance > radius) return false;
-                                        
-                                        // Mostrar si está online O tiene mensajes pendientes
-                                        return user.isOnline || user.hasNewMessage;
-                                    })
-                                    .map(user => {
-                                        // Calculate position based on distance, angle, and current zoom (radius)
-                                        // IMPROVED POSITIONING ALGORITHM
-                                        // Dead zone: minimum 15% (prevents overlap with center avatar)
-                                        // Max zone: 45% (uses more radar space)
-                                        // Formula: maps distance to 15%-45% range
-                                        
-                                        const MIN_PERCENTAGE = 15; // Dead zone around center
-                                        const MAX_PERCENTAGE = 45; // Max usable area
-                                        
-                                        // Linear mapping: 0m → 15%, radius → 45%
-                                        let percentage = MIN_PERCENTAGE + (user.distance / radius) * (MAX_PERCENTAGE - MIN_PERCENTAGE);
-                                        percentage = Math.min(percentage, MAX_PERCENTAGE);
-                                        
-                                        const angleRad = (user.angle - 90) * (Math.PI / 180);
-                                        const x = percentage * Math.cos(angleRad);
-                                        const y = percentage * Math.sin(angleRad);
-                                        
-                                        // Avatar sizing - Fixed small size for all other avatars
-                                        const scale = 0.6;
-                                        
-                                        return (
-                                            <div
-                                                key={user.id}
-                                                className="avatar-container"
-                                                style={{
-                                                    left: `calc(50% + ${x}%)`,
-                                                    top: `calc(50% + ${y}%)`,
-                                                    transform: `scale(${scale})`,
-                                                    opacity: user.distance <= radius ? 1 : 0,
-                                                    zIndex: 10 - Math.floor(user.distance / 10),
-                                                    transition: 'left 2s ease-out, top 2s ease-out, transform 0.4s ease, opacity 0.4s ease'
-                                                }}
-                                                onClick={() => handleAvatarClick(user)}
-                                            >
-                                                <div className="avatar-wrapper regular-avatar">
-                                                    {user.thought && (
-                                                        <div className="avatar-thought">{user.thought}</div>
-                                                    )}
-                                                    <div 
-                                                        className={`avatar-ring ${getAvatarRingClass(user)}`}
-                                                    >
-                                                        <div className="avatar-img-wrapper">
-                                                            <img src={user.photo} alt={user.name} className="avatar-img" />
-                                                        </div>
-                                                        {user.hasNewMessage && (
-                                                            <div className="message-badge">{user.unreadCount || 1}</div>
-                                                        )}
-                                                    </div>
-                                                    <div className="avatar-name">{user.name}</div>
-                                                    <div className="avatar-distance">
-                                                        {user.distance < 1 && ultrasonicActive ? 
-                                                            `${user.distance.toFixed(1)} m 🔊` : 
-                                                            `${Math.round(user.distance)} m`
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-
-                                {/* Compass Cardinal Directions - Fixed decorative */}
-                                <div className="compass-label compass-n">N</div>
-                                <div className="compass-label compass-s">S</div>
-                                <div className="compass-label compass-e">E</div>
-                                <div className="compass-label compass-o">O</div>
-                            </div>
-
-                            {/* Horizontal Range Slider */}
                             <div className="range-slider-container">
                                 <div className="range-slider-label">
                                     <div className="range-slider-title">Radio de Búsqueda</div>
