@@ -3022,6 +3022,10 @@
                 
                 // Pensamiento encima del avatar (si existe)
                 if (user.thought && user.thought.trim() && (user.isOnline || Date.now() - (user.thoughtTime || 0) < 3600000)) {
+                    if (isCurrentUser) {
+                        console.log('✅ Mostrando pensamiento del usuario actual:', user.thought);
+                    }
+                    
                     const thoughtLabel = document.createElement('div');
                     thoughtLabel.textContent = user.thought;
                     
@@ -3126,8 +3130,12 @@
                         const position = overlayProjection.fromLatLngToDivPixel(this.position);
                         
                         if (position) {
-                            this.content.style.left = position.x - (this.content.offsetWidth / 2) + 'px';
-                            this.content.style.top = position.y - (this.content.offsetHeight / 2) + 'px';
+                            // Aplicar offset si existe (para evitar superposición)
+                            const finalX = position.x + (this.offset?.x || 0);
+                            const finalY = position.y + (this.offset?.y || 0);
+                            
+                            this.content.style.left = finalX - (this.content.offsetWidth / 2) + 'px';
+                            this.content.style.top = finalY - (this.content.offsetHeight / 2) + 'px';
                             this.content.style.position = 'absolute';
                         }
                     }
@@ -3151,9 +3159,86 @@
             
             
             // ==========================================
-            // Z-INDEX INTELIGENTE PARA EVITAR SUPERPOSICIÓN
+            // SISTEMA ANTI-SUPERPOSICIÓN CON OFFSETS
             // ==========================================
-            // Asigna z-index basado en distancia al usuario
+            
+            const applyCollisionOffsets = (markers, googleMap, currentUserId) => {
+                if (!googleMap || Object.keys(markers).length < 2) return;
+                
+                const projection = googleMap.getProjection();
+                if (!projection) return;
+                
+                // Resetear offsets primero
+                Object.values(markers).forEach(marker => {
+                    marker.offset = { x: 0, y: 0 };
+                });
+                
+                // Obtener posiciones en píxeles
+                const positions = [];
+                Object.entries(markers).forEach(([userId, marker]) => {
+                    const pixel = projection.fromLatLngToDivPixel(marker.position);
+                    if (pixel) {
+                        positions.push({
+                            userId,
+                            marker,
+                            x: pixel.x,
+                            y: pixel.y,
+                            isCurrentUser: userId === currentUserId,
+                            offset: { x: 0, y: 0 }
+                        });
+                    }
+                });
+                
+                const COLLISION_RADIUS = 50; // 50 píxeles de radio de colisión (aumentado)
+                const OFFSET_DISTANCE = 65; // Desplazar 65px cuando hay colisión (aumentado)
+                
+                // Detectar colisiones y aplicar offsets
+                positions.forEach((pos1, i) => {
+                    positions.forEach((pos2, j) => {
+                        if (i >= j) return; // Evitar duplicados
+                        
+                        const dx = pos2.x - pos1.x;
+                        const dy = pos2.y - pos1.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // ¡HAY COLISIÓN!
+                        if (distance < COLLISION_RADIUS) {
+                            console.log(`⚠️ Colisión detectada: ${distance.toFixed(0)}px entre avatares`);
+                            
+                            // Calcular ángulo entre avatares
+                            const angle = Math.atan2(dy, dx);
+                            
+                            if (pos1.isCurrentUser) {
+                                // TÚ no te mueves, solo el otro
+                                pos2.offset.x = Math.cos(angle) * OFFSET_DISTANCE;
+                                pos2.offset.y = Math.sin(angle) * OFFSET_DISTANCE;
+                                console.log(`   → Desplazando otro avatar: (${pos2.offset.x.toFixed(0)}, ${pos2.offset.y.toFixed(0)})`);
+                            } else if (pos2.isCurrentUser) {
+                                // TÚ no te mueves, solo el otro
+                                pos1.offset.x = -Math.cos(angle) * OFFSET_DISTANCE;
+                                pos1.offset.y = -Math.sin(angle) * OFFSET_DISTANCE;
+                                console.log(`   → Desplazando otro avatar: (${pos1.offset.x.toFixed(0)}, ${pos1.offset.y.toFixed(0)})`);
+                            } else {
+                                // Ambos se desplazan
+                                pos1.offset.x -= Math.cos(angle) * (OFFSET_DISTANCE / 2);
+                                pos1.offset.y -= Math.sin(angle) * (OFFSET_DISTANCE / 2);
+                                pos2.offset.x += Math.cos(angle) * (OFFSET_DISTANCE / 2);
+                                pos2.offset.y += Math.sin(angle) * (OFFSET_DISTANCE / 2);
+                                console.log(`   → Desplazando ambos avatares`);
+                            }
+                        }
+                    });
+                });
+                
+                // Aplicar offsets a los markers
+                positions.forEach(pos => {
+                    pos.marker.offset = pos.offset;
+                    pos.marker.draw();
+                });
+                
+                const collisions = positions.filter(p => Math.abs(p.offset.x) > 0 || Math.abs(p.offset.y) > 0).length;
+                console.log(`✅ Anti-superposición: ${collisions} avatares desplazados de ${positions.length} totales`);
+            };
             
             const calculateZIndex = (user, currentUser, isCurrentUser) => {
                 if (isCurrentUser) return 1000; // Usuario actual siempre al frente
@@ -3197,7 +3282,23 @@
                 
                 console.log(`✅ ${Object.keys(newMarkers).length} markers actualizados`);
                 
+                // Aplicar anti-superposición después del renderizado
+                setTimeout(() => {
+                    applyCollisionOffsets(newMarkers, googleMap, currentUser.id);
+                }, 150);
+                
             }, [googleMap, currentUser, users, radius, viewedStories]);
+            
+            // Re-aplicar anti-superposición cuando cambia el zoom/radio
+            useEffect(() => {
+                if (!googleMap || !currentUser || Object.keys(mapMarkers).length < 2) return;
+                
+                const timeoutId = setTimeout(() => {
+                    applyCollisionOffsets(mapMarkers, googleMap, currentUser.id);
+                }, 200);
+                
+                return () => clearTimeout(timeoutId);
+            }, [radius, googleMap, currentUser, mapMarkers]);
 
             // ==========================================
             // ULTRASONIC SYSTEM - Audio Ultrasónico
