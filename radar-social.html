@@ -2895,17 +2895,6 @@
                     zoomControl: false,
                 });
                 
-                // Listener para cuando el mapa termina de moverse/hacer zoom
-                map.addListener('idle', () => {
-                    console.log('🗺️ Mapa idle - Re-aplicando anti-superposición...');
-                    // Delay pequeño para asegurar que todo esté renderizado
-                    setTimeout(() => {
-                        if (mapMarkers && Object.keys(mapMarkers).length > 1 && currentUser) {
-                            applyCollisionOffsets(mapMarkers, map, currentUser.id);
-                        }
-                    }, 100);
-                });
-                
                 setGoogleMap(map);
                 console.log('✅ Google Maps CREADO Y GUARDADO!');
                 console.log('   Mapa:', map);
@@ -3173,82 +3162,75 @@
             // SISTEMA ANTI-SUPERPOSICIÓN CON OFFSETS
             // ==========================================
             
-            const applyCollisionOffsets = (markers, googleMap, currentUserId) => {
-                if (!googleMap || Object.keys(markers).length < 2) return;
+            // ==========================================
+            // SISTEMA ANTI-SUPERPOSICIÓN CON OFFSETS GEOGRÁFICOS
+            // ==========================================
+            // Modifica coordenadas lat/lng directamente (más confiable)
+            
+            const applyGeoOffsets = (users, currentUser) => {
+                if (!users || !currentUser || users.length < 2) return users;
                 
-                const projection = googleMap.getProjection();
-                if (!projection) return;
+                // Crear copia para no mutar original
+                const modifiedUsers = users.map(u => ({...u}));
                 
-                // Resetear offsets primero
-                Object.values(markers).forEach(marker => {
-                    marker.offset = { x: 0, y: 0 };
-                });
+                const COLLISION_DISTANCE = 15; // Metros - si están más cerca, aplicar offset
+                const OFFSET_METERS = 20; // Metros - cuánto separar
                 
-                // Obtener posiciones en píxeles
-                const positions = [];
-                Object.entries(markers).forEach(([userId, marker]) => {
-                    const pixel = projection.fromLatLngToDivPixel(marker.position);
-                    if (pixel) {
-                        positions.push({
-                            userId,
-                            marker,
-                            x: pixel.x,
-                            y: pixel.y,
-                            isCurrentUser: userId === currentUserId,
-                            offset: { x: 0, y: 0 }
-                        });
-                    }
-                });
+                // Convertir metros a grados (aproximado: 1 metro ≈ 0.000009 grados)
+                const METERS_TO_DEGREES = 0.000009;
+                const offsetDegrees = OFFSET_METERS * METERS_TO_DEGREES;
                 
-                const COLLISION_RADIUS = 50; // 50 píxeles de radio de colisión (aumentado)
-                const OFFSET_DISTANCE = 90; // Desplazar 90px cuando hay colisión (MUY VISIBLE)
+                console.log(`🔄 Aplicando offsets geográficos a ${modifiedUsers.length} usuarios...`);
                 
                 // Detectar colisiones y aplicar offsets
-                positions.forEach((pos1, i) => {
-                    positions.forEach((pos2, j) => {
+                modifiedUsers.forEach((user1, i) => {
+                    if (user1.id === currentUser.id) return; // Saltar usuario actual
+                    
+                    modifiedUsers.forEach((user2, j) => {
                         if (i >= j) return; // Evitar duplicados
+                        if (user2.id === currentUser.id) return; // No mover al usuario actual
                         
-                        const dx = pos2.x - pos1.x;
-                        const dy = pos2.y - pos1.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        // Calcular distancia real
+                        const distance = user1.distance || 0; // Ya viene calculada desde Firebase
                         
                         // ¡HAY COLISIÓN!
-                        if (distance < COLLISION_RADIUS) {
-                            console.log(`⚠️ Colisión detectada: ${distance.toFixed(0)}px entre avatares`);
+                        if (distance < COLLISION_DISTANCE) {
+                            console.log(`⚠️ Colisión detectada: ${distance.toFixed(1)}m entre usuarios`);
                             
-                            // Calcular ángulo entre avatares
-                            const angle = Math.atan2(dy, dx);
+                            // Calcular ángulo entre usuarios
+                            const dlat = user2.latitude - user1.latitude;
+                            const dlng = user2.longitude - user1.longitude;
+                            const angle = Math.atan2(dlat, dlng);
                             
-                            if (pos1.isCurrentUser) {
-                                // TÚ no te mueves, solo el otro
-                                pos2.offset.x = Math.cos(angle) * OFFSET_DISTANCE;
-                                pos2.offset.y = Math.sin(angle) * OFFSET_DISTANCE;
-                                console.log(`   → Desplazando otro avatar: (${pos2.offset.x.toFixed(0)}, ${pos2.offset.y.toFixed(0)})`);
-                            } else if (pos2.isCurrentUser) {
-                                // TÚ no te mueves, solo el otro
-                                pos1.offset.x = -Math.cos(angle) * OFFSET_DISTANCE;
-                                pos1.offset.y = -Math.sin(angle) * OFFSET_DISTANCE;
-                                console.log(`   → Desplazando otro avatar: (${pos1.offset.x.toFixed(0)}, ${pos1.offset.y.toFixed(0)})`);
+                            // Aplicar offset geográfico
+                            // Si user1 es el usuario actual, solo mover user2
+                            if (user1.id === currentUser.id) {
+                                user2.latitude += Math.sin(angle) * offsetDegrees;
+                                user2.longitude += Math.cos(angle) * offsetDegrees;
+                                console.log(`   → Desplazando usuario ${user2.name}: offset ${OFFSET_METERS}m`);
+                            } else if (user2.id === currentUser.id) {
+                                user1.latitude -= Math.sin(angle) * offsetDegrees;
+                                user1.longitude -= Math.cos(angle) * offsetDegrees;
+                                console.log(`   → Desplazando usuario ${user1.name}: offset ${OFFSET_METERS}m`);
                             } else {
-                                // Ambos se desplazan
-                                pos1.offset.x -= Math.cos(angle) * (OFFSET_DISTANCE / 2);
-                                pos1.offset.y -= Math.sin(angle) * (OFFSET_DISTANCE / 2);
-                                pos2.offset.x += Math.cos(angle) * (OFFSET_DISTANCE / 2);
-                                pos2.offset.y += Math.sin(angle) * (OFFSET_DISTANCE / 2);
-                                console.log(`   → Desplazando ambos avatares`);
+                                // Ambos se mueven
+                                user1.latitude -= Math.sin(angle) * offsetDegrees * 0.5;
+                                user1.longitude -= Math.cos(angle) * offsetDegrees * 0.5;
+                                user2.latitude += Math.sin(angle) * offsetDegrees * 0.5;
+                                user2.longitude += Math.cos(angle) * offsetDegrees * 0.5;
+                                console.log(`   → Desplazando ambos usuarios`);
                             }
                         }
                     });
                 });
                 
-                // Aplicar offsets a los markers
-                positions.forEach(pos => {
-                    pos.marker.offset = pos.offset;
-                    pos.marker.draw();
-                });
+                const modified = modifiedUsers.filter((u, i) => 
+                    u.latitude !== users[i].latitude || u.longitude !== users[i].longitude
+                ).length;
+                console.log(`✅ Offset geográfico: ${modified} usuarios desplazados`);
                 
-                const collisions = positions.filter(p => Math.abs(p.offset.x) > 0 || Math.abs(p.offset.y) > 0).length;
-                console.log(`✅ Anti-superposición: ${collisions} avatares desplazados de ${positions.length} totales`);
+                return modifiedUsers;
+            };
             };
             
             const calculateZIndex = (user, currentUser, isCurrentUser) => {
@@ -3275,43 +3257,29 @@
                 
                 const newMarkers = {};
                 
-                // Marker del usuario actual (centro)
+                // Filtrar usuarios dentro del radio
+                const usersInRange = users.filter(user => {
+                    if (!currentUser) return false;
+                    if (user.distance > radius) return false;
+                    return user.isOnline || user.hasNewMessage;
+                });
+                
+                // APLICAR OFFSETS GEOGRÁFICOS para evitar superposición
+                const usersWithOffsets = applyGeoOffsets(usersInRange, currentUser);
+                
+                // Marker del usuario actual (centro, sin offset)
                 newMarkers[currentUser.id] = createUserMarker(currentUser, googleMap, currentUser, true);
                 
-                // Markers de otros usuarios (dentro del radio)
-                users
-                    .filter(user => {
-                        if (!currentUser) return false;
-                        if (user.distance > radius) return false;
-                        return user.isOnline || user.hasNewMessage;
-                    })
-                    .forEach(user => {
-                        newMarkers[user.id] = createUserMarker(user, googleMap, currentUser, false);
-                    });
+                // Markers de otros usuarios (CON offsets aplicados)
+                usersWithOffsets.forEach(user => {
+                    newMarkers[user.id] = createUserMarker(user, googleMap, currentUser, false);
+                });
                 
                 setMapMarkers(newMarkers);
                 
                 console.log(`✅ ${Object.keys(newMarkers).length} markers actualizados`);
                 
-                // Aplicar anti-superposición después del renderizado (delay mayor)
-                setTimeout(() => {
-                    console.log('🔄 Aplicando anti-superposición...');
-                    applyCollisionOffsets(newMarkers, googleMap, currentUser.id);
-                }, 300); // Aumentado de 150ms a 300ms
-                
             }, [googleMap, currentUser, users, radius, viewedStories]);
-            
-            // Re-aplicar anti-superposición cuando cambia el zoom/radio
-            useEffect(() => {
-                if (!googleMap || !currentUser || Object.keys(mapMarkers).length < 2) return;
-                
-                console.log('🔄 useEffect de zoom - Re-aplicando anti-superposición...');
-                const timeoutId = setTimeout(() => {
-                    applyCollisionOffsets(mapMarkers, googleMap, currentUser.id);
-                }, 300); // Aumentado a 300ms
-                
-                return () => clearTimeout(timeoutId);
-            }, [radius]); // Solo cuando cambia radius, no mapMarkers
 
             // ==========================================
             // ULTRASONIC SYSTEM - Audio Ultrasónico
