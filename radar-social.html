@@ -2924,6 +2924,9 @@
                     });
                     googleMap.setZoom(newZoom);
                     console.log(`🔍 Zoom actualizado a ${newZoom} (radio: ${radius}m) - Centrado en usuario`);
+                    
+                    // Re-aplicar anti-superposición después del zoom
+                    applyAntiOverlap();
                 }
             }, [radius, googleMap, currentUser]);
             
@@ -2959,20 +2962,19 @@
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
             
             // Crear marker personalizado (avatar) para un usuario en el mapa
-            const createUserMarker = (user, map, currentUserData, isCurrentUser = false) => {
+            const createUserMarker = (user, map, isCurrentUser = false) => {
                 // Crear elemento HTML del marker
                 const markerDiv = document.createElement('div');
                 markerDiv.className = 'map-marker';
-                
-                // Z-index dinámico: usuarios más cerca quedan detrás, más lejos adelante
-                const zIndex = calculateZIndex(user, currentUserData, isCurrentUser);
-                
+                markerDiv.dataset.userId = user.id; // ID para encontrarlo después
+                markerDiv.dataset.isCurrentUser = isCurrentUser ? 'true' : 'false';
                 markerDiv.style.cssText = `
                     width: ${isCurrentUser ? '60px' : '50px'};
                     height: ${isCurrentUser ? '60px' : '50px'};
                     cursor: pointer;
                     position: relative;
-                    z-index: ${zIndex};
+                    z-index: ${isCurrentUser ? 1000 : 100};
+                    transition: transform 0.3s ease;
                 `;
                 
                 // Anillo (story o estado online)
@@ -3022,64 +3024,30 @@
                 
                 // Pensamiento encima del avatar (si existe)
                 if (user.thought && user.thought.trim() && (user.isOnline || Date.now() - (user.thoughtTime || 0) < 3600000)) {
-                    if (isCurrentUser) {
-                        console.log('✅ Mostrando pensamiento del usuario actual:', user.thought);
-                    }
-                    
                     const thoughtLabel = document.createElement('div');
                     thoughtLabel.textContent = user.thought;
-                    
-                    // Estilo diferente si es el usuario actual (más sutil)
-                    if (isCurrentUser) {
-                        thoughtLabel.style.cssText = `
-                            position: absolute;
-                            bottom: 100%;
-                            left: 50%;
-                            transform: translateX(-50%);
-                            background: rgba(56, 189, 98, 0.15);
-                            backdrop-filter: blur(8px);
-                            -webkit-backdrop-filter: blur(8px);
-                            color: #38bd62;
-                            padding: 5px 10px;
-                            border-radius: 10px;
-                            font-size: 10px;
-                            font-weight: 600;
-                            white-space: nowrap;
-                            margin-bottom: 6px;
-                            border: 1px solid rgba(56, 189, 98, 0.4);
-                            box-shadow: 0 2px 6px rgba(56, 189, 98, 0.3);
-                            max-width: 120px;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                            pointer-events: none;
-                            opacity: 0.9;
-                        `;
-                    } else {
-                        // Estilo normal para otros usuarios
-                        thoughtLabel.style.cssText = `
-                            position: absolute;
-                            bottom: 100%;
-                            left: 50%;
-                            transform: translateX(-50%);
-                            background: rgba(13, 17, 23, 0.95);
-                            backdrop-filter: blur(12px);
-                            -webkit-backdrop-filter: blur(12px);
-                            color: #e6edf3;
-                            padding: 8px 12px;
-                            border-radius: 12px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            white-space: nowrap;
-                            margin-bottom: 8px;
-                            border: 1px solid rgba(56, 189, 98, 0.3);
-                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-                            max-width: 150px;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                            pointer-events: none;
-                        `;
-                    }
-                    
+                    thoughtLabel.style.cssText = `
+                        position: absolute;
+                        bottom: 100%;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: rgba(13, 17, 23, 0.95);
+                        backdrop-filter: blur(12px);
+                        -webkit-backdrop-filter: blur(12px);
+                        color: #e6edf3;
+                        padding: 8px 12px;
+                        border-radius: 12px;
+                        font-size: 12px;
+                        font-weight: 500;
+                        white-space: nowrap;
+                        margin-bottom: 8px;
+                        border: 1px solid rgba(56, 189, 98, 0.3);
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+                        max-width: 150px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        pointer-events: none;
+                    `;
                     markerDiv.appendChild(thoughtLabel);
                 }
                 
@@ -3130,12 +3098,8 @@
                         const position = overlayProjection.fromLatLngToDivPixel(this.position);
                         
                         if (position) {
-                            // Aplicar offset si existe (para evitar superposición)
-                            const finalX = position.x + (this.offset?.x || 0);
-                            const finalY = position.y + (this.offset?.y || 0);
-                            
-                            this.content.style.left = finalX - (this.content.offsetWidth / 2) + 'px';
-                            this.content.style.top = finalY - (this.content.offsetHeight / 2) + 'px';
+                            this.content.style.left = position.x - (this.content.offsetWidth / 2) + 'px';
+                            this.content.style.top = position.y - (this.content.offsetHeight / 2) + 'px';
                             this.content.style.position = 'absolute';
                         }
                     }
@@ -3159,89 +3123,69 @@
             
             
             // ==========================================
-            // SISTEMA ANTI-SUPERPOSICIÓN CON OFFSETS
+            // ANTI-SUPERPOSICIÓN CON CSS TRANSFORM
             // ==========================================
-            
-            // ==========================================
-            // SISTEMA ANTI-SUPERPOSICIÓN CON OFFSETS GEOGRÁFICOS
-            // ==========================================
-            // Modifica coordenadas lat/lng directamente (más confiable)
-            
-            const applyGeoOffsets = (users, currentUser) => {
-                if (!users || !currentUser || users.length < 2) return users;
-                
-                // Crear copia para no mutar original
-                const modifiedUsers = users.map(u => ({...u}));
-                
-                const COLLISION_DISTANCE = 15; // Metros - si están más cerca, aplicar offset
-                const OFFSET_METERS = 20; // Metros - cuánto separar
-                
-                // Convertir metros a grados (aproximado: 1 metro ≈ 0.000009 grados)
-                const METERS_TO_DEGREES = 0.000009;
-                const offsetDegrees = OFFSET_METERS * METERS_TO_DEGREES;
-                
-                console.log(`🔄 Aplicando offsets geográficos a ${modifiedUsers.length} usuarios...`);
-                
-                // Detectar colisiones y aplicar offsets
-                modifiedUsers.forEach((user1, i) => {
-                    if (user1.id === currentUser.id) return; // Saltar usuario actual
+            const applyAntiOverlap = () => {
+                // Esperar a que todos los markers estén en el DOM
+                setTimeout(() => {
+                    const allMarkers = document.querySelectorAll('.map-marker');
+                    if (allMarkers.length < 2) return;
                     
-                    modifiedUsers.forEach((user2, j) => {
-                        if (i >= j) return; // Evitar duplicados
-                        if (user2.id === currentUser.id) return; // No mover al usuario actual
-                        
-                        // Calcular distancia real
-                        const distance = user1.distance || 0; // Ya viene calculada desde Firebase
-                        
-                        // ¡HAY COLISIÓN!
-                        if (distance < COLLISION_DISTANCE) {
-                            console.log(`⚠️ Colisión detectada: ${distance.toFixed(1)}m entre usuarios`);
-                            
-                            // Calcular ángulo entre usuarios
-                            const dlat = user2.latitude - user1.latitude;
-                            const dlng = user2.longitude - user1.longitude;
-                            const angle = Math.atan2(dlat, dlng);
-                            
-                            // Aplicar offset geográfico
-                            // Si user1 es el usuario actual, solo mover user2
-                            if (user1.id === currentUser.id) {
-                                user2.latitude += Math.sin(angle) * offsetDegrees;
-                                user2.longitude += Math.cos(angle) * offsetDegrees;
-                                console.log(`   → Desplazando usuario ${user2.name}: offset ${OFFSET_METERS}m`);
-                            } else if (user2.id === currentUser.id) {
-                                user1.latitude -= Math.sin(angle) * offsetDegrees;
-                                user1.longitude -= Math.cos(angle) * offsetDegrees;
-                                console.log(`   → Desplazando usuario ${user1.name}: offset ${OFFSET_METERS}m`);
-                            } else {
-                                // Ambos se mueven
-                                user1.latitude -= Math.sin(angle) * offsetDegrees * 0.5;
-                                user1.longitude -= Math.cos(angle) * offsetDegrees * 0.5;
-                                user2.latitude += Math.sin(angle) * offsetDegrees * 0.5;
-                                user2.longitude += Math.cos(angle) * offsetDegrees * 0.5;
-                                console.log(`   → Desplazando ambos usuarios`);
-                            }
-                        }
+                    console.log(`🔄 Aplicando anti-superposición a ${allMarkers.length} markers...`);
+                    
+                    const MIN_DISTANCE = 70; // Píxeles mínimos entre avatares
+                    const OFFSET = 50; // Píxeles de separación
+                    
+                    // Resetear transforms
+                    allMarkers.forEach(m => m.style.transform = 'translate(0, 0)');
+                    
+                    // Convertir a array y obtener posiciones
+                    const markers = Array.from(allMarkers).map(el => {
+                        const rect = el.getBoundingClientRect();
+                        return {
+                            element: el,
+                            x: rect.left + rect.width / 2,
+                            y: rect.top + rect.height / 2,
+                            isCurrentUser: el.dataset.isCurrentUser === 'true'
+                        };
                     });
-                });
-                
-                const modified = modifiedUsers.filter((u, i) => 
-                    u.latitude !== users[i].latitude || u.longitude !== users[i].longitude
-                ).length;
-                console.log(`✅ Offset geográfico: ${modified} usuarios desplazados`);
-                
-                return modifiedUsers;
-            };
-            };
-            
-            const calculateZIndex = (user, currentUser, isCurrentUser) => {
-                if (isCurrentUser) return 1000; // Usuario actual siempre al frente
-                
-                // Usuarios más cerca tienen z-index MÁS BAJO (quedan detrás)
-                // Usuarios más lejos tienen z-index MÁS ALTO (quedan adelante)
-                const baseZIndex = 100;
-                const distanceBonus = Math.floor(user.distance); // 1 punto por metro
-                
-                return baseZIndex + distanceBonus;
+                    
+                    let collisions = 0;
+                    
+                    // Detectar y corregir superposiciones
+                    markers.forEach((m1, i) => {
+                        markers.forEach((m2, j) => {
+                            if (i >= j) return;
+                            
+                            const dx = m2.x - m1.x;
+                            const dy = m2.y - m1.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < MIN_DISTANCE && distance > 0) {
+                                collisions++;
+                                console.log(`   ⚠️ Colisión detectada: ${distance.toFixed(0)}px`);
+                                
+                                // Calcular dirección de separación
+                                const angle = Math.atan2(dy, dx);
+                                const offsetX = Math.cos(angle) * OFFSET;
+                                const offsetY = Math.sin(angle) * OFFSET;
+                                
+                                // Solo mover el que NO es el usuario actual
+                                if (m1.isCurrentUser) {
+                                    m2.element.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+                                } else if (m2.isCurrentUser) {
+                                    m1.element.style.transform = `translate(${-offsetX}px, ${-offsetY}px)`;
+                                } else {
+                                    // Si ninguno es el usuario, mover ambos
+                                    m1.element.style.transform = `translate(${-offsetX/2}px, ${-offsetY/2}px)`;
+                                    m2.element.style.transform = `translate(${offsetX/2}px, ${offsetY/2}px)`;
+                                }
+                            }
+                        });
+                    });
+                    
+                    console.log(`✅ Anti-superposición: ${collisions} colisiones corregidas`);
+                }, 500); // Esperar 500ms para que todo esté renderizado
             };
             
             // Actualizar markers de usuarios en el mapa
@@ -3257,27 +3201,26 @@
                 
                 const newMarkers = {};
                 
-                // Filtrar usuarios dentro del radio
-                const usersInRange = users.filter(user => {
-                    if (!currentUser) return false;
-                    if (user.distance > radius) return false;
-                    return user.isOnline || user.hasNewMessage;
-                });
+                // Marker del usuario actual (centro)
+                newMarkers[currentUser.id] = createUserMarker(currentUser, googleMap, true);
                 
-                // APLICAR OFFSETS GEOGRÁFICOS para evitar superposición
-                const usersWithOffsets = applyGeoOffsets(usersInRange, currentUser);
-                
-                // Marker del usuario actual (centro, sin offset)
-                newMarkers[currentUser.id] = createUserMarker(currentUser, googleMap, currentUser, true);
-                
-                // Markers de otros usuarios (CON offsets aplicados)
-                usersWithOffsets.forEach(user => {
-                    newMarkers[user.id] = createUserMarker(user, googleMap, currentUser, false);
-                });
+                // Markers de otros usuarios (dentro del radio)
+                users
+                    .filter(user => {
+                        if (!currentUser) return false;
+                        if (user.distance > radius) return false;
+                        return user.isOnline || user.hasNewMessage;
+                    })
+                    .forEach(user => {
+                        newMarkers[user.id] = createUserMarker(user, googleMap, false);
+                    });
                 
                 setMapMarkers(newMarkers);
                 
                 console.log(`✅ ${Object.keys(newMarkers).length} markers actualizados`);
+                
+                // Aplicar anti-superposición CSS
+                applyAntiOverlap();
                 
             }, [googleMap, currentUser, users, radius, viewedStories]);
 
