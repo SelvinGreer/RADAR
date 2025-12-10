@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v6.5 Build: 2025-12-10 | Fix Flickering + Orbit + Input -->
+    <!-- v6.6 Build: 2025-12-10 | Stable GPS + Better Orbits -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1603,21 +1603,6 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
-        // Kalman Filter Class
-        class KalmanFilter {
-            constructor(processNoise = 0.001, measurementNoise = 0.1) {
-                this.x = 0; this.P = 1; this.Q = processNoise; this.R = measurementNoise;
-            }
-            update(measurement) {
-                this.P = this.P + this.Q;
-                const K = this.P / (this.P + this.R);
-                this.x = this.x + K * (measurement - this.x);
-                this.P = (1 - K) * this.P;
-                return this.x;
-            }
-            reset(value) { this.x = value; this.P = 1; }
-        }
-
         function RadarSocialApp() {
             // State
             const [showLanding, setShowLanding] = useState(true);
@@ -1658,11 +1643,10 @@
             const chatMessagesRef = useRef(null);
             const markersRef = useRef([]);
             const lastMarkersDataRef = useRef('');
-            const kalmanLat = useRef(new KalmanFilter(0.001, 0.1));
-            const kalmanLon = useRef(new KalmanFilter(0.001, 0.1));
+            const currentUserPositionRef = useRef({ lat: 0, lng: 0 });
             const currentUserPositionRef = useRef({ lat: 0, lng: 0 });
 
-            // Helper Functions
+            // Simple distance calculation
             const calculateDistance = (lat1, lon1, lat2, lon2) => {
                 const R = 6371e3;
                 const φ1 = lat1 * Math.PI / 180;
@@ -1675,15 +1659,7 @@
                 return R * c;
             };
 
-            const applySensorFusion = (rawGPS, accuracy) => {
-                const filteredLat = kalmanLat.current.update(rawGPS.latitude);
-                const filteredLon = kalmanLon.current.update(rawGPS.longitude);
-                const improvedAccuracy = Math.min(accuracy * 0.5, 8);
-                setLocationAccuracy(improvedAccuracy);
-                return { latitude: filteredLat, longitude: filteredLon, accuracy: improvedAccuracy };
-            };
-
-            // v6.1: Improved GPS initialization with retries
+            // Simplified initial location - wait for good GPS
             const getInitialLocation = () => {
                 return new Promise((resolve) => {
                     let attempts = 0;
@@ -1693,12 +1669,11 @@
                         navigator.geolocation.getCurrentPosition(
                             (position) => {
                                 const { latitude, longitude, accuracy } = position.coords;
-                                if (accuracy < 30 || attempts >= maxAttempts) {
-                                    console.log(`📍 GPS accepted: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (±${accuracy.toFixed(1)}m) [attempt ${attempts + 1}]`);
+                                if (accuracy < 50 || attempts >= maxAttempts) {
+                                    console.log(`📍 GPS OK: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (±${accuracy.toFixed(0)}m)`);
                                     resolve({ latitude, longitude, accuracy });
                                 } else {
                                     attempts++;
-                                    console.log(`⏳ GPS imprecise (±${accuracy.toFixed(1)}m), retrying... [${attempts}/${maxAttempts}]`);
                                     setTimeout(tryGetLocation, 1000);
                                 }
                             },
@@ -1707,14 +1682,14 @@
                                 if (attempts < maxAttempts) setTimeout(tryGetLocation, 1000);
                                 else resolve(null);
                             },
-                            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                         );
                     };
                     tryGetLocation();
                 });
             };
 
-            // Initialize Google Map
+            // Initialize Google Map - centered on user
             const initializeGoogleMap = (lat, lng) => {
                 if (!mapRef.current || googleMap) return;
                 
@@ -1730,17 +1705,17 @@
                 
                 const map = new google.maps.Map(mapRef.current, {
                     center: { lat, lng },
-                    zoom: 15,
+                    zoom: 16,
                     styles: darkStyle,
                     disableDefaultUI: true,
                     gestureHandling: 'greedy',
                     clickableIcons: false,
-                    minZoom: 15,
-                    maxZoom: 15
+                    minZoom: 14,
+                    maxZoom: 19
                 });
                 
                 setGoogleMap(map);
-                console.log('✅ Google Maps initialized');
+                console.log('✅ Map initialized at:', lat, lng);
             };
 
             // Create user marker on map - Instagram style
@@ -1838,9 +1813,9 @@
             
             // Calculate orbital positions around user (circular, non-overlapping)
             const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
-                // Larger orbit radius to prevent overlap (~50 meters)
-                const orbitRadiusLat = 0.00045; // ~50m in latitude
-                const orbitRadiusLng = 0.00055; // ~50m in longitude (adjusted for latitude)
+                // Orbit radius ~80-100 meters for clear visibility
+                const orbitRadiusLat = 0.0008; // ~80-90m in latitude  
+                const orbitRadiusLng = 0.001;  // ~80-100m in longitude
                 // Start from top and go clockwise
                 const startAngle = -90;
                 const angle = ((startAngle + (index * (360 / totalSlots))) * Math.PI) / 180;
@@ -1862,7 +1837,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v6.5 - Fix Flickering + Orbit + Input');
+                console.log('🚀 RADAR SOCIAL v6.6 - Stable GPS + Better Orbits');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -1924,20 +1899,28 @@
                                 });
                             }
                             
-                            // Continue watching position
+                            // Continue watching position - simplified
                             let usersUnsubscribe = null;
+                            let lastUpdateTime = 0;
                             
                             const watchId = navigator.geolocation.watchPosition(
                                 async (position) => {
                                     const { latitude, longitude, accuracy } = position.coords;
-                                    if (accuracy > 50) return;
                                     
-                                    const fusedLocation = applySensorFusion({ latitude, longitude }, accuracy);
+                                    // Ignore very inaccurate readings
+                                    if (accuracy > 100) return;
                                     
-                                    setUserLocation({ latitude: fusedLocation.latitude, longitude: fusedLocation.longitude });
-                                    setCurrentUser(prev => ({ ...prev, latitude: fusedLocation.latitude, longitude: fusedLocation.longitude }));
+                                    // Throttle updates to max once per 3 seconds
+                                    const now = Date.now();
+                                    if (now - lastUpdateTime < 3000) return;
+                                    lastUpdateTime = now;
                                     
-                                    // Listen to other users
+                                    // Update location directly (no Kalman filter)
+                                    setUserLocation({ latitude, longitude });
+                                    setCurrentUser(prev => ({ ...prev, latitude, longitude }));
+                                    setLocationAccuracy(accuracy);
+                                    
+                                    // Listen to other users (only setup once)
                                     if (!usersUnsubscribe) {
                                         usersUnsubscribe = db.collection('users')
                                             .where('isOnline', '==', true)
@@ -2001,17 +1984,17 @@
                                             });
                                     }
                                     
-                                    // Update Firestore
+                                    // Update Firestore (throttled by the check above)
                                     await db.collection('users').doc(firebaseUser.uid).update({
-                                        location: new firebase.firestore.GeoPoint(fusedLocation.latitude, fusedLocation.longitude),
+                                        location: new firebase.firestore.GeoPoint(latitude, longitude),
                                         isOnline: true,
                                         lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-                                        accuracy: fusedLocation.accuracy,
+                                        accuracy: accuracy,
                                         pendingGPS: false
                                     });
                                 },
                                 (error) => console.error('Location error:', error),
-                                { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 }
+                                { enableHighAccuracy: true, timeout: 30000, maximumAge: 10000 }
                             );
                             
                             return () => {
@@ -2088,11 +2071,15 @@
                 
             }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, users, radius]);
             
-            // Separate effect to pan map (less frequent)
+            // Separate effect to pan/center map
             useEffect(() => {
                 if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
-                googleMap.panTo({ lat: currentUser.latitude, lng: currentUser.longitude });
-            }, [googleMap, Math.round(currentUser?.latitude * 1000), Math.round(currentUser?.longitude * 1000)]);
+                
+                // Center map on user
+                const center = { lat: currentUser.latitude, lng: currentUser.longitude };
+                googleMap.setCenter(center);
+                
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude]);
 
             // Heartbeat
             useEffect(() => {
@@ -2488,7 +2475,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.5</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.6</span>
                             </div>
                         </div>
                     </div>
