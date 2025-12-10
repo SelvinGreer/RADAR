@@ -2973,7 +2973,7 @@
                     height: ${isCurrentUser ? '60px' : '50px'};
                     cursor: pointer;
                     position: relative;
-                    z-index: ${isCurrentUser ? 1000 : 100};
+                    z-index: ${isCurrentUser ? 1000 : 500};
                     transition: transform 0.3s ease;
                 `;
                 
@@ -3133,58 +3133,97 @@
                     
                     console.log(`🔄 Aplicando anti-superposición a ${allMarkers.length} markers...`);
                     
-                    const MIN_DISTANCE = 70; // Píxeles mínimos entre avatares
-                    const OFFSET = 50; // Píxeles de separación
+                    const MIN_DISTANCE = 80; // Píxeles mínimos entre avatares (aumentado)
+                    const PUSH_FORCE = 0.6; // Fuerza de empuje (60% de la distancia faltante)
+                    const MAX_ITERATIONS = 10; // Máximo de iteraciones para resolver colisiones
                     
                     // Resetear transforms
                     allMarkers.forEach(m => m.style.transform = 'translate(0, 0)');
                     
-                    // Convertir a array y obtener posiciones
+                    // Convertir a array y obtener posiciones + offsets acumulados
                     const markers = Array.from(allMarkers).map(el => {
                         const rect = el.getBoundingClientRect();
                         return {
                             element: el,
-                            x: rect.left + rect.width / 2,
-                            y: rect.top + rect.height / 2,
+                            baseX: rect.left + rect.width / 2,
+                            baseY: rect.top + rect.height / 2,
+                            offsetX: 0,
+                            offsetY: 0,
                             isCurrentUser: el.dataset.isCurrentUser === 'true'
                         };
                     });
                     
-                    let collisions = 0;
+                    let totalCollisions = 0;
                     
-                    // Detectar y corregir superposiciones
-                    markers.forEach((m1, i) => {
-                        markers.forEach((m2, j) => {
-                            if (i >= j) return;
-                            
-                            const dx = m2.x - m1.x;
-                            const dy = m2.y - m1.y;
-                            const distance = Math.sqrt(dx * dx + dy * dy);
-                            
-                            if (distance < MIN_DISTANCE && distance > 0) {
-                                collisions++;
-                                console.log(`   ⚠️ Colisión detectada: ${distance.toFixed(0)}px`);
+                    // ITERACIONES para resolver todas las colisiones (como monedas empujándose)
+                    for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+                        let hasCollisions = false;
+                        
+                        markers.forEach((m1, i) => {
+                            markers.forEach((m2, j) => {
+                                if (i >= j) return;
                                 
-                                // Calcular dirección de separación
-                                const angle = Math.atan2(dy, dx);
-                                const offsetX = Math.cos(angle) * OFFSET;
-                                const offsetY = Math.sin(angle) * OFFSET;
+                                // Posiciones actuales (base + offset acumulado)
+                                const x1 = m1.baseX + m1.offsetX;
+                                const y1 = m1.baseY + m1.offsetY;
+                                const x2 = m2.baseX + m2.offsetX;
+                                const y2 = m2.baseY + m2.offsetY;
                                 
-                                // Solo mover el que NO es el usuario actual
-                                if (m1.isCurrentUser) {
-                                    m2.element.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-                                } else if (m2.isCurrentUser) {
-                                    m1.element.style.transform = `translate(${-offsetX}px, ${-offsetY}px)`;
-                                } else {
-                                    // Si ninguno es el usuario, mover ambos
-                                    m1.element.style.transform = `translate(${-offsetX/2}px, ${-offsetY/2}px)`;
-                                    m2.element.style.transform = `translate(${offsetX/2}px, ${offsetY/2}px)`;
+                                const dx = x2 - x1;
+                                const dy = y2 - y1;
+                                const distance = Math.sqrt(dx * dx + dy * dy);
+                                
+                                // ¡HAY COLISIÓN!
+                                if (distance < MIN_DISTANCE && distance > 0) {
+                                    hasCollisions = true;
+                                    totalCollisions++;
+                                    
+                                    // Calcular cuánto falta para separar
+                                    const overlap = MIN_DISTANCE - distance;
+                                    const pushDistance = overlap * PUSH_FORCE;
+                                    
+                                    // Vector normalizado de separación
+                                    const angle = Math.atan2(dy, dx);
+                                    const pushX = Math.cos(angle) * pushDistance;
+                                    const pushY = Math.sin(angle) * pushDistance;
+                                    
+                                    // Empujar como MONEDAS:
+                                    // El usuario actual NO se mueve, solo los otros
+                                    if (m1.isCurrentUser) {
+                                        // TÚ no te mueves, empujar el otro
+                                        m2.offsetX += pushX;
+                                        m2.offsetY += pushY;
+                                    } else if (m2.isCurrentUser) {
+                                        // TÚ no te mueves, empujar el otro
+                                        m1.offsetX -= pushX;
+                                        m1.offsetY -= pushY;
+                                    } else {
+                                        // Ambos son "otros", empujar ambos
+                                        m1.offsetX -= pushX / 2;
+                                        m1.offsetY -= pushY / 2;
+                                        m2.offsetX += pushX / 2;
+                                        m2.offsetY += pushY / 2;
+                                    }
                                 }
-                            }
+                            });
                         });
+                        
+                        // Si no hay colisiones, terminar iteraciones
+                        if (!hasCollisions) {
+                            console.log(`   ✅ Resuelto en ${iteration + 1} iteraciones`);
+                            break;
+                        }
+                    }
+                    
+                    // Aplicar offsets finales con CSS transform
+                    markers.forEach(m => {
+                        if (Math.abs(m.offsetX) > 0.5 || Math.abs(m.offsetY) > 0.5) {
+                            m.element.style.transform = `translate(${m.offsetX.toFixed(1)}px, ${m.offsetY.toFixed(1)}px)`;
+                        }
                     });
                     
-                    console.log(`✅ Anti-superposición: ${collisions} colisiones corregidas`);
+                    const movedCount = markers.filter(m => Math.abs(m.offsetX) > 0.5 || Math.abs(m.offsetY) > 0.5).length;
+                    console.log(`✅ Anti-superposición: ${totalCollisions} colisiones detectadas, ${movedCount} avatares movidos`);
                 }, 500); // Esperar 500ms para que todo esté renderizado
             };
             
