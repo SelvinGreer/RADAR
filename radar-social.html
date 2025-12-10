@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v6.6 Build: 2025-12-10 | Stable GPS + Better Orbits -->
+    <!-- v6.8 Build: 2025-12-10 | Orbital System Fixed -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1704,13 +1704,13 @@
                 
                 const map = new google.maps.Map(mapRef.current, {
                     center: { lat, lng },
-                    zoom: 16,
+                    zoom: 15,
                     styles: darkStyle,
                     disableDefaultUI: true,
                     gestureHandling: 'greedy',
                     clickableIcons: false,
-                    minZoom: 14,
-                    maxZoom: 19
+                    minZoom: 13,
+                    maxZoom: 18
                 });
                 
                 setGoogleMap(map);
@@ -1810,17 +1810,17 @@
                 return marker;
             };
             
-            // Calculate orbital positions around user (circular, non-overlapping)
+            // Calculate orbital positions around user (circular)
             const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
-                // Orbit radius ~80-100 meters for clear visibility
-                const orbitRadiusLat = 0.0008; // ~80-90m in latitude  
-                const orbitRadiusLng = 0.001;  // ~80-100m in longitude
-                // Start from top and go clockwise
-                const startAngle = -90;
+                // LARGE orbit radius ~120-150 meters to prevent overlap
+                const orbitRadiusLat = 0.0012;  // ~120-130m in latitude  
+                const orbitRadiusLng = 0.0015;  // ~130-150m in longitude
+                // Start from bottom and go clockwise
+                const startAngle = 90; // Start from bottom (south)
                 const angle = ((startAngle + (index * (360 / totalSlots))) * Math.PI) / 180;
                 return {
-                    lat: centerLat + (orbitRadiusLat * Math.sin(angle)),
-                    lng: centerLng + (orbitRadiusLng * Math.cos(angle))
+                    lat: centerLat + (orbitRadiusLat * Math.cos(angle)),
+                    lng: centerLng + (orbitRadiusLng * Math.sin(angle))
                 };
             };
             
@@ -1836,7 +1836,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v6.6 - Stable GPS + Better Orbits');
+                console.log('🚀 RADAR SOCIAL v6.8 - Orbital System Fixed');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2015,7 +2015,7 @@
                 initializeGoogleMap(currentUser.latitude, currentUser.longitude);
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
 
-            // Update map markers with orbital system - optimized to prevent flickering
+            // Update map markers - orbital system around user
             useEffect(() => {
                 if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
                 
@@ -2029,7 +2029,8 @@
                     currentUserLat: currentUser.latitude.toFixed(5),
                     currentUserLng: currentUser.longitude.toFixed(5),
                     currentUserPhoto: currentUser.photo,
-                    usersInRange: usersInRange.map(u => `${u.id}-${u.distance}-${u.thought || ''}`),
+                    usersCount: usersInRange.length,
+                    userIds: usersInRange.map(u => u.id).join(','),
                     radius
                 });
                 
@@ -2042,42 +2043,44 @@
                 // Clear existing markers
                 clearAllMarkers();
                 
-                // Create current user marker (largest - 60px)
-                const currentUserMarker = createUserMarker(currentUser, googleMap, 60, true);
+                // Create current user marker (largest - 65px) - NO label, centered
+                const currentUserMarker = createUserMarker(currentUser, googleMap, 65, true);
                 markersRef.current.push(currentUserMarker);
                 
-                // First 8 closest go to orbital positions (medium - 45px)
+                // First 8 closest go in orbital positions around user
                 const orbitUsers = usersInRange.slice(0, 8);
-                const farUsers = usersInRange.slice(8);
                 
-                // Create orbital markers
                 orbitUsers.forEach((user, index) => {
                     const orbitalPos = getOrbitalPosition(currentUser.latitude, currentUser.longitude, index, 8);
-                    const userWithOrbitalPos = {
+                    const userWithPos = {
                         ...user,
                         displayLat: orbitalPos.lat,
                         displayLng: orbitalPos.lng
                     };
-                    const marker = createUserMarker(userWithOrbitalPos, googleMap, 45, false);
-                    markersRef.current.push(marker);
-                });
-                
-                // Create far users at real positions (small - 38px)
-                farUsers.forEach(user => {
-                    const marker = createUserMarker(user, googleMap, 38, false);
+                    const marker = createUserMarker(userWithPos, googleMap, 50, false);
                     markersRef.current.push(marker);
                 });
                 
             }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, users, radius]);
             
-            // Separate effect to pan/center map
+            // Center map on user - only when position changes significantly
             useEffect(() => {
                 if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
                 
-                // Center map on user
-                const center = { lat: currentUser.latitude, lng: currentUser.longitude };
-                googleMap.setCenter(center);
+                const currentCenter = googleMap.getCenter();
+                const newLat = currentUser.latitude;
+                const newLng = currentUser.longitude;
                 
+                // Only recenter if moved more than ~20 meters
+                if (currentCenter) {
+                    const distance = calculateDistance(
+                        currentCenter.lat(), currentCenter.lng(),
+                        newLat, newLng
+                    );
+                    if (distance < 20) return; // Don't recenter for small movements
+                }
+                
+                googleMap.setCenter({ lat: newLat, lng: newLng });
             }, [googleMap, currentUser?.latitude, currentUser?.longitude]);
 
             // Heartbeat
@@ -2474,7 +2477,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.6</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.8</span>
                             </div>
                         </div>
                     </div>
