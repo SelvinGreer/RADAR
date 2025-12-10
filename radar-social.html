@@ -25,7 +25,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
     <!-- Google Maps API con TU API Key -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA2kFaHgj0LpeB3MJBUTG_piDyW_zJ1wzU&libraries=places"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA2kFaHgj0LpeB3MJBUTG_piDyW_zJ1wzU&libraries=places,geometry"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -2579,7 +2579,7 @@
         function RadarSocialApp() {
             const [showLanding, setShowLanding] = useState(true); // Landing page con Google Sign In
             const [locationPermission, setLocationPermission] = useState(false);
-            const [radius, setRadius] = useState(100); // Aumentado de 50m a 100m
+            const [radius, setRadius] = useState(100); // Valor inicial: 100m (uno de los 5 pasos)
             const [thought, setThought] = useState('');
             const [currentUser, setCurrentUser] = useState(null);
             const [userLocation, setUserLocation] = useState(null);
@@ -2884,7 +2884,7 @@
                 // Crear mapa
                 const map = new google.maps.Map(mapRef.current, {
                     center: { lat, lng },
-                    zoom: getZoomFromRadius(radius),
+                    zoom: 15, // ZOOM FIJO - no cambia
                     styles: darkStyle,
                     disableDefaultUI: true, // Ocultar controles default
                     gestureHandling: 'greedy', // Permitir arrastrar con un dedo
@@ -2893,6 +2893,42 @@
                     fullscreenControl: false,
                     streetViewControl: false,
                     zoomControl: false,
+                    scrollwheel: false, // Deshabilitar zoom con scroll
+                    disableDoubleClickZoom: true, // Deshabilitar zoom con doble click
+                    minZoom: 15, // Zoom mínimo = 15
+                    maxZoom: 15, // Zoom máximo = 15 (mismo = bloqueado)
+                });
+                
+                // LÍMITE DE MOVIMIENTO: 1km desde ubicación del usuario
+                const MAX_DISTANCE_KM = 1; // 1 kilómetro
+                const userCenter = { lat, lng };
+                
+                map.addListener('center_changed', () => {
+                    const currentCenter = map.getCenter();
+                    if (!currentCenter) return;
+                    
+                    // Calcular distancia desde el centro del usuario
+                    const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                        new google.maps.LatLng(userCenter.lat, userCenter.lng),
+                        currentCenter
+                    );
+                    
+                    // Si la distancia es mayor a 1km, restringir
+                    if (distance > MAX_DISTANCE_KM * 1000) {
+                        // Calcular punto en el límite (1km desde el usuario)
+                        const heading = google.maps.geometry.spherical.computeHeading(
+                            new google.maps.LatLng(userCenter.lat, userCenter.lng),
+                            currentCenter
+                        );
+                        
+                        const limitPoint = google.maps.geometry.spherical.computeOffset(
+                            new google.maps.LatLng(userCenter.lat, userCenter.lng),
+                            MAX_DISTANCE_KM * 1000,
+                            heading
+                        );
+                        
+                        map.setCenter(limitPoint);
+                    }
                 });
                 
                 setGoogleMap(map);
@@ -2916,19 +2952,8 @@
                 return 13; // Máximo zoom out para 1km
             };
             
-            // Actualizar zoom del mapa cuando cambia el radio
-            useEffect(() => {
-                if (googleMap && radius && currentUser) {
-                    const newZoom = getZoomFromRadius(radius);
-                    // ✅ CENTRAR EN USUARIO al hacer zoom
-                    googleMap.setCenter({ 
-                        lat: currentUser.latitude, 
-                        lng: currentUser.longitude 
-                    });
-                    googleMap.setZoom(newZoom);
-                    console.log(`🔍 Zoom actualizado a ${newZoom} (radio: ${radius}m) - Centrado en usuario`);
-                }
-            }, [radius, googleMap, currentUser]);
+            // ZOOM FIJO - No se actualiza cuando cambia el radio
+            // El mapa siempre permanece en zoom 15
             
             // Inicializar mapa cuando tengamos ubicación del usuario
             useEffect(() => {
@@ -4974,8 +4999,11 @@
                 let position = (clientX - rect.left) / rect.width;
                 position = Math.max(0, Math.min(1, position)); // Clamp 0-1
                 
-                // Map 0-1 to 5-1000 meters (máximo 1km)
-                const newRadius = Math.round(5 + position * 995);
+                // 5 PASOS DISCRETOS: 50m, 100m, 200m, 500m, 1000m
+                const steps = [50, 100, 200, 500, 1000];
+                const stepIndex = Math.round(position * (steps.length - 1));
+                const newRadius = steps[stepIndex];
+                
                 setRadius(newRadius);
             };
 
@@ -5870,11 +5898,19 @@
                                 >
                                     <div 
                                         className="range-slider-progress"
-                                        style={{ width: `${((radius - 5) / 995) * 100}%` }}
+                                        style={{ width: `${(() => {
+                                            const steps = [50, 100, 200, 500, 1000];
+                                            const index = steps.indexOf(radius);
+                                            return (index / (steps.length - 1)) * 100;
+                                        })()}%` }}
                                     />
                                     <div 
                                         className="range-slider-thumb"
-                                        style={{ left: `${((radius - 5) / 995) * 100}%` }}
+                                        style={{ left: `${(() => {
+                                            const steps = [50, 100, 200, 500, 1000];
+                                            const index = steps.indexOf(radius);
+                                            return (index / (steps.length - 1)) * 100;
+                                        })()}%` }}
                                     />
                                 </div>
                                 
