@@ -2895,6 +2895,17 @@
                     zoomControl: false,
                 });
                 
+                // Listener para cuando el mapa termina de moverse/hacer zoom
+                map.addListener('idle', () => {
+                    console.log('🗺️ Mapa idle - Re-aplicando anti-superposición...');
+                    // Delay pequeño para asegurar que todo esté renderizado
+                    setTimeout(() => {
+                        if (mapMarkers && Object.keys(mapMarkers).length > 1 && currentUser) {
+                            applyCollisionOffsets(mapMarkers, map, currentUser.id);
+                        }
+                    }, 100);
+                });
+                
                 setGoogleMap(map);
                 console.log('✅ Google Maps CREADO Y GUARDADO!');
                 console.log('   Mapa:', map);
@@ -3190,7 +3201,7 @@
                 });
                 
                 const COLLISION_RADIUS = 50; // 50 píxeles de radio de colisión (aumentado)
-                const OFFSET_DISTANCE = 65; // Desplazar 65px cuando hay colisión (aumentado)
+                const OFFSET_DISTANCE = 90; // Desplazar 90px cuando hay colisión (MUY VISIBLE)
                 
                 // Detectar colisiones y aplicar offsets
                 positions.forEach((pos1, i) => {
@@ -3282,10 +3293,11 @@
                 
                 console.log(`✅ ${Object.keys(newMarkers).length} markers actualizados`);
                 
-                // Aplicar anti-superposición después del renderizado
+                // Aplicar anti-superposición después del renderizado (delay mayor)
                 setTimeout(() => {
+                    console.log('🔄 Aplicando anti-superposición...');
                     applyCollisionOffsets(newMarkers, googleMap, currentUser.id);
-                }, 150);
+                }, 300); // Aumentado de 150ms a 300ms
                 
             }, [googleMap, currentUser, users, radius, viewedStories]);
             
@@ -3293,12 +3305,13 @@
             useEffect(() => {
                 if (!googleMap || !currentUser || Object.keys(mapMarkers).length < 2) return;
                 
+                console.log('🔄 useEffect de zoom - Re-aplicando anti-superposición...');
                 const timeoutId = setTimeout(() => {
                     applyCollisionOffsets(mapMarkers, googleMap, currentUser.id);
-                }, 200);
+                }, 300); // Aumentado a 300ms
                 
                 return () => clearTimeout(timeoutId);
-            }, [radius, googleMap, currentUser, mapMarkers]);
+            }, [radius]); // Solo cuando cambia radius, no mapMarkers
 
             // ==========================================
             // ULTRASONIC SYSTEM - Audio Ultrasónico
