@@ -1040,7 +1040,7 @@
 
         .thought-input-container {
             position: absolute;
-            bottom: max(env(safe-area-inset-bottom), 16px);
+            bottom: 16px; /* ← Eliminado safe-area-inset-bottom que causaba espacio extra */
             left: 16px;
             right: 16px;
             z-index: 15;
@@ -1195,7 +1195,7 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 20px 20px 0 0;
-            padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+            padding: 20px; /* ← Simplificado, sin safe-area-inset */
             z-index: 9999;
             transform: translateY(100%);
             transition: transform 0.3s ease;
@@ -2964,26 +2964,38 @@
                     { elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
                     { elementType: 'labels.text.stroke', stylers: [{ color: '#0d1117' }] },
                     { elementType: 'labels.text.fill', stylers: [{ color: '#8696a0' }] },
+                    
+                    // ❌ OCULTAR TODOS LOS POIs (restaurantes, tiendas, etc.)
+                    {
+                        featureType: 'poi',
+                        stylers: [{ visibility: 'off' }]
+                    },
+                    
+                    // ❌ OCULTAR negocios
+                    {
+                        featureType: 'poi.business',
+                        stylers: [{ visibility: 'off' }]
+                    },
+                    
+                    // ❌ OCULTAR todo el transporte (paradas de bus, estaciones)
+                    {
+                        featureType: 'transit',
+                        stylers: [{ visibility: 'off' }]
+                    },
+                    
+                    // ❌ OCULTAR estaciones de transporte
+                    {
+                        featureType: 'transit.station',
+                        stylers: [{ visibility: 'off' }]
+                    },
+                    
                     {
                         featureType: 'administrative.locality',
                         elementType: 'labels.text.fill',
                         stylers: [{ color: '#a0a9b1' }]
                     },
-                    {
-                        featureType: 'poi',
-                        elementType: 'labels.text.fill',
-                        stylers: [{ color: '#757c85' }]
-                    },
-                    {
-                        featureType: 'poi.park',
-                        elementType: 'geometry',
-                        stylers: [{ color: '#1a2a1f' }]
-                    },
-                    {
-                        featureType: 'poi.park',
-                        elementType: 'labels.text.fill',
-                        stylers: [{ color: '#5a7061' }]
-                    },
+                    
+                    // ✅ CALLES - Mantener visibles
                     {
                         featureType: 'road',
                         elementType: 'geometry',
@@ -2994,6 +3006,8 @@
                         elementType: 'geometry.stroke',
                         stylers: [{ color: '#2a3542' }]
                     },
+                    
+                    // ✅ NOMBRES DE CALLES - Mantener visibles
                     {
                         featureType: 'road',
                         elementType: 'labels.text.fill',
@@ -3009,16 +3023,8 @@
                         elementType: 'geometry.stroke',
                         stylers: [{ color: '#3a4a5c' }]
                     },
-                    {
-                        featureType: 'transit',
-                        elementType: 'geometry',
-                        stylers: [{ color: '#1a2530' }]
-                    },
-                    {
-                        featureType: 'transit.station',
-                        elementType: 'labels.text.fill',
-                        stylers: [{ color: '#757c85' }]
-                    },
+                    
+                    // ✅ AGUA - Mantener visible
                     {
                         featureType: 'water',
                         elementType: 'geometry',
@@ -4515,37 +4521,34 @@
             // 🧲 ANIMACIÓN DE IMÁN - Detectar usuarios nuevos
             // ==========================================
             useEffect(() => {
-                if (!users || users.length === 0) return;
+                if (!users || users.length === 0 || !currentUser) return;
                 
-                const currentUserIds = new Set(users.map(u => u.id));
-                
-                // Detectar usuarios nuevos (que no estaban en enteringUsers ni en la lista anterior)
+                // Detectar usuarios que son REALMENTE nuevos (no estaban en lastSeenUsers)
                 users.forEach(user => {
-                    // Si el usuario no está ya en la animación y no es el usuario actual
-                    if (!enteringUsers.has(user.id) && currentUser && user.id !== currentUser.id) {
-                        // Verificar si es realmente nuevo (no existía antes)
-                        const userElement = document.querySelector(`[data-user-id="${user.id}"]`);
-                        if (userElement && !userElement.classList.contains('avatar-entering') && !userElement.dataset.animated) {
-                            console.log(`🧲 Usuario nuevo detectado: ${user.name} - Activando animación de imán`);
-                            
-                            // Agregar al conjunto de usuarios entrando
-                            setEnteringUsers(prev => new Set([...prev, user.id]));
-                            
-                            // Marcar como animado para no repetir
-                            userElement.dataset.animated = 'true';
-                            
-                            // Remover del conjunto después de la animación (600ms)
-                            setTimeout(() => {
-                                setEnteringUsers(prev => {
-                                    const next = new Set(prev);
-                                    next.delete(user.id);
-                                    return next;
-                                });
-                            }, 600);
-                        }
+                    // Si no es el usuario actual y no estaba antes
+                    if (user.id !== currentUser.id && !lastSeenUsers[user.id]) {
+                        console.log(`🧲 Usuario NUEVO detectado: ${user.name} - Activando animación de imán`);
+                        
+                        // Agregar a enteringUsers
+                        setEnteringUsers(prev => new Set([...prev, user.id]));
+                        
+                        // Actualizar lastSeenUsers
+                        setLastSeenUsers(prev => ({
+                            ...prev,
+                            [user.id]: Date.now()
+                        }));
+                        
+                        // Remover de enteringUsers después de la animación
+                        setTimeout(() => {
+                            setEnteringUsers(prev => {
+                                const next = new Set(prev);
+                                next.delete(user.id);
+                                return next;
+                            });
+                        }, 650); // Un poco más que la animación (600ms)
                     }
                 });
-            }, [users, currentUser, enteringUsers]);
+            }, [users, currentUser, lastSeenUsers]);
 
             // ==========================================
             // ACTIVE TECHNOLOGY CALCULATOR - Determina qué tech está activa
@@ -6726,7 +6729,7 @@
                                 fontWeight: 500,
                                 letterSpacing: '0.5px'
                             }}>
-                                v5.8
+                                v6.0
                             </div>
                         </div>
                     </div>
