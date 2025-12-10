@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v6.1 Build: 2025-12-10 | GPS Fix + UI Cleanup -->
+    <!-- v6.2 Build: 2025-12-10 | Orbital System + UI Cleanup -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -122,48 +122,7 @@
             color: rgba(230, 237, 243, 0.8);
         }
 
-        .tech-badges-container {
-            position: fixed;
-            top: 67px;
-            right: 16px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            align-items: flex-end;
-        }
-
-        .tech-badge {
-            padding: 6px 12px;
-            font-size: 10px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(56, 189, 98, 0.15);
-            border: 1px solid rgba(56, 189, 98, 0.3);
-            border-radius: 8px;
-            font-weight: 600;
-            color: #38bd62;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-            cursor: pointer;
-        }
-
-        .tech-badge.online {
-            background: rgba(34, 197, 94, 0.15);
-            border-color: rgba(34, 197, 94, 0.4);
-            color: #22c55e;
-        }
-
-        .tech-badge-dot {
-            width: 6px;
-            height: 6px;
-            background: currentColor;
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
-        }
+        /* Badges container removed in v6.2 */
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -1537,6 +1496,7 @@
             
             const mapRef = useRef(null);
             const chatMessagesRef = useRef(null);
+            const markersRef = useRef([]);
             const kalmanLat = useRef(new KalmanFilter(0.001, 0.1));
             const kalmanLon = useRef(new KalmanFilter(0.001, 0.1));
             const currentUserPositionRef = useRef({ lat: 0, lng: 0 });
@@ -1622,10 +1582,8 @@
                 console.log('✅ Google Maps initialized');
             };
 
-            // Create user marker on map
-            const createUserMarker = (user, map, isCurrentUser = false) => {
-                const size = isCurrentUser ? 60 : 50;
-                
+            // Create user marker on map - with size parameter
+            const createUserMarker = (user, map, size, isCurrentUser = false, showDistance = false) => {
                 const markerDiv = document.createElement('div');
                 markerDiv.style.cssText = `width:${size}px;height:${size}px;cursor:pointer;position:relative;z-index:${isCurrentUser?1000:500}`;
                 
@@ -1641,11 +1599,20 @@
                 ring.appendChild(avatarImg);
                 markerDiv.appendChild(ring);
                 
-                if (user.thought && user.thought.trim()) {
+                // Show thought bubble for current user or orbit users
+                if (user.thought && user.thought.trim() && (isCurrentUser || size >= 45)) {
                     const thoughtLabel = document.createElement('div');
                     thoughtLabel.textContent = user.thought;
-                    thoughtLabel.style.cssText = 'position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:rgba(13,17,23,0.95);color:#e6edf3;padding:8px 12px;border-radius:12px;font-size:12px;white-space:nowrap;margin-bottom:8px;border:1px solid rgba(56,189,98,0.3);max-width:150px;overflow:hidden;text-overflow:ellipsis;pointer-events:none';
+                    thoughtLabel.style.cssText = 'position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:rgba(13,17,23,0.95);color:#e6edf3;padding:6px 10px;border-radius:10px;font-size:11px;white-space:nowrap;margin-bottom:6px;border:1px solid rgba(56,189,98,0.3);max-width:120px;overflow:hidden;text-overflow:ellipsis;pointer-events:none';
                     markerDiv.appendChild(thoughtLabel);
+                }
+                
+                // Show distance label for orbit users
+                if (showDistance && user.distance) {
+                    const distanceLabel = document.createElement('div');
+                    distanceLabel.textContent = `${user.distance}m`;
+                    distanceLabel.style.cssText = 'position:absolute;top:100%;left:50%;transform:translateX(-50%);background:rgba(13,17,23,0.9);color:#8b949e;padding:3px 8px;border-radius:8px;font-size:10px;margin-top:4px;font-weight:600;pointer-events:none';
+                    markerDiv.appendChild(distanceLabel);
                 }
                 
                 markerDiv.addEventListener('click', () => handleAvatarClick(user));
@@ -1668,14 +1635,38 @@
                     onRemove() { if (this.content.parentElement) this.content.parentElement.removeChild(this.content); }
                 }
                 
-                const marker = new CustomMarker(new google.maps.LatLng(user.latitude, user.longitude), markerDiv);
+                const marker = new CustomMarker(new google.maps.LatLng(user.displayLat || user.latitude, user.displayLng || user.longitude), markerDiv);
                 marker.setMap(map);
                 return marker;
+            };
+            
+            // Calculate orbital positions around user (circular)
+            const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
+                // Orbit radius ~40 meters for better visibility
+                const orbitRadiusLat = 0.00036; // ~40m in latitude
+                const orbitRadiusLng = 0.00045; // ~40m in longitude (adjusted for latitude)
+                // Start from top (270 degrees) and go clockwise
+                const startAngle = -90; // Start from top
+                const angle = ((startAngle + (index * (360 / totalSlots))) * Math.PI) / 180;
+                return {
+                    lat: centerLat + (orbitRadiusLat * Math.sin(angle)),
+                    lng: centerLng + (orbitRadiusLng * Math.cos(angle))
+                };
+            };
+            
+            // Clear all markers
+            const clearAllMarkers = () => {
+                markersRef.current.forEach(marker => {
+                    if (marker && marker.setMap) {
+                        marker.setMap(null);
+                    }
+                });
+                markersRef.current = [];
             };
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v6.1 - GPS Fix + UI Cleanup');
+                console.log('🚀 RADAR SOCIAL v6.2 - Orbital System + UI Cleanup');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -1769,7 +1760,7 @@
                                                             isOnline = (Date.now() - lastSeenTime) <= 30000;
                                                         }
                                                         
-                                                        if (userData.location) {
+                                                        if (userData.location && isOnline) {
                                                             const userLat = userData.location.latitude;
                                                             const userLon = userData.location.longitude;
                                                             
@@ -1801,7 +1792,7 @@
                                                                     photo: userData.photoURL || 'https://ui-avatars.com/api/?name=User&background=38bd62&color=fff',
                                                                     thought: displayThought,
                                                                     hasStory: hasActiveStory, storyUrl, storyTimestamp,
-                                                                    distance, isOnline,
+                                                                    distance, isOnline: true,
                                                                     latitude: userLat, longitude: userLon
                                                                 });
                                                             }
@@ -1846,22 +1837,48 @@
                 initializeGoogleMap(currentUser.latitude, currentUser.longitude);
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
 
-            // Update map markers
+            // Update map markers with orbital system
             useEffect(() => {
-                if (!googleMap || !currentUser) return;
+                if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
                 
-                // Create current user marker
-                createUserMarker(currentUser, googleMap, true);
+                // Clear existing markers first
+                clearAllMarkers();
                 
-                // Create other user markers
-                const usersInRange = users.filter(u => u.distance <= radius && u.isOnline);
-                usersInRange.forEach(user => createUserMarker(user, googleMap, false));
+                // Create current user marker (largest - 65px)
+                const currentUserMarker = createUserMarker(currentUser, googleMap, 65, true);
+                markersRef.current.push(currentUserMarker);
                 
-                // Pan to user
-                if (currentUser.latitude && currentUser.longitude) {
-                    googleMap.panTo({ lat: currentUser.latitude, lng: currentUser.longitude });
-                }
-            }, [googleMap, currentUser, users, radius]);
+                // Get users in range and sort by distance
+                const usersInRange = users
+                    .filter(u => u.distance <= radius && u.isOnline)
+                    .sort((a, b) => a.distance - b.distance);
+                
+                // First 8 closest go to orbital positions
+                const orbitUsers = usersInRange.slice(0, 8);
+                const farUsers = usersInRange.slice(8);
+                
+                // Create orbital markers (medium - 48px)
+                orbitUsers.forEach((user, index) => {
+                    const orbitalPos = getOrbitalPosition(currentUser.latitude, currentUser.longitude, index, 8);
+                    const userWithOrbitalPos = {
+                        ...user,
+                        displayLat: orbitalPos.lat,
+                        displayLng: orbitalPos.lng
+                    };
+                    const marker = createUserMarker(userWithOrbitalPos, googleMap, 48, false, true);
+                    markersRef.current.push(marker);
+                });
+                
+                // Create far users at real positions (small - 35px)
+                farUsers.forEach(user => {
+                    const marker = createUserMarker(user, googleMap, 35, false, true);
+                    markersRef.current.push(marker);
+                });
+                
+                // Pan to user location
+                googleMap.panTo({ lat: currentUser.latitude, lng: currentUser.longitude });
+                
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius]);
 
             // Heartbeat
             useEffect(() => {
@@ -1909,12 +1926,14 @@
 
             const handleThoughtSubmit = async () => {
                 if (!thought.trim() || !currentUser) return;
+                const newThought = thought.trim();
                 try {
                     await db.collection('users').doc(currentUser.id).update({
-                        thought: thought.trim(),
+                        thought: newThought,
                         thoughtTimestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    setCurrentUser(prev => ({ ...prev, thought: thought.trim() }));
+                    setCurrentUser(prev => ({ ...prev, thought: newThought }));
+                    setThought(''); // Limpiar el campo después de publicar
                 } catch (error) {
                     console.error('Error updating thought:', error);
                 }
@@ -2080,7 +2099,7 @@
                 );
             }
 
-            const usersInRange = users.filter(u => u.distance <= radius);
+            const usersInRange = users.filter(u => u.distance <= radius && u.isOnline && u.latitude !== 0);
             const chatId = selectedUser ? [currentUser?.id, selectedUser.id].sort().join('_') : null;
             const chatMessages = chatId ? (messages[chatId] || []) : [];
 
@@ -2118,12 +2137,7 @@
                                 </svg>
                             </div>
                             
-                            <div className="tech-badges-container">
-                                <div className="tech-badge online"><span className="tech-badge-dot"></span><span>EN LÍNEA</span></div>
-                                <div className="tech-badge" onClick={() => setShowTechSettings(true)}>
-                                    <span>{activeTech.icon}</span><span>{activeTech.name} ±{activeTech.precision}m</span>
-                                </div>
-                            </div>
+                            
                         </div>
                         
                         <div className="range-slider-container">
@@ -2191,7 +2205,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.1</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.2</span>
                             </div>
                         </div>
                     </div>
