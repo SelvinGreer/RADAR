@@ -438,25 +438,29 @@
 
         .avatar-ring {
             border-radius: 50%;
-            padding: 2.5px;
+            padding: 2px; /* Más delgado: 2px (Instagram) vs 2.5px (antes) */
             position: relative;
             flex-shrink: 0;
         }
 
         .avatar-ring.has-story {
-            background: linear-gradient(135deg, #f59e0b 0%, #f97316 35%, #ec4899 70%, #a855f7 100%);
+            /* Gradiente Instagram: rosa/violeta suave y sutil */
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
         }
 
         .avatar-ring.viewed-story {
-            background: rgba(71, 85, 105, 0.5);
-            opacity: 0.6;
+            /* Story vista: gris más claro y sutil */
+            background: rgba(142, 142, 142, 0.4);
+            opacity: 0.7;
         }
 
         .avatar-ring.no-story {
-            background: rgba(71, 85, 105, 0.5);
+            /* Sin story: apenas visible */
+            background: rgba(142, 142, 142, 0.3);
         }
 
         .avatar-ring.new-message {
+            /* Mensaje nuevo: dorado sutil */
             background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
             animation: messagePulse 1.5s ease-in-out infinite;
         }
@@ -470,6 +474,30 @@
                 opacity: 0.75;
                 box-shadow: 0 0 24px rgba(251, 191, 36, 0.6);
             }
+        }
+
+        /* 🧲 Animación de "Imán" - Avatar es jalado desde el centro */
+        @keyframes magnetPull {
+            0% {
+                transform: scale(0) translate(-50%, -50%);
+                opacity: 0;
+            }
+            60% {
+                transform: scale(1.15) translate(-50%, -50%);
+                opacity: 1;
+            }
+            80% {
+                transform: scale(0.95) translate(-50%, -50%);
+            }
+            100% {
+                transform: scale(1) translate(-50%, -50%);
+                opacity: 1;
+            }
+        }
+
+        /* Clase para avatares que están entrando */
+        .avatar-entering {
+            animation: magnetPull 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
         .avatar-img-wrapper {
@@ -505,7 +533,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             letter-spacing: -0.1px;
-            margin-bottom: 4px;
+            margin-bottom: 2px; /* Más cerca: 2px (Instagram) vs 4px (antes) */
         }
 
         .avatar-name {
@@ -1154,6 +1182,124 @@
 
         .chat-overlay.active {
             transform: translateX(0);
+        }
+
+        /* Modal estilo Instagram al hacer clic en avatar */
+        .instagram-modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(13, 17, 23, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px 20px 0 0;
+            padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+            z-index: 9999;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .instagram-modal.active {
+            transform: translateY(0);
+        }
+
+        .instagram-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .instagram-modal-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(142, 142, 142, 0.3);
+        }
+
+        .instagram-modal-info {
+            flex: 1;
+        }
+
+        .instagram-modal-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 4px;
+        }
+
+        .instagram-modal-distance {
+            font-size: 14px;
+            color: #8b949e;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .instagram-modal-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .instagram-modal-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            padding: 12px 20px;
+            color: #e6edf3;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .instagram-modal-input::placeholder {
+            color: #6e7681;
+        }
+
+        .instagram-modal-input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .instagram-modal-heart {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .instagram-modal-heart:active {
+            transform: scale(0.9);
+        }
+
+        .instagram-modal-heart svg {
+            width: 28px;
+            height: 28px;
+            color: #f0f6fc;
+        }
+
+        .instagram-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 9998;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .instagram-modal-backdrop.active {
+            opacity: 1;
+            pointer-events: all;
         }
 
         .inbox-overlay {
@@ -2054,7 +2200,9 @@
         .sidebar-content {
             flex: 1;
             overflow-y: auto;
-            padding: 12px 0;
+            padding: 12px 0 0 0; /* Sin padding inferior, el footer lo maneja */
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-item {
@@ -2585,8 +2733,12 @@
             const [userLocation, setUserLocation] = useState(null);
             const [users, setUsers] = useState([]); // Start empty - will load from Firebase
             const [lastSeenUsers, setLastSeenUsers] = useState({}); // Track when we last saw each user
+            const [enteringUsers, setEnteringUsers] = useState(new Set()); // IDs de usuarios que están entrando (animación imán)
             const [isDraggingDial, setIsDraggingDial] = useState(false);
             const [selectedUser, setSelectedUser] = useState(null);
+            const [showInstagramModal, setShowInstagramModal] = useState(false); // Modal Instagram
+            const [instagramModalUser, setInstagramModalUser] = useState(null); // Usuario del modal
+            const [quickMessage, setQuickMessage] = useState(''); // Mensaje rápido
             const [chats, setChats] = useState({});
             const [messages, setMessages] = useState({});
             const [messageInput, setMessageInput] = useState('');
@@ -2620,6 +2772,7 @@
             const [soundEnabled, setSoundEnabled] = useState(true);
             const [googleMap, setGoogleMap] = useState(null); // Instancia del mapa de Google Maps
             const [mapMarkers, setMapMarkers] = useState({}); // Markers de usuarios en el mapa
+            const [waitingForGPS, setWaitingForGPS] = useState(true); // Esperando GPS real
             const mapRef = useRef(null); // Referencia al div del mapa
             const [wakeLockEnabled, setWakeLockEnabled] = useState(false);
             const wakeLockRef = useRef(null);
@@ -2654,6 +2807,7 @@
             const kalmanLon = useRef(new KalmanFilter(0.001, 0.1));
             const lastDeadReckoningPos = useRef(null);
             const lastDeadReckoningTime = useRef(Date.now());
+            const currentUserPositionRef = useRef({ lat: 0, lng: 0 }); // ← NUEVO: Para el límite 1km
 
             // Calculate distance between two GPS coordinates (Haversine formula)
             const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -2923,100 +3077,82 @@
             // ZOOM FIJO - No se actualiza cuando cambia el radio
             // El mapa siempre permanece en zoom 15
             
+            // Actualizar ref de posición actual del usuario (para límite 1km)
+            useEffect(() => {
+                if (currentUser && currentUser.latitude && currentUser.longitude &&
+                    currentUser.latitude !== 0 && currentUser.longitude !== 0) {
+                    currentUserPositionRef.current = {
+                        lat: currentUser.latitude,
+                        lng: currentUser.longitude
+                    };
+                    console.log('📍 Ref actualizado con posición actual:', currentUser.latitude.toFixed(6), currentUser.longitude.toFixed(6));
+                }
+            }, [currentUser?.latitude, currentUser?.longitude]);
+            
             // LÍMITE DE MOVIMIENTO: 1km desde ubicación ACTUAL del usuario
             useEffect(() => {
-                console.log('🗺️ useEffect de LÍMITE ejecutado');
-                console.log('   googleMap:', googleMap ? 'OK ✅' : 'NULL ❌');
-                console.log('   currentUser:', currentUser ? 'OK ✅' : 'NULL ❌');
-                
                 if (!googleMap) {
-                    console.log('   ⏳ Esperando googleMap...');
+                    console.log('🗺️ Límite: Esperando googleMap...');
                     return;
                 }
                 
-                if (!currentUser) {
-                    console.log('   ⏳ Esperando currentUser...');
-                    return;
-                }
-                
-                // VALIDACIÓN: Coordenadas REALES
-                if (!currentUser.latitude || !currentUser.longitude || 
-                    currentUser.latitude === 0 || currentUser.longitude === 0) {
-                    console.log('   ⏳ Esperando coordenadas GPS REALES...');
-                    console.log('      latitude:', currentUser.latitude);
-                    console.log('      longitude:', currentUser.longitude);
-                    return;
-                }
-                
-                const MAX_DISTANCE_KM = 1; // 1 kilómetro
+                const MAX_DISTANCE_KM = 1;
                 let isAdjustingCenter = false;
-                let listener = null;
                 
-                console.log('✅ CONDICIONES CUMPLIDAS - Creando listener de límite 1km');
-                console.log('   → currentUser posición REAL:', currentUser.latitude, currentUser.longitude);
-                console.log('   → MAX_DISTANCE_KM:', MAX_DISTANCE_KM);
+                console.log('✅ Creando listener de límite 1km');
                 
-                // Crear listener para limitar movimiento
-                listener = googleMap.addListener('center_changed', () => {
-                    // Si YO estoy ajustando el centro, no hacer nada (evitar loop)
+                const listener = googleMap.addListener('center_changed', () => {
                     if (isAdjustingCenter) return;
                     
                     const currentCenter = googleMap.getCenter();
-                    if (!currentCenter || !currentUser) return;
+                    if (!currentCenter) return;
                     
-                    // Validar coordenadas del usuario actuales
-                    if (!currentUser.latitude || !currentUser.longitude ||
-                        currentUser.latitude === 0 || currentUser.longitude === 0) {
-                        return;
+                    // USAR REF: Siempre tiene coordenadas ACTUALES
+                    const userPos = currentUserPositionRef.current;
+                    
+                    // Validar que el ref tenga coordenadas válidas
+                    if (!userPos || userPos.lat === 0 || userPos.lng === 0) {
+                        return; // Sin coordenadas válidas, no limitar
                     }
                     
-                    // Calcular distancia desde el centro ACTUAL del usuario
+                    // Calcular distancia desde posición ACTUAL
                     const distance = google.maps.geometry.spherical.computeDistanceBetween(
-                        new google.maps.LatLng(currentUser.latitude, currentUser.longitude),
+                        new google.maps.LatLng(userPos.lat, userPos.lng),
                         currentCenter
                     );
                     
-                    console.log(`📏 Distancia actual: ${(distance / 1000).toFixed(3)}km`);
+                    console.log(`📏 Distancia: ${(distance / 1000).toFixed(3)}km desde (${userPos.lat.toFixed(4)}, ${userPos.lng.toFixed(4)})`);
                     
-                    // Si la distancia es mayor a 1km, restringir
+                    // Si excede 1km, restringir
                     if (distance > MAX_DISTANCE_KM * 1000) {
-                        console.log(`🚫 LÍMITE ALCANZADO: ${(distance / 1000).toFixed(2)}km > ${MAX_DISTANCE_KM}km`);
+                        console.log(`🚫 LÍMITE: ${(distance / 1000).toFixed(2)}km > ${MAX_DISTANCE_KM}km`);
                         
-                        // Calcular punto en el límite (1km desde el usuario)
                         const heading = google.maps.geometry.spherical.computeHeading(
-                            new google.maps.LatLng(currentUser.latitude, currentUser.longitude),
+                            new google.maps.LatLng(userPos.lat, userPos.lng),
                             currentCenter
                         );
                         
                         const limitPoint = google.maps.geometry.spherical.computeOffset(
-                            new google.maps.LatLng(currentUser.latitude, currentUser.longitude),
+                            new google.maps.LatLng(userPos.lat, userPos.lng),
                             MAX_DISTANCE_KM * 1000,
                             heading
                         );
                         
-                        console.log(`   → Reubicando a límite: ${limitPoint.lat().toFixed(4)}, ${limitPoint.lng().toFixed(4)}`);
+                        console.log(`   → Regresando a límite: ${limitPoint.lat().toFixed(4)}, ${limitPoint.lng().toFixed(4)}`);
                         
-                        // Activar flag ANTES de setCenter
                         isAdjustingCenter = true;
                         googleMap.setCenter(limitPoint);
-                        
-                        // Desactivar flag después de un pequeño delay
-                        setTimeout(() => {
-                            isAdjustingCenter = false;
-                        }, 100);
+                        setTimeout(() => { isAdjustingCenter = false; }, 100);
                     }
                 });
                 
-                console.log('✅ Listener de límite 1km CREADO Y ACTIVO');
+                console.log('✅ Listener de límite 1km ACTIVO');
                 
-                // Cleanup: remover listener cuando el componente se desmonte o cambien dependencias
                 return () => {
-                    console.log('🧹 Limpiando listener de límite');
-                    if (listener) {
-                        google.maps.event.removeListener(listener);
-                    }
+                    console.log('🧹 Removiendo listener de límite');
+                    google.maps.event.removeListener(listener);
                 };
-            }, [googleMap, currentUser]);
+            }, [googleMap]); // Solo depende de googleMap, usa ref para posición
             
             // Inicializar mapa cuando tengamos ubicación del usuario
             useEffect(() => {
@@ -3026,27 +3162,47 @@
                 console.log('   currentUser.longitude:', currentUser?.longitude);
                 console.log('   googleMap:', googleMap);
                 
-                // VALIDACIÓN ESTRICTA: Coordenadas REALES (no 0,0)
-                const hasRealCoordinates = currentUser && 
-                                          currentUser.latitude && 
-                                          currentUser.longitude &&
-                                          currentUser.latitude !== 0 &&
-                                          currentUser.longitude !== 0;
-                
-                if (hasRealCoordinates && !googleMap) {
-                    console.log('✅ Coordenadas GPS REALES detectadas, inicializando mapa...');
-                    console.log('   → Centrado en:', currentUser.latitude, currentUser.longitude);
-                    initializeGoogleMap(currentUser.latitude, currentUser.longitude);
-                } else {
-                    console.log('⏳ Esperando ubicación GPS REAL:', {
-                        tieneUsuario: !!currentUser,
-                        tieneLatitud: !!currentUser?.latitude,
-                        tieneLongitud: !!currentUser?.longitude,
-                        latitudNoEsCero: currentUser?.latitude !== 0,
-                        longitudNoEsCero: currentUser?.longitude !== 0,
-                        noTieneMapa: !googleMap
-                    });
+                if (!currentUser || !currentUser.latitude || !currentUser.longitude) {
+                    console.log('⏳ Esperando currentUser con coordenadas...');
+                    return;
                 }
+                
+                const lat = currentUser.latitude;
+                const lng = currentUser.longitude;
+                
+                // VALIDACIÓN 1: NO (0, 0)
+                if (lat === 0 && lng === 0) {
+                    console.log('⏳ Coordenadas (0,0) - Esperando GPS real...');
+                    return;
+                }
+                
+                // VALIDACIÓN 2: SOLO PANAMÁ (lat: 7-10, lng: -83 a -77)
+                const isPanama = lat >= 7 && lat <= 10 && lng >= -83 && lng <= -77;
+                
+                if (!isPanama) {
+                    console.warn('❌ Coordenadas FUERA de Panamá:', lat, lng);
+                    console.warn('   Esperando GPS válido de Panamá...');
+                    return;
+                }
+                
+                // VALIDACIÓN 3: Mapa no creado aún
+                if (googleMap) {
+                    console.log('⚠️ Mapa ya existe, no reinicializar');
+                    return;
+                }
+                
+                // ✅ TODO OK: Crear mapa
+                console.log('✅ COORDENADAS VÁLIDAS DE PANAMÁ DETECTADAS');
+                console.log('   → Lat:', lat.toFixed(6), '(Panamá ✓)');
+                console.log('   → Lng:', lng.toFixed(6), '(Panamá ✓)');
+                console.log('   → Inicializando mapa...');
+                
+                initializeGoogleMap(lat, lng);
+                
+                // Ocultar pantalla de "Esperando GPS..."
+                setWaitingForGPS(false);
+                console.log('✅ Pantalla de espera OCULTADA');
+                
             }, [currentUser, googleMap]);
             
             // Centrar mapa en usuario cuando su ubicación cambie (COMO WAZE/UBER)
@@ -3082,7 +3238,7 @@
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
             
             // Crear marker personalizado (avatar) para un usuario en el mapa
-            const createUserMarker = (user, map, isCurrentUser = false, options = {}) => {
+            const createUserMarker = (user, map, isCurrentUser = false, options = {}, enteringUserIds = new Set()) => {
                 const { 
                     size = isCurrentUser ? 60 : 50,
                     inCircle = false,
@@ -3091,7 +3247,14 @@
                 
                 // Crear elemento HTML del marker
                 const markerDiv = document.createElement('div');
-                markerDiv.className = 'map-marker';
+                
+                // Agregar clase de animación si es un usuario entrando
+                const isEntering = enteringUserIds.has(user.id) && !isCurrentUser;
+                markerDiv.className = isEntering ? 'map-marker avatar-entering' : 'map-marker';
+                
+                if (isEntering) {
+                    console.log(`   🎨 Aplicando animación de imán a ${user.name}`);
+                }
                 markerDiv.dataset.userId = user.id; // ID para encontrarlo después
                 markerDiv.dataset.isCurrentUser = isCurrentUser ? 'true' : 'false';
                 markerDiv.dataset.inCircle = inCircle ? 'true' : 'false';
@@ -3434,7 +3597,7 @@
                 // Marker del usuario actual (centro) - Tamaño 60px
                 newMarkers[currentUser.id] = createUserMarker(currentUser, googleMap, true, { 
                     size: 60 
-                });
+                }, enteringUsers);
                 
                 // Filtrar usuarios dentro del radio
                 const usersInRange = users.filter(user => {
@@ -3467,7 +3630,7 @@
                         size: 40,
                         inCircle: true,
                         showDistance: true
-                    });
+                    }, enteringUsers);
                 });
                 
                 // USUARIOS EN GPS REAL (9+) - Tamaño 30px
@@ -3476,7 +3639,7 @@
                         size: 30,
                         inCircle: false,
                         showDistance: true
-                    });
+                    }, enteringUsers);
                 });
                 
                 setMapMarkers(newMarkers);
@@ -4346,6 +4509,42 @@
                     stopUltrasonicDetector();
                 }
             }, [users, currentUser, ultrasonicActive]);
+
+            // ==========================================
+            // 🧲 ANIMACIÓN DE IMÁN - Detectar usuarios nuevos
+            // ==========================================
+            useEffect(() => {
+                if (!users || users.length === 0) return;
+                
+                const currentUserIds = new Set(users.map(u => u.id));
+                
+                // Detectar usuarios nuevos (que no estaban en enteringUsers ni en la lista anterior)
+                users.forEach(user => {
+                    // Si el usuario no está ya en la animación y no es el usuario actual
+                    if (!enteringUsers.has(user.id) && currentUser && user.id !== currentUser.id) {
+                        // Verificar si es realmente nuevo (no existía antes)
+                        const userElement = document.querySelector(`[data-user-id="${user.id}"]`);
+                        if (userElement && !userElement.classList.contains('avatar-entering') && !userElement.dataset.animated) {
+                            console.log(`🧲 Usuario nuevo detectado: ${user.name} - Activando animación de imán`);
+                            
+                            // Agregar al conjunto de usuarios entrando
+                            setEnteringUsers(prev => new Set([...prev, user.id]));
+                            
+                            // Marcar como animado para no repetir
+                            userElement.dataset.animated = 'true';
+                            
+                            // Remover del conjunto después de la animación (600ms)
+                            setTimeout(() => {
+                                setEnteringUsers(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(user.id);
+                                    return next;
+                                });
+                            }, 600);
+                        }
+                    }
+                });
+            }, [users, currentUser, enteringUsers]);
 
             // ==========================================
             // ACTIVE TECHNOLOGY CALCULATOR - Determina qué tech está activa
@@ -5383,73 +5582,55 @@
             };
 
             const handleAvatarClick = async (user) => {
-                // Lógica mejorada: Si ya viste la story, abre el chat
+                // Si tiene story, mostrar story
                 if (user.hasStory) {
-                    // Verificar si ya viste la story
                     const viewedTimestamp = viewedStories[user.id];
                     const alreadyViewed = viewedTimestamp && (!user.storyTimestamp || user.storyTimestamp <= viewedTimestamp);
                     
-                    if (alreadyViewed && currentUser && user.id !== currentUser.id) {
-                        // Ya viste la story → Abrir CHAT (no story de nuevo)
-                        console.log(`💬 Story ya vista, abriendo chat con ${user.name}`);
-                        setSelectedUser(user);
-                        
-                        // Marcar mensaje como leído localmente
-                        setUsers(users.map(u => 
-                            u.id === user.id ? { ...u, hasNewMessage: false, unreadCount: 0 } : u
-                        ));
-                        
-                        // Marcar mensajes como leídos en Firestore
-                        try {
-                            const messagesSnapshot = await db.collection('messages')
-                                .where('sender', '==', user.id)
-                                .where('receiver', '==', currentUser.id)
-                                .where('read', '==', false)
-                                .get();
-                            
-                            const batch = db.batch();
-                            messagesSnapshot.docs.forEach(doc => {
-                                batch.update(doc.ref, { read: true });
-                            });
-                            await batch.commit();
-                            
-                            console.log(`✅ Mensajes de ${user.name} marcados como leídos`);
-                        } catch (error) {
-                            console.error('Error marking messages as read:', error);
-                        }
-                    } else {
-                        // NO has visto la story (o es tu propia story) → Abrir STORY
+                    if (!alreadyViewed) {
+                        // Story no vista → Abrir STORY
                         console.log(`📸 Abriendo story de ${user.name}`);
                         setViewingStory(user);
+                        return;
                     }
-                } else if (currentUser && user.id !== currentUser.id) {
-                    // No tiene story → Abrir CHAT
-                    console.log(`💬 No tiene story, abriendo chat con ${user.name}`);
-                    setSelectedUser(user);
+                }
+                
+                // Si no es el usuario actual → Abrir MODAL INSTAGRAM
+                if (currentUser && user.id !== currentUser.id) {
+                    console.log(`📱 Abriendo modal Instagram para ${user.name}`);
+                    setInstagramModalUser(user);
+                    setShowInstagramModal(true);
+                }
+            };
+
+            // Enviar mensaje rápido desde modal Instagram
+            const sendQuickMessage = async () => {
+                if (!quickMessage.trim() || !instagramModalUser || !currentUser) return;
+                
+                console.log(`💬 Enviando mensaje rápido a ${instagramModalUser.name}`);
+                
+                try {
+                    const newMessage = {
+                        sender: currentUser.id,
+                        receiver: instagramModalUser.id,
+                        content: sanitizeInput(quickMessage),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        read: false
+                    };
                     
-                    // Marcar mensaje como leído localmente
-                    setUsers(users.map(u => 
-                        u.id === user.id ? { ...u, hasNewMessage: false, unreadCount: 0 } : u
-                    ));
+                    await db.collection('messages').add(newMessage);
+                    console.log(`✅ Mensaje enviado a ${instagramModalUser.name}`);
                     
-                    // Marcar mensajes como leídos en Firestore
-                    try {
-                        const messagesSnapshot = await db.collection('messages')
-                            .where('sender', '==', user.id)
-                            .where('receiver', '==', currentUser.id)
-                            .where('read', '==', false)
-                            .get();
-                        
-                        const batch = db.batch();
-                        messagesSnapshot.docs.forEach(doc => {
-                            batch.update(doc.ref, { read: true });
-                        });
-                        await batch.commit();
-                        
-                        console.log(`✅ Mensajes de ${user.name} marcados como leídos`);
-                    } catch (error) {
-                        console.error('Error marking messages as read:', error);
-                    }
+                    // Limpiar y cerrar modal
+                    setQuickMessage('');
+                    setShowInstagramModal(false);
+                    setInstagramModalUser(null);
+                    
+                    // Mostrar feedback
+                    alert(`✅ Mensaje enviado a ${instagramModalUser.name}`);
+                } catch (error) {
+                    console.error('❌ Error enviando mensaje:', error);
+                    alert('Error al enviar mensaje');
                 }
             };
 
@@ -5864,6 +6045,54 @@
                             <button className="permission-btn" onClick={requestLocation}>
                                 Permitir Ubicación
                             </button>
+                        </div>
+                    </div>
+                );
+            }
+            
+            // Pantalla de espera mientras se obtiene GPS real
+            if (waitingForGPS && !showLanding) {
+                return (
+                    <div className="location-permission">
+                        <div className="permission-card">
+                            <div style={{
+                                fontSize: '64px',
+                                marginBottom: '20px',
+                                animation: 'float 2s ease-in-out infinite'
+                            }}>📡</div>
+                            <h2>Obteniendo tu ubicación...</h2>
+                            <p style={{ marginBottom: '20px' }}>
+                                Esperando señal GPS precisa de Panamá.
+                                Esto puede tomar unos segundos.
+                            </p>
+                            <div style={{
+                                display: 'flex',
+                                gap: '8px',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                            }}>
+                                <div style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    background: '#38bd62',
+                                    borderRadius: '50%',
+                                    animation: 'badgePulse 1.5s ease-in-out infinite'
+                                }}></div>
+                                <div style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    background: '#38bd62',
+                                    borderRadius: '50%',
+                                    animation: 'badgePulse 1.5s ease-in-out infinite 0.3s'
+                                }}></div>
+                                <div style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    background: '#38bd62',
+                                    borderRadius: '50%',
+                                    animation: 'badgePulse 1.5s ease-in-out infinite 0.6s'
+                                }}></div>
+                            </div>
                         </div>
                     </div>
                 );
@@ -6484,6 +6713,20 @@
                                 </svg>
                                 <span>Ayuda</span>
                             </div>
+                            
+                            {/* Versión */}
+                            <div style={{
+                                marginTop: 'auto',
+                                padding: '15px 20px 30px 20px',
+                                textAlign: 'center',
+                                fontSize: '11px',
+                                color: '#6e7681',
+                                borderTop: '1px solid rgba(48, 54, 61, 0.4)',
+                                fontWeight: 500,
+                                letterSpacing: '0.5px'
+                            }}>
+                                v5.7
+                            </div>
                         </div>
                     </div>
 
@@ -7055,6 +7298,60 @@ NO funcionan con pantalla apagada.
                                 </button>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Modal Instagram */}
+                    <div 
+                        className={`instagram-modal-backdrop ${showInstagramModal ? 'active' : ''}`}
+                        onClick={() => {
+                            setShowInstagramModal(false);
+                            setInstagramModalUser(null);
+                            setQuickMessage('');
+                        }}
+                    />
+                    <div className={`instagram-modal ${showInstagramModal ? 'active' : ''}`}>
+                        {instagramModalUser && (
+                            <>
+                                <div className="instagram-modal-header">
+                                    <img 
+                                        src={instagramModalUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${instagramModalUser.name}`}
+                                        alt={instagramModalUser.name}
+                                        className="instagram-modal-avatar"
+                                    />
+                                    <div className="instagram-modal-info">
+                                        <div className="instagram-modal-name">{instagramModalUser.name}</div>
+                                        <div className="instagram-modal-distance">
+                                            {instagramModalUser.distance}m • {instagramModalUser.thought || 'Disponible'}
+                                        </div>
+                                    </div>
+                                    <div 
+                                        className="instagram-modal-heart"
+                                        onClick={() => {
+                                            console.log(`❤️ Favorito: ${instagramModalUser.name}`);
+                                            alert(`❤️ ${instagramModalUser.name} agregado a favoritos`);
+                                        }}
+                                    >
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div className="instagram-modal-actions">
+                                    <input 
+                                        type="text"
+                                        className="instagram-modal-input"
+                                        placeholder="Enviar mensaje..."
+                                        value={quickMessage}
+                                        onChange={(e) => setQuickMessage(e.target.value)}
+                                        onKeyPress={(e) => {
+                                            if (e.key === 'Enter' && quickMessage.trim()) {
+                                                sendQuickMessage();
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
                 </>
             );
