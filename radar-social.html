@@ -2925,19 +2925,36 @@
             
             // LÍMITE DE MOVIMIENTO: 1km desde ubicación ACTUAL del usuario
             useEffect(() => {
-                if (!googleMap || !currentUser) return;
+                console.log('🗺️ useEffect de LÍMITE ejecutado');
+                console.log('   googleMap:', googleMap ? 'OK' : 'NULL');
+                console.log('   currentUser:', currentUser ? 'OK' : 'NULL');
+                
+                if (!googleMap || !currentUser) {
+                    console.log('   ❌ Saliendo: falta googleMap o currentUser');
+                    return;
+                }
                 
                 const MAX_DISTANCE_KM = 1; // 1 kilómetro
                 let isAdjustingCenter = false;
                 let listener = null;
                 
+                console.log('✅ Creando listener de límite 1km...');
+                console.log('   currentUser posición:', currentUser.latitude, currentUser.longitude);
+                console.log('   MAX_DISTANCE_KM:', MAX_DISTANCE_KM);
+                
                 // Crear listener para limitar movimiento
                 listener = googleMap.addListener('center_changed', () => {
                     // Si YO estoy ajustando el centro, no hacer nada (evitar loop)
-                    if (isAdjustingCenter) return;
+                    if (isAdjustingCenter) {
+                        console.log('   ⏭️ Saliendo: isAdjustingCenter = true');
+                        return;
+                    }
                     
                     const currentCenter = googleMap.getCenter();
-                    if (!currentCenter || !currentUser) return;
+                    if (!currentCenter || !currentUser) {
+                        console.log('   ⏭️ Saliendo: falta currentCenter o currentUser');
+                        return;
+                    }
                     
                     // Calcular distancia desde el centro ACTUAL del usuario
                     const distance = google.maps.geometry.spherical.computeDistanceBetween(
@@ -2945,9 +2962,11 @@
                         currentCenter
                     );
                     
+                    console.log(`📏 Distancia actual: ${(distance / 1000).toFixed(3)}km`);
+                    
                     // Si la distancia es mayor a 1km, restringir
                     if (distance > MAX_DISTANCE_KM * 1000) {
-                        console.log(`🚫 Límite alcanzado: ${(distance / 1000).toFixed(2)}km > ${MAX_DISTANCE_KM}km`);
+                        console.log(`🚫 LÍMITE ALCANZADO: ${(distance / 1000).toFixed(2)}km > ${MAX_DISTANCE_KM}km`);
                         
                         // Calcular punto en el límite (1km desde el usuario)
                         const heading = google.maps.geometry.spherical.computeHeading(
@@ -2961,6 +2980,8 @@
                             heading
                         );
                         
+                        console.log(`   → Reubicando a límite: ${limitPoint.lat()}, ${limitPoint.lng()}`);
+                        
                         // Activar flag ANTES de setCenter
                         isAdjustingCenter = true;
                         googleMap.setCenter(limitPoint);
@@ -2968,12 +2989,16 @@
                         // Desactivar flag después de un pequeño delay
                         setTimeout(() => {
                             isAdjustingCenter = false;
+                            console.log('   ✅ isAdjustingCenter = false');
                         }, 100);
                     }
                 });
                 
+                console.log('✅ Listener de límite 1km CREADO');
+                
                 // Cleanup: remover listener cuando el componente se desmonte o cambien dependencias
                 return () => {
+                    console.log('🧹 Limpiando listener de límite');
                     if (listener) {
                         google.maps.event.removeListener(listener);
                     }
@@ -3331,7 +3356,7 @@
             
             const calculateCirclePosition = (index, total, currentUserLat, currentUserLng) => {
                 // Radio del círculo aumentado para zoom 15 fijo
-                const CIRCLE_RADIUS_METERS = 150; // 150 metros de radio (aumentado de 80)
+                const CIRCLE_RADIUS_METERS = 300; // 300 metros de radio (AUMENTADO para más espacio)
                 const METERS_TO_DEGREES = 0.000009; // 1 metro ≈ 0.000009 grados
                 
                 // Calcular ángulo para este usuario (distribuir uniformemente)
