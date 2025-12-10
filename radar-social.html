@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v6.3 Build: 2025-12-10 | New Landing Page Design -->
+    <!-- v6.4 Build: 2025-12-10 | Instagram-style Markers -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1742,38 +1742,77 @@
                 console.log('✅ Google Maps initialized');
             };
 
-            // Create user marker on map - with size parameter
-            const createUserMarker = (user, map, size, isCurrentUser = false, showDistance = false) => {
+            // Create user marker on map - Instagram style
+            const createUserMarker = (user, map, size, isCurrentUser = false) => {
                 const markerDiv = document.createElement('div');
-                markerDiv.style.cssText = `width:${size}px;height:${size}px;cursor:pointer;position:relative;z-index:${isCurrentUser?1000:500}`;
+                markerDiv.style.cssText = `display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;`;
                 
+                // Thought bubble (Instagram Notes style) - only if has thought
+                if (user.thought && user.thought.trim()) {
+                    const thoughtBubble = document.createElement('div');
+                    thoughtBubble.style.cssText = `
+                        background: #262626;
+                        color: #fff;
+                        padding: 8px 12px;
+                        border-radius: 16px;
+                        font-size: 12px;
+                        font-weight: 500;
+                        max-width: 120px;
+                        text-align: center;
+                        margin-bottom: 6px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                        line-height: 1.3;
+                        word-wrap: break-word;
+                    `;
+                    thoughtBubble.textContent = user.thought;
+                    markerDiv.appendChild(thoughtBubble);
+                }
+                
+                // Avatar container
+                const avatarContainer = document.createElement('div');
+                avatarContainer.style.cssText = `width:${size}px;height:${size}px;position:relative;`;
+                
+                // Ring
                 const ring = document.createElement('div');
-                let ringColor = user.hasStory ? 'linear-gradient(45deg, #f09433, #dc2743, #bc1888)' : 
-                               (user.isOnline || isCurrentUser) ? '#38bd62' : 'rgba(139,148,158,0.4)';
-                ring.style.cssText = `position:absolute;width:100%;height:100%;border-radius:50%;background:${ringColor};padding:3px;box-shadow:0 2px 8px rgba(0,0,0,0.4)`;
+                let ringStyle = user.hasStory 
+                    ? 'background:linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);' 
+                    : (user.isOnline || isCurrentUser) 
+                        ? 'background:#38bd62;' 
+                        : 'background:rgba(139,148,158,0.4);';
+                ring.style.cssText = `position:absolute;width:100%;height:100%;border-radius:50%;${ringStyle}padding:3px;box-shadow:0 2px 12px rgba(0,0,0,0.4);`;
                 
                 const avatarImg = document.createElement('img');
                 avatarImg.src = user.photo;
-                avatarImg.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid #0d1117';
+                avatarImg.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid #0d1117;';
                 
                 ring.appendChild(avatarImg);
-                markerDiv.appendChild(ring);
+                avatarContainer.appendChild(ring);
+                markerDiv.appendChild(avatarContainer);
                 
-                // Show thought bubble for current user or orbit users
-                if (user.thought && user.thought.trim() && (isCurrentUser || size >= 45)) {
-                    const thoughtLabel = document.createElement('div');
-                    thoughtLabel.textContent = user.thought;
-                    thoughtLabel.style.cssText = 'position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:rgba(13,17,23,0.95);color:#e6edf3;padding:6px 10px;border-radius:10px;font-size:11px;white-space:nowrap;margin-bottom:6px;border:1px solid rgba(56,189,98,0.3);max-width:120px;overflow:hidden;text-overflow:ellipsis;pointer-events:none';
-                    markerDiv.appendChild(thoughtLabel);
-                }
+                // Name + Distance label below avatar
+                const nameLabel = document.createElement('div');
+                nameLabel.style.cssText = `
+                    margin-top: 4px;
+                    background: rgba(0,0,0,0.7);
+                    padding: 3px 8px;
+                    border-radius: 8px;
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #fff;
+                    white-space: nowrap;
+                    text-align: center;
+                `;
                 
-                // Show distance label for orbit users
-                if (showDistance && user.distance) {
-                    const distanceLabel = document.createElement('div');
-                    distanceLabel.textContent = `${user.distance}m`;
-                    distanceLabel.style.cssText = 'position:absolute;top:100%;left:50%;transform:translateX(-50%);background:rgba(13,17,23,0.9);color:#8b949e;padding:3px 8px;border-radius:8px;font-size:10px;margin-top:4px;font-weight:600;pointer-events:none';
-                    markerDiv.appendChild(distanceLabel);
+                // Get first name only
+                const firstName = user.name.split(' ')[0];
+                if (isCurrentUser) {
+                    nameLabel.textContent = 'Tú';
+                } else if (user.distance) {
+                    nameLabel.textContent = `${firstName} ${user.distance}m`;
+                } else {
+                    nameLabel.textContent = firstName;
                 }
+                markerDiv.appendChild(nameLabel);
                 
                 markerDiv.addEventListener('click', () => handleAvatarClick(user));
                 
@@ -1788,7 +1827,7 @@
                         const pos = this.getProjection().fromLatLngToDivPixel(this.position);
                         if (pos) {
                             this.content.style.left = pos.x - (this.content.offsetWidth / 2) + 'px';
-                            this.content.style.top = pos.y - (this.content.offsetHeight / 2) + 'px';
+                            this.content.style.top = pos.y - this.content.offsetHeight + 'px';
                             this.content.style.position = 'absolute';
                         }
                     }
@@ -1800,13 +1839,13 @@
                 return marker;
             };
             
-            // Calculate orbital positions around user (circular)
+            // Calculate orbital positions around user (circular, non-overlapping)
             const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
-                // Orbit radius ~40 meters for better visibility
-                const orbitRadiusLat = 0.00036; // ~40m in latitude
-                const orbitRadiusLng = 0.00045; // ~40m in longitude (adjusted for latitude)
-                // Start from top (270 degrees) and go clockwise
-                const startAngle = -90; // Start from top
+                // Larger orbit radius to prevent overlap (~50 meters)
+                const orbitRadiusLat = 0.00045; // ~50m in latitude
+                const orbitRadiusLng = 0.00055; // ~50m in longitude (adjusted for latitude)
+                // Start from top and go clockwise
+                const startAngle = -90;
                 const angle = ((startAngle + (index * (360 / totalSlots))) * Math.PI) / 180;
                 return {
                     lat: centerLat + (orbitRadiusLat * Math.sin(angle)),
@@ -1826,7 +1865,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v6.3 - New Landing Page Design');
+                console.log('🚀 RADAR SOCIAL v6.4 - Instagram-style Markers');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2004,20 +2043,20 @@
                 // Clear existing markers first
                 clearAllMarkers();
                 
-                // Create current user marker (largest - 65px)
-                const currentUserMarker = createUserMarker(currentUser, googleMap, 65, true);
+                // Create current user marker (largest - 60px)
+                const currentUserMarker = createUserMarker(currentUser, googleMap, 60, true);
                 markersRef.current.push(currentUserMarker);
                 
                 // Get users in range and sort by distance
                 const usersInRange = users
-                    .filter(u => u.distance <= radius && u.isOnline)
+                    .filter(u => u.distance <= radius && u.isOnline && u.latitude !== 0)
                     .sort((a, b) => a.distance - b.distance);
                 
-                // First 8 closest go to orbital positions
+                // First 8 closest go to orbital positions (medium - 45px)
                 const orbitUsers = usersInRange.slice(0, 8);
                 const farUsers = usersInRange.slice(8);
                 
-                // Create orbital markers (medium - 48px)
+                // Create orbital markers
                 orbitUsers.forEach((user, index) => {
                     const orbitalPos = getOrbitalPosition(currentUser.latitude, currentUser.longitude, index, 8);
                     const userWithOrbitalPos = {
@@ -2025,13 +2064,13 @@
                         displayLat: orbitalPos.lat,
                         displayLng: orbitalPos.lng
                     };
-                    const marker = createUserMarker(userWithOrbitalPos, googleMap, 48, false, true);
+                    const marker = createUserMarker(userWithOrbitalPos, googleMap, 45, false);
                     markersRef.current.push(marker);
                 });
                 
-                // Create far users at real positions (small - 35px)
+                // Create far users at real positions (small - 38px)
                 farUsers.forEach(user => {
-                    const marker = createUserMarker(user, googleMap, 35, false, true);
+                    const marker = createUserMarker(user, googleMap, 38, false);
                     markersRef.current.push(marker);
                 });
                 
@@ -2434,7 +2473,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.3</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.4</span>
                             </div>
                         </div>
                     </div>
