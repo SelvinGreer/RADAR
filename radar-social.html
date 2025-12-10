@@ -2902,8 +2902,12 @@
                 // LÍMITE DE MOVIMIENTO: 1km desde ubicación del usuario
                 const MAX_DISTANCE_KM = 1; // 1 kilómetro
                 const userCenter = { lat, lng };
+                let isAdjustingCenter = false; // Variable de control para evitar loop
                 
                 map.addListener('center_changed', () => {
+                    // Si YO estoy ajustando el centro, no hacer nada (evitar loop)
+                    if (isAdjustingCenter) return;
+                    
                     const currentCenter = map.getCenter();
                     if (!currentCenter) return;
                     
@@ -2927,7 +2931,14 @@
                             heading
                         );
                         
+                        // Activar flag ANTES de setCenter
+                        isAdjustingCenter = true;
                         map.setCenter(limitPoint);
+                        
+                        // Desactivar flag después de un pequeño delay
+                        setTimeout(() => {
+                            isAdjustingCenter = false;
+                        }, 100);
                     }
                 });
                 
