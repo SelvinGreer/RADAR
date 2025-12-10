@@ -2910,7 +2910,10 @@
                 if (radiusInMeters <= 30) return 19;
                 if (radiusInMeters <= 60) return 18;
                 if (radiusInMeters <= 100) return 17;
-                return 16;
+                if (radiusInMeters <= 200) return 16;
+                if (radiusInMeters <= 400) return 15;
+                if (radiusInMeters <= 800) return 14;
+                return 13; // Máximo zoom out para 1km
             };
             
             // Actualizar zoom del mapa cuando cambia el radio
@@ -2924,9 +2927,6 @@
                     });
                     googleMap.setZoom(newZoom);
                     console.log(`🔍 Zoom actualizado a ${newZoom} (radio: ${radius}m) - Centrado en usuario`);
-                    
-                    // Re-aplicar anti-superposición después del zoom
-                    applyAntiOverlap();
                 }
             }, [radius, googleMap, currentUser]);
             
@@ -2962,15 +2962,22 @@
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
             
             // Crear marker personalizado (avatar) para un usuario en el mapa
-            const createUserMarker = (user, map, isCurrentUser = false) => {
+            const createUserMarker = (user, map, isCurrentUser = false, options = {}) => {
+                const { 
+                    size = isCurrentUser ? 60 : 50,
+                    inCircle = false,
+                    showDistance = false
+                } = options;
+                
                 // Crear elemento HTML del marker
                 const markerDiv = document.createElement('div');
                 markerDiv.className = 'map-marker';
                 markerDiv.dataset.userId = user.id; // ID para encontrarlo después
                 markerDiv.dataset.isCurrentUser = isCurrentUser ? 'true' : 'false';
+                markerDiv.dataset.inCircle = inCircle ? 'true' : 'false';
                 markerDiv.style.cssText = `
-                    width: ${isCurrentUser ? '60px' : '50px'};
-                    height: ${isCurrentUser ? '60px' : '50px'};
+                    width: ${size}px;
+                    height: ${size}px;
                     cursor: pointer;
                     position: relative;
                     z-index: ${isCurrentUser ? 1000 : 500};
@@ -3073,6 +3080,29 @@
                         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
                     `;
                     markerDiv.appendChild(badge);
+                }
+                
+                // Label de distancia (si showDistance es true)
+                if (showDistance && user.distance !== undefined) {
+                    const distanceLabel = document.createElement('div');
+                    distanceLabel.textContent = `${Math.round(user.distance)}m`;
+                    distanceLabel.style.cssText = `
+                        position: absolute;
+                        top: 100%;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: rgba(13, 17, 23, 0.9);
+                        color: #38bd62;
+                        padding: 2px 6px;
+                        border-radius: 6px;
+                        font-size: 10px;
+                        font-weight: 700;
+                        margin-top: 4px;
+                        white-space: nowrap;
+                        pointer-events: none;
+                        border: 1px solid rgba(56, 189, 98, 0.3);
+                    `;
+                    markerDiv.appendChild(distanceLabel);
                 }
                 
                 // Click handler
@@ -3227,6 +3257,45 @@
                 }, 500); // Esperar 500ms para que todo esté renderizado
             };
             
+            
+            // ==========================================
+            // SISTEMA DE CÍRCULO PARA USUARIOS CERCANOS
+            // ==========================================
+            // Los 8 más cercanos en círculo fijo, el resto en GPS real
+            
+            const organizeUsersInCircle = (usersArray, currentUserData) => {
+                if (!usersArray || usersArray.length === 0) return { circleUsers: [], realPositionUsers: [] };
+                
+                // Ordenar usuarios por distancia (más cercanos primero)
+                const sortedUsers = [...usersArray].sort((a, b) => (a.distance || 0) - (b.distance || 0));
+                
+                // Los primeros 8 van en círculo
+                const MAX_CIRCLE_USERS = 8;
+                const circleUsers = sortedUsers.slice(0, MAX_CIRCLE_USERS);
+                const realPositionUsers = sortedUsers.slice(MAX_CIRCLE_USERS);
+                
+                console.log(`👥 Organizando ${usersArray.length} usuarios: ${circleUsers.length} en círculo, ${realPositionUsers.length} en GPS real`);
+                
+                return { circleUsers, realPositionUsers };
+            };
+            
+            const calculateCirclePosition = (index, total, currentUserLat, currentUserLng) => {
+                // Radio del círculo: ~100 metros en coordenadas
+                const CIRCLE_RADIUS_METERS = 80; // 80 metros de radio
+                const METERS_TO_DEGREES = 0.000009; // 1 metro ≈ 0.000009 grados
+                
+                // Calcular ángulo para este usuario (distribuir uniformemente)
+                const angleStep = (2 * Math.PI) / total; // Radianes
+                const angle = index * angleStep;
+                
+                // Convertir a coordenadas geográficas
+                const radiusDegrees = CIRCLE_RADIUS_METERS * METERS_TO_DEGREES;
+                const lat = currentUserLat + Math.cos(angle) * radiusDegrees;
+                const lng = currentUserLng + Math.sin(angle) * radiusDegrees;
+                
+                return { lat, lng };
+            };
+            
             // Actualizar markers de usuarios en el mapa
             useEffect(() => {
                 if (!googleMap || !currentUser) return;
@@ -3240,26 +3309,57 @@
                 
                 const newMarkers = {};
                 
-                // Marker del usuario actual (centro)
-                newMarkers[currentUser.id] = createUserMarker(currentUser, googleMap, true);
+                // Marker del usuario actual (centro) - Tamaño 60px
+                newMarkers[currentUser.id] = createUserMarker(currentUser, googleMap, true, { 
+                    size: 60 
+                });
                 
-                // Markers de otros usuarios (dentro del radio)
-                users
-                    .filter(user => {
-                        if (!currentUser) return false;
-                        if (user.distance > radius) return false;
-                        return user.isOnline || user.hasNewMessage;
-                    })
-                    .forEach(user => {
-                        newMarkers[user.id] = createUserMarker(user, googleMap, false);
+                // Filtrar usuarios dentro del radio
+                const usersInRange = users.filter(user => {
+                    if (!currentUser) return false;
+                    if (user.distance > radius) return false;
+                    return user.isOnline || user.hasNewMessage;
+                });
+                
+                // Organizar en círculo vs GPS real
+                const { circleUsers, realPositionUsers } = organizeUsersInCircle(usersInRange, currentUser);
+                
+                // USUARIOS EN CÍRCULO (top 8 más cercanos) - Tamaño 40px
+                circleUsers.forEach((user, index) => {
+                    // Calcular posición en círculo
+                    const circlePosition = calculateCirclePosition(
+                        index,
+                        circleUsers.length,
+                        currentUser.latitude,
+                        currentUser.longitude
+                    );
+                    
+                    // Crear usuario con coordenadas del círculo
+                    const userInCircle = {
+                        ...user,
+                        latitude: circlePosition.lat,
+                        longitude: circlePosition.lng
+                    };
+                    
+                    newMarkers[user.id] = createUserMarker(userInCircle, googleMap, false, {
+                        size: 40,
+                        inCircle: true,
+                        showDistance: true
                     });
+                });
+                
+                // USUARIOS EN GPS REAL (9+) - Tamaño 30px
+                realPositionUsers.forEach(user => {
+                    newMarkers[user.id] = createUserMarker(user, googleMap, false, {
+                        size: 30,
+                        inCircle: false,
+                        showDistance: true
+                    });
+                });
                 
                 setMapMarkers(newMarkers);
                 
-                console.log(`✅ ${Object.keys(newMarkers).length} markers actualizados`);
-                
-                // Aplicar anti-superposición CSS
-                applyAntiOverlap();
+                console.log(`✅ ${Object.keys(newMarkers).length} markers: 1 centro + ${circleUsers.length} círculo + ${realPositionUsers.length} GPS real`);
                 
             }, [googleMap, currentUser, users, radius, viewedStories]);
 
@@ -4874,8 +4974,8 @@
                 let position = (clientX - rect.left) / rect.width;
                 position = Math.max(0, Math.min(1, position)); // Clamp 0-1
                 
-                // Map 0-1 to 5-100 meters
-                const newRadius = Math.round(5 + position * 95);
+                // Map 0-1 to 5-1000 meters (máximo 1km)
+                const newRadius = Math.round(5 + position * 995);
                 setRadius(newRadius);
             };
 
@@ -5770,11 +5870,11 @@
                                 >
                                     <div 
                                         className="range-slider-progress"
-                                        style={{ width: `${((radius - 5) / 95) * 100}%` }}
+                                        style={{ width: `${((radius - 5) / 995) * 100}%` }}
                                     />
                                     <div 
                                         className="range-slider-thumb"
-                                        style={{ left: `${((radius - 5) / 95) * 100}%` }}
+                                        style={{ left: `${((radius - 5) / 995) * 100}%` }}
                                     />
                                 </div>
                                 
