@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v6.4 Build: 2025-12-10 | Instagram-style Markers -->
+    <!-- v6.5 Build: 2025-12-10 | Fix Flickering + Orbit + Input -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1657,6 +1657,7 @@
             const mapRef = useRef(null);
             const chatMessagesRef = useRef(null);
             const markersRef = useRef([]);
+            const lastMarkersDataRef = useRef('');
             const kalmanLat = useRef(new KalmanFilter(0.001, 0.1));
             const kalmanLon = useRef(new KalmanFilter(0.001, 0.1));
             const currentUserPositionRef = useRef({ lat: 0, lng: 0 });
@@ -1745,10 +1746,10 @@
             // Create user marker on map - Instagram style
             const createUserMarker = (user, map, size, isCurrentUser = false) => {
                 const markerDiv = document.createElement('div');
-                markerDiv.style.cssText = `display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;`;
+                markerDiv.style.cssText = `display:flex;flex-direction:column;align-items:center;cursor:pointer;`;
                 
-                // Thought bubble (Instagram Notes style) - only if has thought
-                if (user.thought && user.thought.trim()) {
+                // Thought bubble (Instagram Notes style) - only for OTHER users
+                if (user.thought && user.thought.trim() && !isCurrentUser) {
                     const thoughtBubble = document.createElement('div');
                     thoughtBubble.style.cssText = `
                         background: #262626;
@@ -1789,30 +1790,24 @@
                 avatarContainer.appendChild(ring);
                 markerDiv.appendChild(avatarContainer);
                 
-                // Name + Distance label below avatar
-                const nameLabel = document.createElement('div');
-                nameLabel.style.cssText = `
-                    margin-top: 4px;
-                    background: rgba(0,0,0,0.7);
-                    padding: 3px 8px;
-                    border-radius: 8px;
-                    font-size: 11px;
-                    font-weight: 600;
-                    color: #fff;
-                    white-space: nowrap;
-                    text-align: center;
-                `;
-                
-                // Get first name only
-                const firstName = user.name.split(' ')[0];
-                if (isCurrentUser) {
-                    nameLabel.textContent = 'Tú';
-                } else if (user.distance) {
-                    nameLabel.textContent = `${firstName} ${user.distance}m`;
-                } else {
-                    nameLabel.textContent = firstName;
+                // Name + Distance label below avatar - ONLY for other users, not current user
+                if (!isCurrentUser) {
+                    const nameLabel = document.createElement('div');
+                    nameLabel.style.cssText = `
+                        margin-top: 4px;
+                        background: rgba(0,0,0,0.7);
+                        padding: 3px 8px;
+                        border-radius: 8px;
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: #fff;
+                        white-space: nowrap;
+                        text-align: center;
+                    `;
+                    const firstName = user.name.split(' ')[0];
+                    nameLabel.textContent = user.distance ? `${firstName} ${user.distance}m` : firstName;
+                    markerDiv.appendChild(nameLabel);
                 }
-                markerDiv.appendChild(nameLabel);
                 
                 markerDiv.addEventListener('click', () => handleAvatarClick(user));
                 
@@ -1834,7 +1829,9 @@
                     onRemove() { if (this.content.parentElement) this.content.parentElement.removeChild(this.content); }
                 }
                 
-                const marker = new CustomMarker(new google.maps.LatLng(user.displayLat || user.latitude, user.displayLng || user.longitude), markerDiv);
+                const lat = user.displayLat || user.latitude;
+                const lng = user.displayLng || user.longitude;
+                const marker = new CustomMarker(new google.maps.LatLng(lat, lng), markerDiv);
                 marker.setMap(map);
                 return marker;
             };
@@ -1865,7 +1862,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v6.4 - Instagram-style Markers');
+                console.log('🚀 RADAR SOCIAL v6.5 - Fix Flickering + Orbit + Input');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -1899,7 +1896,7 @@
                         };
                         
                         setCurrentUser(initialUser);
-                        setThought(thought);
+                        // El campo de texto empieza vacío, el pensamiento solo se muestra en el avatar
                         
                         await db.collection('users').doc(firebaseUser.uid).set({
                             uid: firebaseUser.uid,
@@ -2036,21 +2033,36 @@
                 initializeGoogleMap(currentUser.latitude, currentUser.longitude);
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
 
-            // Update map markers with orbital system
+            // Update map markers with orbital system - optimized to prevent flickering
             useEffect(() => {
                 if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
-                
-                // Clear existing markers first
-                clearAllMarkers();
-                
-                // Create current user marker (largest - 60px)
-                const currentUserMarker = createUserMarker(currentUser, googleMap, 60, true);
-                markersRef.current.push(currentUserMarker);
                 
                 // Get users in range and sort by distance
                 const usersInRange = users
                     .filter(u => u.distance <= radius && u.isOnline && u.latitude !== 0)
                     .sort((a, b) => a.distance - b.distance);
+                
+                // Create a signature to compare if data actually changed
+                const currentDataSignature = JSON.stringify({
+                    currentUserLat: currentUser.latitude.toFixed(5),
+                    currentUserLng: currentUser.longitude.toFixed(5),
+                    currentUserPhoto: currentUser.photo,
+                    usersInRange: usersInRange.map(u => `${u.id}-${u.distance}-${u.thought || ''}`),
+                    radius
+                });
+                
+                // Only update markers if data actually changed
+                if (currentDataSignature === lastMarkersDataRef.current) {
+                    return;
+                }
+                lastMarkersDataRef.current = currentDataSignature;
+                
+                // Clear existing markers
+                clearAllMarkers();
+                
+                // Create current user marker (largest - 60px)
+                const currentUserMarker = createUserMarker(currentUser, googleMap, 60, true);
+                markersRef.current.push(currentUserMarker);
                 
                 // First 8 closest go to orbital positions (medium - 45px)
                 const orbitUsers = usersInRange.slice(0, 8);
@@ -2074,10 +2086,13 @@
                     markersRef.current.push(marker);
                 });
                 
-                // Pan to user location
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, users, radius]);
+            
+            // Separate effect to pan map (less frequent)
+            useEffect(() => {
+                if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
                 googleMap.panTo({ lat: currentUser.latitude, lng: currentUser.longitude });
-                
-            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius]);
+            }, [googleMap, Math.round(currentUser?.latitude * 1000), Math.round(currentUser?.longitude * 1000)]);
 
             // Heartbeat
             useEffect(() => {
@@ -2473,7 +2488,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.4</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.5</span>
                             </div>
                         </div>
                     </div>
