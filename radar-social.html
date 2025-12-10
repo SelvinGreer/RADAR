@@ -2926,11 +2926,25 @@
             // LÍMITE DE MOVIMIENTO: 1km desde ubicación ACTUAL del usuario
             useEffect(() => {
                 console.log('🗺️ useEffect de LÍMITE ejecutado');
-                console.log('   googleMap:', googleMap ? 'OK' : 'NULL');
-                console.log('   currentUser:', currentUser ? 'OK' : 'NULL');
+                console.log('   googleMap:', googleMap ? 'OK ✅' : 'NULL ❌');
+                console.log('   currentUser:', currentUser ? 'OK ✅' : 'NULL ❌');
                 
-                if (!googleMap || !currentUser) {
-                    console.log('   ❌ Saliendo: falta googleMap o currentUser');
+                if (!googleMap) {
+                    console.log('   ⏳ Esperando googleMap...');
+                    return;
+                }
+                
+                if (!currentUser) {
+                    console.log('   ⏳ Esperando currentUser...');
+                    return;
+                }
+                
+                // VALIDACIÓN: Coordenadas REALES
+                if (!currentUser.latitude || !currentUser.longitude || 
+                    currentUser.latitude === 0 || currentUser.longitude === 0) {
+                    console.log('   ⏳ Esperando coordenadas GPS REALES...');
+                    console.log('      latitude:', currentUser.latitude);
+                    console.log('      longitude:', currentUser.longitude);
                     return;
                 }
                 
@@ -2938,21 +2952,21 @@
                 let isAdjustingCenter = false;
                 let listener = null;
                 
-                console.log('✅ Creando listener de límite 1km...');
-                console.log('   currentUser posición:', currentUser.latitude, currentUser.longitude);
-                console.log('   MAX_DISTANCE_KM:', MAX_DISTANCE_KM);
+                console.log('✅ CONDICIONES CUMPLIDAS - Creando listener de límite 1km');
+                console.log('   → currentUser posición REAL:', currentUser.latitude, currentUser.longitude);
+                console.log('   → MAX_DISTANCE_KM:', MAX_DISTANCE_KM);
                 
                 // Crear listener para limitar movimiento
                 listener = googleMap.addListener('center_changed', () => {
                     // Si YO estoy ajustando el centro, no hacer nada (evitar loop)
-                    if (isAdjustingCenter) {
-                        console.log('   ⏭️ Saliendo: isAdjustingCenter = true');
-                        return;
-                    }
+                    if (isAdjustingCenter) return;
                     
                     const currentCenter = googleMap.getCenter();
-                    if (!currentCenter || !currentUser) {
-                        console.log('   ⏭️ Saliendo: falta currentCenter o currentUser');
+                    if (!currentCenter || !currentUser) return;
+                    
+                    // Validar coordenadas del usuario actuales
+                    if (!currentUser.latitude || !currentUser.longitude ||
+                        currentUser.latitude === 0 || currentUser.longitude === 0) {
                         return;
                     }
                     
@@ -2980,7 +2994,7 @@
                             heading
                         );
                         
-                        console.log(`   → Reubicando a límite: ${limitPoint.lat()}, ${limitPoint.lng()}`);
+                        console.log(`   → Reubicando a límite: ${limitPoint.lat().toFixed(4)}, ${limitPoint.lng().toFixed(4)}`);
                         
                         // Activar flag ANTES de setCenter
                         isAdjustingCenter = true;
@@ -2989,12 +3003,11 @@
                         // Desactivar flag después de un pequeño delay
                         setTimeout(() => {
                             isAdjustingCenter = false;
-                            console.log('   ✅ isAdjustingCenter = false');
                         }, 100);
                     }
                 });
                 
-                console.log('✅ Listener de límite 1km CREADO');
+                console.log('✅ Listener de límite 1km CREADO Y ACTIVO');
                 
                 // Cleanup: remover listener cuando el componente se desmonte o cambien dependencias
                 return () => {
@@ -3013,27 +3026,59 @@
                 console.log('   currentUser.longitude:', currentUser?.longitude);
                 console.log('   googleMap:', googleMap);
                 
-                if (currentUser && currentUser.latitude && currentUser.longitude && !googleMap) {
-                    console.log('✅ Condiciones cumplidas, llamando initializeGoogleMap...');
+                // VALIDACIÓN ESTRICTA: Coordenadas REALES (no 0,0)
+                const hasRealCoordinates = currentUser && 
+                                          currentUser.latitude && 
+                                          currentUser.longitude &&
+                                          currentUser.latitude !== 0 &&
+                                          currentUser.longitude !== 0;
+                
+                if (hasRealCoordinates && !googleMap) {
+                    console.log('✅ Coordenadas GPS REALES detectadas, inicializando mapa...');
+                    console.log('   → Centrado en:', currentUser.latitude, currentUser.longitude);
                     initializeGoogleMap(currentUser.latitude, currentUser.longitude);
                 } else {
-                    console.log('⏳ Esperando condiciones:', {
+                    console.log('⏳ Esperando ubicación GPS REAL:', {
                         tieneUsuario: !!currentUser,
                         tieneLatitud: !!currentUser?.latitude,
                         tieneLongitud: !!currentUser?.longitude,
+                        latitudNoEsCero: currentUser?.latitude !== 0,
+                        longitudNoEsCero: currentUser?.longitude !== 0,
                         noTieneMapa: !googleMap
                     });
                 }
             }, [currentUser, googleMap]);
             
-            // Centrar mapa en usuario cuando su ubicación cambie
+            // Centrar mapa en usuario cuando su ubicación cambie (COMO WAZE/UBER)
             useEffect(() => {
-                if (googleMap && currentUser && currentUser.latitude && currentUser.longitude) {
-                    googleMap.panTo({
-                        lat: currentUser.latitude,
-                        lng: currentUser.longitude
-                    });
+                if (!googleMap) {
+                    console.log('📍 Centrado: Esperando googleMap...');
+                    return;
                 }
+                
+                if (!currentUser) {
+                    console.log('📍 Centrado: Esperando currentUser...');
+                    return;
+                }
+                
+                // VALIDACIÓN: Solo centrar con coordenadas REALES
+                if (!currentUser.latitude || !currentUser.longitude ||
+                    currentUser.latitude === 0 || currentUser.longitude === 0) {
+                    console.log('📍 Centrado: Esperando coordenadas GPS REALES...');
+                    console.log('   latitude:', currentUser.latitude);
+                    console.log('   longitude:', currentUser.longitude);
+                    return;
+                }
+                
+                console.log('🎯 CENTRANDO MAPA en ubicación real del usuario');
+                console.log('   → Coordenadas:', currentUser.latitude, currentUser.longitude);
+                
+                googleMap.panTo({
+                    lat: currentUser.latitude,
+                    lng: currentUser.longitude
+                });
+                
+                console.log('✅ Mapa centrado en tu ubicación (como Waze/Uber)');
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
             
             // Crear marker personalizado (avatar) para un usuario en el mapa
