@@ -2465,7 +2465,7 @@
             };
 
             // Initialize Google Map - centered on user with FIXED zoom and pan limit
-            const FIXED_ZOOM = 16;
+            const FIXED_ZOOM = 15;
             
             const initializeGoogleMap = (lat, lng) => {
                 if (!mapRef.current || googleMap) return;
@@ -2544,8 +2544,8 @@
                         // Current user: 10 o'clock position (left side)
                         bubbleContainer.style.cssText = `
                             position: absolute;
-                            top: -5px;
-                            left: -55px;
+                            top: -3px;
+                            left: -45px;
                             display: flex;
                             flex-direction: column;
                             align-items: flex-end;
@@ -2556,7 +2556,7 @@
                         bubbleContainer.style.cssText = `
                             position: absolute;
                             top: 0px;
-                            left: ${size - 10}px;
+                            left: ${size - 8}px;
                             display: flex;
                             flex-direction: column;
                             align-items: flex-start;
@@ -2567,7 +2567,7 @@
                         bubbleContainer.style.cssText = `
                             position: absolute;
                             top: 0px;
-                            right: ${size - 10}px;
+                            right: ${size - 8}px;
                             display: flex;
                             flex-direction: column;
                             align-items: flex-end;
@@ -2578,7 +2578,7 @@
                         bubbleContainer.style.cssText = `
                             position: absolute;
                             top: 0px;
-                            right: ${size - 5}px;
+                            right: ${size - 4}px;
                             display: flex;
                             flex-direction: column;
                             align-items: flex-end;
@@ -2586,14 +2586,14 @@
                         `;
                     }
                     
-                    // Thought bubble - single line
+                    // Thought bubble - single line (reduced 20%)
                     const thoughtBubble = document.createElement('div');
                     thoughtBubble.style.cssText = `
                         background: #3a3a3a;
                         color: #e0e0e0;
-                        padding: 6px 10px;
-                        border-radius: 14px;
-                        font-size: 11px;
+                        padding: 5px 8px;
+                        border-radius: 11px;
+                        font-size: 9px;
                         font-weight: 400;
                         white-space: nowrap;
                         text-align: center;
@@ -2636,12 +2636,12 @@
                     
                     // Medium circle
                     const circle1 = document.createElement('div');
-                    circle1.style.cssText = `width:6px;height:6px;background:#3a3a3a;border-radius:50%;margin-bottom:1px;`;
+                    circle1.style.cssText = `width:5px;height:5px;background:#3a3a3a;border-radius:50%;margin-bottom:1px;`;
                     circlesContainer.appendChild(circle1);
                     
                     // Small circle
                     const circle2 = document.createElement('div');
-                    circle2.style.cssText = `width:4px;height:4px;background:#3a3a3a;border-radius:50%;`;
+                    circle2.style.cssText = `width:3px;height:3px;background:#3a3a3a;border-radius:50%;`;
                     circlesContainer.appendChild(circle2);
                     
                     bubbleContainer.appendChild(circlesContainer);
@@ -2822,8 +2822,8 @@
             
             // Calculate orbital positions around user (circular)
             const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
-                // Orbit radius ~60 meters visual display (only users ≤50m real distance go to orbit)
-                const orbitRadius = 0.00054; // ~60 meters in lat/lng for visual display
+                // Orbit radius ~50 meters visual display (only users ≤50m real distance go to orbit)
+                const orbitRadius = 0.00045; // ~50 meters in lat/lng for visual display
                 const angle = (index * (360 / totalSlots)) * (Math.PI / 180);
                 return {
                     lat: centerLat + (orbitRadius * Math.cos(angle)),
@@ -3185,7 +3185,7 @@
                 clearAllMarkers();
                 
                 // Create current user marker (largest - 56px, reduced 20%) - NO label, centered
-                const currentUserMarker = createUserMarker(currentUser, googleMap, 56, true, true, -1);
+                const currentUserMarker = createUserMarker(currentUser, googleMap, 48, true, true, -1);
                 markersRef.current.push(currentUserMarker);
                 
                 // Only users within 50m go in orbital positions (max 8)
@@ -3210,14 +3210,14 @@
                         displayLng: orbitalPos.lng
                     };
                     // Pass orbital index to determine thought bubble side
-                    const marker = createUserMarker(userWithPos, googleMap, 45, false, true, index);
+                    const marker = createUserMarker(userWithPos, googleMap, 38, false, true, index);
                     markersRef.current.push(marker);
                 });
                 
                 // Users beyond 50m OR beyond 8 orbital slots - show at real position
                 const realPositionUsers = [...farFromOrbit, ...closeButNotOrbital];
                 realPositionUsers.forEach(user => {
-                    const marker = createUserMarker(user, googleMap, 35, false, false, -1);
+                    const marker = createUserMarker(user, googleMap, 30, false, false, -1);
                     markersRef.current.push(marker);
                 });
                 
