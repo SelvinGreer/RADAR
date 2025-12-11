@@ -2525,16 +2525,23 @@
             };
 
             // Create user marker on map - Instagram Notes style
-            const createUserMarker = (user, map, size, isCurrentUser = false, isOrbital = true) => {
+            const createUserMarker = (user, map, size, isCurrentUser = false, isOrbital = true, orbitalIndex = -1) => {
                 const markerDiv = document.createElement('div');
                 markerDiv.style.cssText = `display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;`;
                 
+                // Determine thought bubble side based on orbital position
+                // Circle positions: 0=top, 1=top-right, 2=right, 3=bottom-right, 4=bottom, 5=bottom-left, 6=left, 7=top-left
+                // Right side (thought goes RIGHT): 0, 1, 2, 3 (top to bottom-right)
+                // Left side (thought goes LEFT): 4, 5, 6, 7 (bottom to top-left)
+                const isRightSide = orbitalIndex >= 0 && orbitalIndex <= 3;
+                
                 // Thought bubble with circles (Instagram Notes style) - for ALL users including current user
                 if (user.thought && user.thought.trim()) {
-                    // Main bubble container - positioned at 10 o'clock (main) or 11 o'clock (orbitals)
+                    // Main bubble container
                     const bubbleContainer = document.createElement('div');
                     
                     if (isCurrentUser) {
+                        // Current user: 10 o'clock position (left side)
                         bubbleContainer.style.cssText = `
                             position: absolute;
                             top: -5px;
@@ -2544,12 +2551,34 @@
                             align-items: flex-end;
                             z-index: 10;
                         `;
-                    } else {
-                        // Orbitals: position from right side, diagonal toward 11 o'clock
+                    } else if (isOrbital && isRightSide) {
+                        // Orbital on RIGHT side (indices 0,1,2,3): thought goes to the RIGHT (2 o'clock)
                         bubbleContainer.style.cssText = `
                             position: absolute;
-                            top: -12px;
-                            right: ${size + 5}px;
+                            top: 0px;
+                            left: ${size - 10}px;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: flex-start;
+                            z-index: 10;
+                        `;
+                    } else if (isOrbital) {
+                        // Orbital on LEFT side (indices 4,5,6,7): thought goes to the LEFT (10 o'clock)
+                        bubbleContainer.style.cssText = `
+                            position: absolute;
+                            top: 0px;
+                            right: ${size - 10}px;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: flex-end;
+                            z-index: 10;
+                        `;
+                    } else {
+                        // Far users (not orbital): thought goes to the LEFT (10 o'clock)
+                        bubbleContainer.style.cssText = `
+                            position: absolute;
+                            top: 0px;
+                            right: ${size - 5}px;
                             display: flex;
                             flex-direction: column;
                             align-items: flex-end;
@@ -2577,6 +2606,7 @@
                     const circlesContainer = document.createElement('div');
                     
                     if (isCurrentUser) {
+                        // Current user: diagonal to bottom-right
                         circlesContainer.style.cssText = `
                             display: flex;
                             flex-direction: column;
@@ -2584,13 +2614,23 @@
                             margin-top: 1px;
                             margin-right: -5px;
                         `;
-                    } else {
-                        // Orbitals: circles centered (6 o'clock direction)
+                    } else if (isOrbital && isRightSide) {
+                        // Orbital right side: circles point to bottom-left
                         circlesContainer.style.cssText = `
                             display: flex;
                             flex-direction: column;
-                            align-items: center;
+                            align-items: flex-start;
                             margin-top: 1px;
+                            margin-left: -3px;
+                        `;
+                    } else {
+                        // Orbital left side / far users: circles point to bottom-right
+                        circlesContainer.style.cssText = `
+                            display: flex;
+                            flex-direction: column;
+                            align-items: flex-end;
+                            margin-top: 1px;
+                            margin-right: -3px;
                         `;
                     }
                     
@@ -2782,8 +2822,8 @@
             
             // Calculate orbital positions around user (circular)
             const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
-                // Orbit radius ~160 meters (reduced 20% from 200m)
-                const orbitRadius = 0.00144; // ~160 meters in lat/lng
+                // Orbit radius ~60 meters visual display (only users ≤50m real distance go to orbit)
+                const orbitRadius = 0.00054; // ~60 meters in lat/lng for visual display
                 const angle = (index * (360 / totalSlots)) * (Math.PI / 180);
                 return {
                     lat: centerLat + (orbitRadius * Math.cos(angle)),
@@ -2926,7 +2966,7 @@
                                                         let isOnline = false;
                                                         if (userData.lastSeen) {
                                                             const lastSeenTime = userData.lastSeen.toMillis ? userData.lastSeen.toMillis() : userData.lastSeen;
-                                                            isOnline = (Date.now() - lastSeenTime) <= 30000;
+                                                            isOnline = (Date.now() - lastSeenTime) <= 90000;
                                                         }
                                                         
                                                         if (userData.location && isOnline) {
@@ -3139,21 +3179,28 @@
                     refreshTick: markerRefreshTick
                 });
                 
-                // Only update markers if data actually changed
-                if (currentDataSignature === lastMarkersDataRef.current) {
-                    return;
-                }
-                lastMarkersDataRef.current = currentDataSignature;
+                // Always update markers (removed optimization that could block updates)
                 
                 // Clear existing markers
                 clearAllMarkers();
                 
                 // Create current user marker (largest - 56px, reduced 20%) - NO label, centered
-                const currentUserMarker = createUserMarker(currentUser, googleMap, 56, true, true);
+                const currentUserMarker = createUserMarker(currentUser, googleMap, 56, true, true, -1);
                 markersRef.current.push(currentUserMarker);
                 
-                // First 8 closest go in orbital positions around user
-                const orbitUsers = usersInRange.slice(0, 8);
+                // Only users within 50m go in orbital positions (max 8)
+                const closeUsers = usersInRange.filter(u => u.distance <= 50);
+                const farFromOrbit = usersInRange.filter(u => u.distance > 50);
+                const orbitUsers = closeUsers.slice(0, 8);
+                
+                // Debug log
+                console.log(`📍 Orbital check: ${closeUsers.length} users ≤50m, ${farFromOrbit.length} users >50m`);
+                if (usersInRange.length > 0) {
+                    usersInRange.forEach(u => console.log(`  - ${u.name}: ${u.distance}m (${u.distance <= 50 ? 'ORBIT' : 'REAL POS'})`));
+                }
+                
+                // Users close but beyond 8 orbital slots go to real position
+                const closeButNotOrbital = closeUsers.slice(8);
                 
                 orbitUsers.forEach((user, index) => {
                     const orbitalPos = getOrbitalPosition(currentUser.latitude, currentUser.longitude, index, 8);
@@ -3162,15 +3209,15 @@
                         displayLat: orbitalPos.lat,
                         displayLng: orbitalPos.lng
                     };
-                    const marker = createUserMarker(userWithPos, googleMap, 45, false, true); // isOrbital = true
+                    // Pass orbital index to determine thought bubble side
+                    const marker = createUserMarker(userWithPos, googleMap, 45, false, true, index);
                     markersRef.current.push(marker);
                 });
                 
-                // Users beyond the 8 closest - show at real position with smaller size (35px)
-                // These users get direction indicators
-                const farUsers = usersInRange.slice(8);
-                farUsers.forEach(user => {
-                    const marker = createUserMarker(user, googleMap, 35, false, false); // isOrbital = false
+                // Users beyond 50m OR beyond 8 orbital slots - show at real position
+                const realPositionUsers = [...farFromOrbit, ...closeButNotOrbital];
+                realPositionUsers.forEach(user => {
+                    const marker = createUserMarker(user, googleMap, 35, false, false, -1);
                     markersRef.current.push(marker);
                 });
                 
@@ -3216,6 +3263,30 @@
                     setMarkerRefreshTick(t => t + 1);
                 }, 10000);
                 return () => clearInterval(interval);
+            }, []);
+            
+            // Detect page visibility change - refresh when user returns to tab
+            useEffect(() => {
+                const handleVisibilityChange = () => {
+                    if (!document.hidden) {
+                        console.log('🔄 Tab visible - forcing refresh');
+                        setMarkerRefreshTick(t => t + 1);
+                    }
+                };
+                
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+            }, []);
+            
+            // Detect online/offline status - refresh when reconnected
+            useEffect(() => {
+                const handleOnline = () => {
+                    console.log('🌐 Connection restored - forcing refresh');
+                    setMarkerRefreshTick(t => t + 1);
+                };
+                
+                window.addEventListener('online', handleOnline);
+                return () => window.removeEventListener('online', handleOnline);
             }, []);
 
             // Guardar preferencias en Firebase
@@ -3738,7 +3809,7 @@
                                 <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" onClick={() => setShowSidebar(true)}>
                                     <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
                                 </svg>
-                                <div className="map-people-counter">
+                                <div className="map-people-counter" onClick={() => setMarkerRefreshTick(t => t + 1)} style={{ cursor: 'pointer' }}>
                                     <span className="map-people-counter-number">{usersInRange.length}</span>
                                     <span className="map-people-counter-text">cerca</span>
                                 </div>
