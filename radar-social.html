@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.2.3 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.2.5 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2587,14 +2587,15 @@
                         `;
                     }
                     
-                    // Thought bubble - single line (reduced 35% total)
+                    // Thought bubble - single line (reduced 35% total, explorers 50% smaller)
+                    const isExplorer = !isOrbital && !isCurrentUser;
                     const thoughtBubble = document.createElement('div');
                     thoughtBubble.style.cssText = `
                         background: #3a3a3a;
                         color: #e0e0e0;
-                        padding: 4px 6px;
-                        border-radius: 9px;
-                        font-size: 8px;
+                        padding: ${isExplorer ? '2px 3px' : '4px 6px'};
+                        border-radius: ${isExplorer ? '5px' : '9px'};
+                        font-size: ${isExplorer ? '5px' : '8px'};
                         font-weight: 400;
                         white-space: nowrap;
                         text-align: center;
@@ -2605,6 +2606,7 @@
                     
                     // Circle connectors pointing to avatar
                     const circlesContainer = document.createElement('div');
+                    const isExplorer = !isOrbital && !isCurrentUser;
                     
                     if (isCurrentUser) {
                         // Current user: diagonal to bottom-right
@@ -2637,12 +2639,12 @@
                     
                     // Medium circle
                     const circle1 = document.createElement('div');
-                    circle1.style.cssText = `width:4px;height:4px;background:#3a3a3a;border-radius:50%;margin-bottom:1px;`;
+                    circle1.style.cssText = `width:${isExplorer ? '2' : '4'}px;height:${isExplorer ? '2' : '4'}px;background:#3a3a3a;border-radius:50%;margin-bottom:1px;`;
                     circlesContainer.appendChild(circle1);
                     
                     // Small circle
                     const circle2 = document.createElement('div');
-                    circle2.style.cssText = `width:2px;height:2px;background:#3a3a3a;border-radius:50%;`;
+                    circle2.style.cssText = `width:${isExplorer ? '1' : '2'}px;height:${isExplorer ? '1' : '2'}px;background:#3a3a3a;border-radius:50%;`;
                     circlesContainer.appendChild(circle2);
                     
                     bubbleContainer.appendChild(circlesContainer);
@@ -2716,12 +2718,13 @@
                 // Name + Distance label - ONLY for other users
                 if (!isCurrentUser) {
                     const nameLabel = document.createElement('div');
+                    const isExplorer = !isOrbital;
                     nameLabel.style.cssText = `
-                        margin-top: 2px;
+                        margin-top: ${isExplorer ? '1px' : '2px'};
                         background: rgba(0,0,0,0.65);
-                        padding: 2px 5px;
+                        padding: ${isExplorer ? '1px 3px' : '2px 5px'};
                         border-radius: 999px;
-                        font-size: 7px;
+                        font-size: ${isExplorer ? '5px' : '7px'};
                         font-weight: 500;
                         color: #fff;
                         white-space: nowrap;
@@ -2823,8 +2826,8 @@
             
             // Calculate orbital positions around user (circular)
             const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
-                // Orbit radius ~200 meters visual display (only users ≤50m real distance go to orbit)
-                const orbitRadius = 0.0018; // ~200 meters in lat/lng for visual display
+                // Orbit radius ~230 meters visual display (only users ≤50m real distance go to orbit)
+                const orbitRadius = 0.00207; // ~230 meters in lat/lng for visual display
                 const angle = (index * (360 / totalSlots)) * (Math.PI / 180);
                 return {
                     lat: centerLat + (orbitRadius * Math.cos(angle)),
@@ -2844,7 +2847,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.2.3 - Interest filtering, profile interests display, movement intelligence');
+                console.log('🚀 RADAR SOCIAL v7.2.5 - Interest filtering, profile interests display, movement intelligence');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3196,9 +3199,9 @@
                 const orbitUsers = closeUsers.slice(0, 8);
                 
                 // Debug log
-                console.log(`📍 Orbital check: ${closeUsers.length} users ≤50m, ${farFromOrbit.length} users >50m`);
+                console.log(`📍 Orbitales: ${closeUsers.length} (≤50m), Exploradores: ${farFromOrbit.length} (>50m)`);
                 if (usersInRange.length > 0) {
-                    usersInRange.forEach(u => console.log(`  - ${u.name}: ${u.distance}m (${u.distance <= 50 ? 'ORBIT' : 'REAL POS'})`));
+                    usersInRange.forEach(u => console.log(`  - ${u.name}: ${u.distance}m (${u.distance <= 50 ? 'ORBITAL' : 'EXPLORADOR'})`));
                 }
                 
                 // Users close but beyond 8 orbital slots go to real position
@@ -3216,10 +3219,10 @@
                     markersRef.current.push(marker);
                 });
                 
-                // Users beyond 50m OR beyond 8 orbital slots - show at real position
+                // Explorers beyond 50m OR beyond 8 orbital slots - show at real position (50% smaller)
                 const realPositionUsers = [...farFromOrbit, ...closeButNotOrbital];
                 realPositionUsers.forEach(user => {
-                    const marker = createUserMarker(user, googleMap, 30, false, false, -1);
+                    const marker = createUserMarker(user, googleMap, 19, false, false, -1);
                     markersRef.current.push(marker);
                 });
                 
@@ -3924,7 +3927,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.2.3</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.2.5</span>
                             </div>
                         </div>
                     </div>
