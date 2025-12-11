@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.0 Build: 2025-12-11 | Inbox redesign Instagram style -->
+    <!-- v7.0.1 Build: 2025-12-11 | Bug fixes: story ring, notifications, thought bubbles -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1502,6 +1502,18 @@
             justify-content: center;
             cursor: pointer;
             padding: 0;
+            transition: transform 0.15s ease, background 0.15s ease;
+            z-index: 10;
+        }
+
+        .story-reaction-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: scale(1.1);
+        }
+
+        .story-reaction-btn:active {
+            transform: scale(0.95);
+            background: rgba(56, 189, 98, 0.4);
         }
 
         .story-message-btn {
@@ -1854,6 +1866,8 @@
             const [inboxTab, setInboxTab] = useState('messages'); // 'messages' or 'requests'
             const [favoriteUsers, setFavoriteUsers] = useState([]);
             const [chatHistory, setChatHistory] = useState([]); // Lista de chats con historial
+            const [initialLoadComplete, setInitialLoadComplete] = useState(false); // Para evitar notificaciones al conectar
+            const [knownUserIds, setKnownUserIds] = useState(new Set()); // IDs de usuarios ya conocidos
             
             const [techSettings, setTechSettings] = useState({
                 mode: 'auto', gps: true, kalman: true, deadReckoning: true, ultrasonic: true
@@ -1978,18 +1992,18 @@
                 if (user.thought && user.thought.trim()) {
                     // Main bubble container
                     const bubbleContainer = document.createElement('div');
-                    bubbleContainer.style.cssText = `display:flex;flex-direction:column;align-items:center;margin-bottom:2px;`;
+                    bubbleContainer.style.cssText = `display:flex;flex-direction:column;align-items:center;margin-bottom:-4px;`;
                     
                     // Thought bubble
                     const thoughtBubble = document.createElement('div');
                     thoughtBubble.style.cssText = `
                         background: #3a3a3a;
                         color: #e0e0e0;
-                        padding: 10px 14px;
-                        border-radius: 18px;
-                        font-size: 12px;
+                        padding: 8px 12px;
+                        border-radius: 16px;
+                        font-size: 11px;
                         font-weight: 400;
-                        max-width: 120px;
+                        max-width: 110px;
                         text-align: center;
                         line-height: 1.3;
                         word-wrap: break-word;
@@ -1997,18 +2011,18 @@
                     thoughtBubble.textContent = user.thought;
                     bubbleContainer.appendChild(thoughtBubble);
                     
-                    // Circle connectors (big to small)
+                    // Circle connectors (big to small) - closer together
                     const circlesContainer = document.createElement('div');
-                    circlesContainer.style.cssText = `display:flex;flex-direction:column;align-items:flex-start;margin-left:-15px;margin-top:2px;`;
+                    circlesContainer.style.cssText = `display:flex;flex-direction:column;align-items:center;margin-top:1px;`;
                     
                     // Medium circle
                     const circle1 = document.createElement('div');
-                    circle1.style.cssText = `width:10px;height:10px;background:#3a3a3a;border-radius:50%;margin-bottom:2px;`;
+                    circle1.style.cssText = `width:8px;height:8px;background:#3a3a3a;border-radius:50%;margin-bottom:1px;`;
                     circlesContainer.appendChild(circle1);
                     
                     // Small circle
                     const circle2 = document.createElement('div');
-                    circle2.style.cssText = `width:6px;height:6px;background:#3a3a3a;border-radius:50%;margin-left:2px;`;
+                    circle2.style.cssText = `width:5px;height:5px;background:#3a3a3a;border-radius:50%;`;
                     circlesContainer.appendChild(circle2);
                     
                     bubbleContainer.appendChild(circlesContainer);
@@ -2019,14 +2033,16 @@
                 const avatarContainer = document.createElement('div');
                 avatarContainer.style.cssText = `width:${size}px;height:${size}px;position:relative;`;
                 
-                // Ring - ONLY colored if has story, otherwise gray
+                // Ring - Colored if has UNSEEN story, otherwise gray
                 const ring = document.createElement('div');
                 let ringStyle;
-                if (user.hasStory) {
-                    // Story ring - Instagram gradient (only the ring, not the avatar)
+                const hasUnseenStory = user.hasStory && !viewedStories[user.id];
+                
+                if (hasUnseenStory) {
+                    // Story ring - Instagram gradient (only if NOT viewed)
                     ringStyle = 'background:linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);';
                 } else {
-                    // Default ring - gray (no green "online" indicator)
+                    // Default ring - gray (viewed story or no story)
                     ringStyle = 'background: #404040;';
                 }
                 ring.style.cssText = `position:absolute;width:100%;height:100%;border-radius:50%;${ringStyle}display:flex;align-items:center;justify-content:center;`;
@@ -2145,7 +2161,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.0 - Inbox redesign Instagram style');
+                console.log('🚀 RADAR SOCIAL v7.0.1 - Bug fixes: story ring, notifications, thought bubbles');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2356,7 +2372,8 @@
                     currentUserPhoto: currentUser.photo,
                     usersCount: usersInRange.length,
                     userIds: usersInRange.map(u => u.id).join(','),
-                    radius
+                    radius,
+                    viewedStories: Object.keys(viewedStories).join(',')
                 });
                 
                 // Only update markers if data actually changed
@@ -2393,7 +2410,7 @@
                     markersRef.current.push(marker);
                 });
                 
-            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, users, radius]);
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, users, radius, viewedStories]);
             
             // Center map on user - only when position changes significantly
             useEffect(() => {
@@ -2664,35 +2681,39 @@
                 return () => clearTimeout(timer);
             }, [viewingStory]);
 
-            // Proximity notifications - notify when new user enters range
+            // Proximity notifications - notify ONLY when NEW user appears after initial load
             useEffect(() => {
                 if (!currentUser?.latitude || users.length === 0) return;
                 
                 const closeUsers = users.filter(u => u.distance <= 100 && u.isOnline);
+                const currentUserIds = new Set(closeUsers.map(u => u.id));
                 
+                // First load - just record who's here, don't notify
+                if (!initialLoadComplete) {
+                    setKnownUserIds(currentUserIds);
+                    setInitialLoadComplete(true);
+                    return;
+                }
+                
+                // Check for NEW users (not in knownUserIds)
                 closeUsers.forEach(user => {
-                    const lastSeen = lastSeenUsers[user.id];
-                    const now = Date.now();
-                    
-                    // If user wasn't seen before or was seen more than 5 minutes ago
-                    if (!lastSeen || (now - lastSeen) > 300000) {
-                        // Show notification
+                    if (!knownUserIds.has(user.id)) {
+                        // This is a NEW user who just appeared!
                         setSocialNotifications(prev => {
                             // Don't add duplicate notifications
                             if (prev.some(n => n.userId === user.id)) return prev;
                             return [...prev, {
-                                id: `${user.id}-${now}`,
+                                id: `${user.id}-${Date.now()}`,
                                 userId: user.id,
                                 user: user,
-                                message: `${user.name} está a ${user.distance}m de ti`,
-                                timestamp: now
+                                timestamp: Date.now()
                             }];
                         });
                     }
-                    
-                    // Update last seen
-                    setLastSeenUsers(prev => ({ ...prev, [user.id]: now }));
                 });
+                
+                // Update known users
+                setKnownUserIds(currentUserIds);
                 
                 // Auto-remove notifications after 8 seconds
                 const cleanupInterval = setInterval(() => {
@@ -2906,7 +2927,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.0</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.0.1</span>
                             </div>
                         </div>
                     </div>
@@ -3269,7 +3290,7 @@
                                 </div>
                             </div>
                             <div className="social-notification-message">
-                                {notification.user.thought ? `"${notification.user.thought}"` : '¡Hay alguien cerca! ¿Por qué no saludas?'}
+                                ¡{notification.user.name.split(' ')[0]} está cerca! ¿Te animas a saludarle?
                             </div>
                             <div className="social-notification-actions">
                                 <button className="social-notification-btn social-notification-btn-primary" onClick={() => { openChat(notification.user); setSocialNotifications(prev => prev.filter(n => n.id !== notification.id)); }}>
