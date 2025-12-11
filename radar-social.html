@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v6.9.1 Build: 2025-12-11 | Fix marker position jump -->
+    <!-- v6.9.2 Build: 2025-12-11 | Live distance updates + slider from 0m -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1917,7 +1917,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v6.9.1 - Fix marker position jump');
+                console.log('🚀 RADAR SOCIAL v6.9.2 - Live distance updates + slider from 0m');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2095,6 +2095,21 @@
                 if (!currentUser?.latitude || currentUser.latitude === 0 || googleMap) return;
                 initializeGoogleMap(currentUser.latitude, currentUser.longitude);
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
+
+            // Recalculate distances when current user moves
+            useEffect(() => {
+                if (!currentUser?.latitude || currentUser.latitude === 0) return;
+                if (users.length === 0) return;
+                
+                // Recalculate all user distances based on current position
+                setUsers(prevUsers => prevUsers.map(user => ({
+                    ...user,
+                    distance: Math.round(calculateDistance(
+                        currentUser.latitude, currentUser.longitude,
+                        user.latitude, user.longitude
+                    ))
+                })));
+            }, [currentUser?.latitude, currentUser?.longitude]);
 
             // Update map markers - orbital system around user
             useEffect(() => {
@@ -2507,19 +2522,19 @@
                                 <span className="range-slider-value">{radius}m</span>
                             </div>
                             <div className="range-slider-track"
-                                onMouseDown={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); setRadius(Math.round(10 + percent * 990)); setIsDraggingDial(true); }}
-                                onMouseMove={(e) => { if (!isDraggingDial) return; const rect = e.currentTarget.getBoundingClientRect(); const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); setRadius(Math.round(10 + percent * 990)); }}
+                                onMouseDown={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); setRadius(Math.round(percent * 1000)); setIsDraggingDial(true); }}
+                                onMouseMove={(e) => { if (!isDraggingDial) return; const rect = e.currentTarget.getBoundingClientRect(); const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)); setRadius(Math.round(percent * 1000)); }}
                                 onMouseUp={() => setIsDraggingDial(false)}
                                 onMouseLeave={() => setIsDraggingDial(false)}
-                                onTouchStart={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const touch = e.touches[0]; const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)); setRadius(Math.round(10 + percent * 990)); setIsDraggingDial(true); }}
-                                onTouchMove={(e) => { if (!isDraggingDial) return; const rect = e.currentTarget.getBoundingClientRect(); const touch = e.touches[0]; const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)); setRadius(Math.round(10 + percent * 990)); }}
+                                onTouchStart={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const touch = e.touches[0]; const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)); setRadius(Math.round(percent * 1000)); setIsDraggingDial(true); }}
+                                onTouchMove={(e) => { if (!isDraggingDial) return; const rect = e.currentTarget.getBoundingClientRect(); const touch = e.touches[0]; const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)); setRadius(Math.round(percent * 1000)); }}
                                 onTouchEnd={() => setIsDraggingDial(false)}
                             >
-                                <div className="range-slider-progress" style={{ width: `${((radius - 10) / 990) * 100}%` }}/>
-                                <div className="range-slider-thumb" style={{ left: `${((radius - 10) / 990) * 100}%` }}/>
+                                <div className="range-slider-progress" style={{ width: `${(radius / 1000) * 100}%` }}/>
+                                <div className="range-slider-thumb" style={{ left: `${(radius / 1000) * 100}%` }}/>
                             </div>
                             <div className="range-slider-marks">
-                                <span className="range-slider-mark">10m</span>
+                                <span className="range-slider-mark">0m</span>
                                 <span className="range-slider-mark">500m</span>
                                 <span className="range-slider-mark">1km</span>
                             </div>
@@ -2566,7 +2581,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.9.1</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.9.2</span>
                             </div>
                         </div>
                     </div>
