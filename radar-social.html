@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.1.9 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.2.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2137,6 +2137,7 @@
             const [currentUser, setCurrentUser] = useState(null);
             const [userLocation, setUserLocation] = useState(null);
             const [users, setUsers] = useState([]);
+            const [markerRefreshTick, setMarkerRefreshTick] = useState(0);
             const [selectedUser, setSelectedUser] = useState(null);
             const [showInstagramModal, setShowInstagramModal] = useState(false);
             const [instagramModalUser, setInstagramModalUser] = useState(null);
@@ -2572,15 +2573,26 @@
                     thoughtBubble.textContent = user.thought;
                     bubbleContainer.appendChild(thoughtBubble);
                     
-                    // Circle connectors pointing to avatar (diagonal)
+                    // Circle connectors pointing to avatar
                     const circlesContainer = document.createElement('div');
-                    circlesContainer.style.cssText = `
-                        display: flex;
-                        flex-direction: column;
-                        align-items: flex-end;
-                        margin-top: 1px;
-                        margin-right: ${isCurrentUser ? '-5px' : '-3px'};
-                    `;
+                    
+                    if (isCurrentUser) {
+                        circlesContainer.style.cssText = `
+                            display: flex;
+                            flex-direction: column;
+                            align-items: flex-end;
+                            margin-top: 1px;
+                            margin-right: -5px;
+                        `;
+                    } else {
+                        // Orbitals: circles centered (6 o'clock direction)
+                        circlesContainer.style.cssText = `
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            margin-top: 1px;
+                        `;
+                    }
                     
                     // Medium circle
                     const circle1 = document.createElement('div');
@@ -2589,7 +2601,7 @@
                     
                     // Small circle
                     const circle2 = document.createElement('div');
-                    circle2.style.cssText = `width:4px;height:4px;background:#3a3a3a;border-radius:50%;margin-right:-2px;`;
+                    circle2.style.cssText = `width:4px;height:4px;background:#3a3a3a;border-radius:50%;`;
                     circlesContainer.appendChild(circle2);
                     
                     bubbleContainer.appendChild(circlesContainer);
@@ -2791,7 +2803,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.1.9 - Interest filtering, profile interests display, movement intelligence');
+                console.log('🚀 RADAR SOCIAL v7.2.0 - Interest filtering, profile interests display, movement intelligence');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3108,7 +3120,8 @@
                     .sort((a, b) => a.distance - b.distance);
                 
                 // Create a signature to compare if data actually changed
-                // Using toFixed(4) = ~10m precision to avoid unnecessary updates
+                // Include user states to detect online/offline changes
+                // Include refreshTick to force periodic updates
                 const currentDataSignature = JSON.stringify({
                     currentUserLat: currentUser.latitude.toFixed(4),
                     currentUserLng: currentUser.longitude.toFixed(4),
@@ -3116,12 +3129,14 @@
                     currentUserThought: currentUser.thought || '',
                     usersCount: usersInRange.length,
                     userIds: usersInRange.map(u => u.id).join(','),
+                    userStates: usersInRange.map(u => `${u.id}:${u.isOnline}:${u.thought || ''}`).join('|'),
                     radius,
                     viewedStories: Object.keys(viewedStories).join(','),
                     unreadMessages: JSON.stringify(unreadMessages),
                     lookingFor: userPreferences.lookingFor.join(','),
                     ageRange: `${userPreferences.ageRangeMin}-${userPreferences.ageRangeMax}`,
-                    genderPref: userPreferences.genderPreference
+                    genderPref: userPreferences.genderPreference,
+                    refreshTick: markerRefreshTick
                 });
                 
                 // Only update markers if data actually changed
@@ -3159,7 +3174,7 @@
                     markersRef.current.push(marker);
                 });
                 
-            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius, viewedStories, unreadMessages, userPreferences.lookingFor, userPreferences.ageRangeMin, userPreferences.ageRangeMax, userPreferences.genderPreference]);
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius, viewedStories, unreadMessages, userPreferences.lookingFor, userPreferences.ageRangeMin, userPreferences.ageRangeMax, userPreferences.genderPreference, markerRefreshTick]);
             
             // Center map on user - only when position changes significantly
             useEffect(() => {
@@ -3194,6 +3209,14 @@
                 }, 10000);
                 return () => clearInterval(interval);
             }, [currentUser]);
+            
+            // Force marker refresh every 10 seconds to catch any missed updates
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setMarkerRefreshTick(t => t + 1);
+                }, 10000);
+                return () => clearInterval(interval);
+            }, []);
 
             // Guardar preferencias en Firebase
             const savePreferences = async () => {
@@ -3828,7 +3851,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.1.9</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.2.0</span>
                             </div>
                         </div>
                     </div>
