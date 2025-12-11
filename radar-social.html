@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.1.1 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.1.2 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1352,7 +1352,7 @@
         .looking-for-checkbox {
             width: 22px;
             height: 22px;
-            border-radius: 6px;
+            border-radius: 50%;
             border: 2px solid #8b949e;
             display: flex;
             align-items: center;
@@ -2526,13 +2526,20 @@
             // Create user marker on map - Instagram Notes style
             const createUserMarker = (user, map, size, isCurrentUser = false, isOrbital = true) => {
                 const markerDiv = document.createElement('div');
-                markerDiv.style.cssText = `display:flex;flex-direction:column;align-items:center;cursor:pointer;`;
+                markerDiv.style.cssText = `display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;`;
                 
                 // Thought bubble with circles (Instagram Notes style) - for ALL users including current user
                 if (user.thought && user.thought.trim()) {
-                    // Main bubble container
+                    // Main bubble container - positioned at 10 o'clock
                     const bubbleContainer = document.createElement('div');
-                    bubbleContainer.style.cssText = `display:flex;flex-direction:column;align-items:center;margin-bottom:-4px;`;
+                    bubbleContainer.style.cssText = `
+                        position: absolute;
+                        top: -10px;
+                        left: -60px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-end;
+                    `;
                     
                     // Thought bubble
                     const thoughtBubble = document.createElement('div');
@@ -2551,9 +2558,15 @@
                     thoughtBubble.textContent = user.thought;
                     bubbleContainer.appendChild(thoughtBubble);
                     
-                    // Circle connectors (big to small) - closer together
+                    // Circle connectors pointing to avatar (diagonal)
                     const circlesContainer = document.createElement('div');
-                    circlesContainer.style.cssText = `display:flex;flex-direction:column;align-items:center;margin-top:1px;`;
+                    circlesContainer.style.cssText = `
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-end;
+                        margin-top: 1px;
+                        margin-right: -5px;
+                    `;
                     
                     // Medium circle
                     const circle1 = document.createElement('div');
@@ -2562,7 +2575,7 @@
                     
                     // Small circle
                     const circle2 = document.createElement('div');
-                    circle2.style.cssText = `width:5px;height:5px;background:#3a3a3a;border-radius:50%;`;
+                    circle2.style.cssText = `width:5px;height:5px;background:#3a3a3a;border-radius:50%;margin-right:-3px;`;
                     circlesContainer.appendChild(circle2);
                     
                     bubbleContainer.appendChild(circlesContainer);
@@ -2764,7 +2777,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.1.1 - Interest filtering, profile interests display, movement intelligence');
+                console.log('🚀 RADAR SOCIAL v7.1.2 - Interest filtering, profile interests display, movement intelligence');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2775,9 +2788,12 @@
                         
                         if (userDoc.exists) {
                             const userData = userDoc.data();
+                            let thoughtTimestampMs = null;
                             if (userData.thought && userData.thoughtTimestamp) {
-                                const hoursPassed = (Date.now() - (userData.thoughtTimestamp.toMillis ? userData.thoughtTimestamp.toMillis() : userData.thoughtTimestamp)) / 3600000;
+                                thoughtTimestampMs = userData.thoughtTimestamp.toMillis ? userData.thoughtTimestamp.toMillis() : userData.thoughtTimestamp;
+                                const hoursPassed = (Date.now() - thoughtTimestampMs) / 3600000;
                                 if (hoursPassed < 24) thought = userData.thought;
+                                else thoughtTimestampMs = null;
                             }
                             if (userData.storyUrl && userData.storyTimestamp) {
                                 const hoursPassed = (Date.now() - (userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp)) / 3600000;
@@ -2791,6 +2807,10 @@
                             if (userData.preferences) {
                                 setUserPreferences(userData.preferences);
                                 console.log('✅ Preferencias cargadas:', userData.preferences);
+                            }
+                            // Guardar thoughtTimestamp para verificar cooldown
+                            if (thoughtTimestampMs) {
+                                window.lastThoughtTimestamp = thoughtTimestampMs;
                             }
                         }
                         
@@ -3031,23 +3051,43 @@
                 if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
                 
                 // Get users in range and sort by distance
-                // Apply interest filter if user has interests configured
+                // Apply lookingFor, age, and gender filters (interests are just informational)
                 const usersInRange = users
                     .filter(u => {
                         // Basic filters
                         if (u.distance > radius || !u.isOnline || u.latitude === 0) return false;
                         
-                        // Interest filter: only apply if current user has interests set
-                        if (userPreferences.interests.length > 0) {
-                            // If other user has no preferences, show them (they haven't configured yet)
-                            if (!u.preferences?.interests || u.preferences.interests.length === 0) return true;
-                            
-                            // Check for at least one common interest
-                            const hasCommonInterest = u.preferences.interests.some(
-                                interest => userPreferences.interests.includes(interest)
-                            );
-                            if (!hasCommonInterest) return false;
+                        // Age filter: only apply if user has age range set AND other user has age
+                        if (u.preferences?.age) {
+                            if (u.preferences.age < userPreferences.ageRangeMin) return false;
+                            if (u.preferences.age > userPreferences.ageRangeMax) return false;
                         }
+                        
+                        // Gender filter: only apply if not "all"
+                        if (userPreferences.genderPreference !== 'all') {
+                            // If other user has no gender set, don't show them
+                            if (!u.preferences?.gender) return false;
+                            if (u.preferences.gender !== userPreferences.genderPreference) return false;
+                        }
+                        
+                        // LookingFor filter
+                        const myLookingFor = userPreferences.lookingFor.length > 0;
+                        const theirLookingFor = u.preferences?.lookingFor?.length > 0;
+                        
+                        if (myLookingFor && theirLookingFor) {
+                            // Both have configured - must match
+                            const hasCommonLookingFor = u.preferences.lookingFor.some(
+                                lf => userPreferences.lookingFor.includes(lf)
+                            );
+                            if (!hasCommonLookingFor) return false;
+                        } else if (myLookingFor && !theirLookingFor) {
+                            // I configured, they didn't - don't show
+                            return false;
+                        } else if (!myLookingFor && theirLookingFor) {
+                            // I didn't configure, they did - don't show
+                            return false;
+                        }
+                        // Both not configured - show each other
                         
                         return true;
                     })
@@ -3064,7 +3104,10 @@
                     userIds: usersInRange.map(u => u.id).join(','),
                     radius,
                     viewedStories: Object.keys(viewedStories).join(','),
-                    unreadMessages: JSON.stringify(unreadMessages)
+                    unreadMessages: JSON.stringify(unreadMessages),
+                    lookingFor: userPreferences.lookingFor.join(','),
+                    ageRange: `${userPreferences.ageRangeMin}-${userPreferences.ageRangeMax}`,
+                    genderPref: userPreferences.genderPreference
                 });
                 
                 // Only update markers if data actually changed
@@ -3102,7 +3145,7 @@
                     markersRef.current.push(marker);
                 });
                 
-            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius, viewedStories, unreadMessages, userPreferences.interests]);
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius, viewedStories, unreadMessages, userPreferences.lookingFor, userPreferences.ageRangeMin, userPreferences.ageRangeMax, userPreferences.genderPreference]);
             
             // Center map on user - only when position changes significantly
             useEffect(() => {
@@ -3177,13 +3220,11 @@
                 }));
             };
             
-            // Toggle lookingFor selection
+            // Toggle lookingFor selection - SINGLE selection only
             const toggleLookingFor = (optionId) => {
                 setUserPreferences(prev => ({
                     ...prev,
-                    lookingFor: prev.lookingFor.includes(optionId)
-                        ? prev.lookingFor.filter(i => i !== optionId)
-                        : [...prev.lookingFor, optionId]
+                    lookingFor: prev.lookingFor.includes(optionId) ? [] : [optionId]
                 }));
             };
             
@@ -3246,13 +3287,28 @@
 
             const handleThoughtSubmit = async () => {
                 if (!thought.trim() || !currentUser) return;
+                
+                // Verificar si han pasado 15 minutos desde el último pensamiento
+                if (window.lastThoughtTimestamp) {
+                    const now = Date.now();
+                    const minutesPassed = (now - window.lastThoughtTimestamp) / 60000;
+                    
+                    if (minutesPassed < 15) {
+                        const minutesLeft = Math.ceil(15 - minutesPassed);
+                        alert(`Debes esperar ${minutesLeft} minuto${minutesLeft > 1 ? 's' : ''} para publicar otro pensamiento`);
+                        return;
+                    }
+                }
+                
                 const newThought = thought.trim();
+                const now = Date.now();
                 try {
                     await db.collection('users').doc(currentUser.id).update({
                         thought: newThought,
                         thoughtTimestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
                     setCurrentUser(prev => ({ ...prev, thought: newThought }));
+                    window.lastThoughtTimestamp = now; // Actualizar timestamp local
                     setThought(''); // Limpiar el campo después de publicar
                 } catch (error) {
                     console.error('Error updating thought:', error);
@@ -3713,7 +3769,7 @@
                                     <line x1="9" y1="9" x2="9.01" y2="9"/>
                                     <line x1="15" y1="9" x2="15.01" y2="9"/>
                                 </svg>
-                                <input type="text" className="thought-input" placeholder="Mensaje" value={thought} onChange={(e) => setThought(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleThoughtSubmit()} maxLength={50}/>
+                                <input type="text" className="thought-input" placeholder="Mensaje" value={thought} onChange={(e) => setThought(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleThoughtSubmit()} maxLength={15}/>
                             </div>
                             <button className="send-button" onClick={handleThoughtSubmit}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -3758,7 +3814,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.1.1</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.1.2</span>
                             </div>
                         </div>
                     </div>
