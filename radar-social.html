@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.1.6 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.1.9 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2530,21 +2530,31 @@
                 
                 // Thought bubble with circles (Instagram Notes style) - for ALL users including current user
                 if (user.thought && user.thought.trim()) {
-                    // Adjust position based on avatar size - orbitals at 11 o'clock
-                    const offsetTop = isCurrentUser ? -5 : 0;
-                    const offsetLeft = isCurrentUser ? -55 : -25;
-                    
                     // Main bubble container - positioned at 10 o'clock (main) or 11 o'clock (orbitals)
                     const bubbleContainer = document.createElement('div');
-                    bubbleContainer.style.cssText = `
-                        position: absolute;
-                        top: ${offsetTop}px;
-                        left: ${offsetLeft}px;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: ${isCurrentUser ? 'flex-end' : 'flex-end'};
-                        z-index: 10;
-                    `;
+                    
+                    if (isCurrentUser) {
+                        bubbleContainer.style.cssText = `
+                            position: absolute;
+                            top: -5px;
+                            left: -55px;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: flex-end;
+                            z-index: 10;
+                        `;
+                    } else {
+                        // Orbitals: position from right side, diagonal toward 11 o'clock
+                        bubbleContainer.style.cssText = `
+                            position: absolute;
+                            top: -12px;
+                            right: ${size + 5}px;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: flex-end;
+                            z-index: 10;
+                        `;
+                    }
                     
                     // Thought bubble - single line
                     const thoughtBubble = document.createElement('div');
@@ -2781,7 +2791,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.1.6 - Interest filtering, profile interests display, movement intelligence');
+                console.log('🚀 RADAR SOCIAL v7.1.9 - Interest filtering, profile interests display, movement intelligence');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3818,7 +3828,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.1.6</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.1.9</span>
                             </div>
                         </div>
                     </div>
