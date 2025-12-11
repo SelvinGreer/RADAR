@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.3.3 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.4.2 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -358,133 +358,6 @@
         .gps-dot:nth-child(3) { animation-delay: 0.4s; }
 
         /* Landing Page - Redesigned v6.2 */
-        .landing-page {
-            position: fixed;
-            inset: 0;
-            background: #0a0e13;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            overflow: hidden;
-        }
-
-        .landing-map-bg {
-            position: absolute;
-            inset: 0;
-            background: 
-                radial-gradient(circle at 30% 40%, rgba(56, 189, 98, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 70% 60%, rgba(88, 166, 255, 0.05) 0%, transparent 40%),
-                linear-gradient(180deg, #0a0e13 0%, #0d1117 50%, #0a0e13 100%);
-        }
-
-        .landing-grid {
-            position: absolute;
-            inset: 0;
-            background-image: 
-                linear-gradient(rgba(56, 189, 98, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(56, 189, 98, 0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            animation: gridMove 20s linear infinite;
-        }
-
-        @keyframes gridMove {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(60px, 60px); }
-        }
-
-        .radar-pulse {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 300px;
-            height: 300px;
-            border: 1px solid rgba(56, 189, 98, 0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: radarPulse 4s ease-out infinite;
-        }
-
-        .radar-pulse.delay-1 { animation-delay: 1.3s; }
-        .radar-pulse.delay-2 { animation-delay: 2.6s; }
-
-        @keyframes radarPulse {
-            0% { width: 100px; height: 100px; opacity: 0.8; border-width: 2px; }
-            100% { width: 600px; height: 600px; opacity: 0; border-width: 1px; }
-        }
-
-        .floating-avatars {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-        }
-
-        .floating-avatar {
-            position: absolute;
-            animation: floatAvatar 6s ease-in-out infinite;
-        }
-
-        .floating-avatar .avatar-ring {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            padding: 3px;
-            background: #38bd62;
-            box-shadow: 0 4px 20px rgba(56, 189, 98, 0.4);
-        }
-
-        .floating-avatar .avatar-ring.has-story {
-            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
-            animation: storyRingRotate 3s linear infinite;
-        }
-
-        @keyframes storyRingRotate {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
-        }
-
-        .floating-avatar .avatar-ring img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #0d1117;
-        }
-
-        .floating-avatar .avatar-thought {
-            position: absolute;
-            top: -35px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(13, 17, 23, 0.95);
-            color: #e6edf3;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            white-space: nowrap;
-            border: 1px solid rgba(56, 189, 98, 0.3);
-            animation: thoughtPop 0.4s ease-out;
-        }
-
-        .floating-avatar .avatar-distance {
-            position: absolute;
-            bottom: -22px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(56, 189, 98, 0.2);
-            color: #38bd62;
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: 600;
-        }
-
-        @keyframes floatAvatar {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
-        }
-        
         /* Avatar breathing animations */
         @keyframes breathe {
             0%, 100% { transform: scale(1); }
@@ -497,126 +370,6 @@
             30% { transform: scale(1); }
             45% { transform: scale(1.06); }
             60% { transform: scale(1); }
-        }
-
-        .avatar-1 { top: 12%; left: 8%; animation-delay: 0s; }
-        .avatar-2 { top: 20%; right: 12%; animation-delay: 0.5s; }
-        .avatar-3 { top: 45%; left: 5%; animation-delay: 1s; }
-        .avatar-4 { top: 55%; right: 8%; animation-delay: 1.5s; }
-        .avatar-5 { bottom: 25%; left: 15%; animation-delay: 2s; }
-        .avatar-6 { bottom: 18%; right: 15%; animation-delay: 2.5s; }
-
-        @keyframes thoughtPop {
-            0% { opacity: 0; transform: translateX(-50%) scale(0.8) translateY(10px); }
-            100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
-        }
-
-        .landing-content {
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            padding: 20px;
-            max-width: 400px;
-        }
-
-        .landing-logo-container {
-            margin-bottom: 24px;
-        }
-
-        .landing-logo-icon {
-            font-size: 64px;
-            margin-bottom: 12px;
-            animation: float 3s ease-in-out infinite;
-            filter: drop-shadow(0 0 30px rgba(56, 189, 98, 0.5));
-        }
-
-        .landing-title {
-            font-size: 36px;
-            font-weight: 800;
-            color: #fff;
-            margin: 0;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #fff 0%, #38bd62 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .landing-tagline {
-            font-size: 18px;
-            color: #8b949e;
-            margin: 20px 0 28px;
-            line-height: 1.5;
-        }
-
-        .landing-tagline .highlight {
-            color: #38bd62;
-            font-weight: 600;
-        }
-
-        .landing-features-row {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 32px;
-        }
-
-        .feature-pill {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(56, 189, 98, 0.1);
-            border: 1px solid rgba(56, 189, 98, 0.2);
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: #c9d1d9;
-        }
-
-        .google-signin-btn {
-            background: #fff;
-            color: #1f2937;
-            border: none;
-            border-radius: 50px;
-            padding: 16px 32px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin: 0 auto;
-            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            width: 100%;
-            max-width: 280px;
-        }
-
-        .google-signin-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(255, 255, 255, 0.3);
-        }
-
-        .google-signin-btn:active {
-            transform: translateY(0);
-        }
-
-        .google-icon {
-            width: 20px;
-            height: 20px;
-        }
-
-        .landing-footer-text {
-            margin-top: 24px;
-            font-size: 12px;
-            color: #6e7681;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
         }
 
         /* Overlays */
@@ -2145,7 +1898,6 @@
 
         function RadarSocialApp() {
             // State
-            const [showLanding, setShowLanding] = useState(true);
             const [radius, setRadius] = useState(1000);
             const [thought, setThought] = useState('');
             const [currentUser, setCurrentUser] = useState(null);
@@ -2904,12 +2656,10 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.3.3 - Fixed map pan animation bug');
+                console.log('🚀 RADAR SOCIAL v7.4.2 - Claude-style login page');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
-                        setShowLanding(false);
-                        
                         const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
                         let thought = '', hasActiveStory = false, storyUrl = null, storyTimestamp = null;
                         
@@ -3101,7 +2851,7 @@
                             };
                         }
                     } else {
-                        setShowLanding(true);
+                        setCurrentUser(null);
                     }
                 });
                 
@@ -3505,7 +3255,6 @@
                     const provider = new firebase.auth.GoogleAuthProvider();
                     provider.setCustomParameters({ prompt: 'select_account' });
                     await auth.signInWithPopup(provider);
-                    setShowLanding(false);
                 } catch (error) {
                     console.error('Sign in error:', error);
                     alert('Error: ' + error.message);
@@ -3521,7 +3270,6 @@
                         });
                     }
                     await auth.signOut();
-                    setShowLanding(true);
                     setCurrentUser(null);
                     setShowSidebar(false);
                 } catch (error) {
@@ -3564,7 +3312,11 @@
                     if (currentUser.hasStory && currentUser.storyUrl) setViewingStory(currentUser);
                     else setShowStoryUpload(true);
                 } else {
-                    if (user.hasStory && user.storyUrl) setViewingStory(user);
+                    if (user.hasStory && user.storyUrl) {
+                        // Mark as viewed immediately when opening
+                        setViewedStories(prev => ({ ...prev, [user.id]: Date.now() }));
+                        setViewingStory(user);
+                    }
                     else { setInstagramModalUser(user); setShowInstagramModal(true); }
                 }
             };
@@ -3807,85 +3559,67 @@
             }, [users, currentUser?.latitude]);
 
             // Render
-            if (showLanding) {
+            if (!currentUser) {
+                // Show Claude-style login screen
                 return (
-                    <div className="landing-page">
-                        {/* Animated Map Background */}
-                        <div className="landing-map-bg">
-                            <div className="landing-grid"></div>
-                            <div className="radar-pulse"></div>
-                            <div className="radar-pulse delay-1"></div>
-                            <div className="radar-pulse delay-2"></div>
-                        </div>
-                        
-                        {/* Floating Avatars */}
-                        <div className="floating-avatars">
-                            <div className="floating-avatar avatar-1">
-                                <div className="avatar-ring has-story">
-                                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" alt=""/>
-                                </div>
-                                <div className="avatar-thought">Buscando café ☕</div>
-                            </div>
-                            <div className="floating-avatar avatar-2">
-                                <div className="avatar-ring online">
-                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" alt=""/>
-                                </div>
-                                <div className="avatar-distance">45m</div>
-                            </div>
-                            <div className="floating-avatar avatar-3">
-                                <div className="avatar-ring has-story">
-                                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150" alt=""/>
-                                </div>
-                                <div className="avatar-thought">🎵 En concierto</div>
-                            </div>
-                            <div className="floating-avatar avatar-4">
-                                <div className="avatar-ring online">
-                                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150" alt=""/>
-                                </div>
-                            </div>
-                            <div className="floating-avatar avatar-5">
-                                <div className="avatar-ring has-story">
-                                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt=""/>
-                                </div>
-                                <div className="avatar-thought">¿Alguien para gym? 💪</div>
-                            </div>
-                            <div className="floating-avatar avatar-6">
-                                <div className="avatar-ring online">
-                                    <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150" alt=""/>
-                                </div>
-                                <div className="avatar-distance">120m</div>
-                            </div>
-                        </div>
-                        
-                        {/* Main Content */}
-                        <div className="landing-content">
-                            <div className="landing-logo-container">
-                                <div className="landing-logo-icon">📡</div>
-                                <h1 className="landing-title">Radar Social</h1>
-                            </div>
+                    <div style={{
+                        minHeight: '100vh',
+                        background: '#0d1117',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '20px'
+                    }}>
+                        {/* Main content */}
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            maxWidth: '400px',
+                            width: '100%'
+                        }}>
+                            {/* Title */}
+                            <h1 style={{
+                                color: '#e6edf3',
+                                fontSize: '28px',
+                                fontWeight: '500',
+                                margin: '0 0 48px 0',
+                                letterSpacing: '-0.3px'
+                            }}>
+                                Radar Social
+                            </h1>
                             
-                            <p className="landing-tagline">
-                                Descubre quién está cerca.<br/>
-                                <span className="highlight">Conecta en tiempo real.</span>
-                            </p>
-                            
-                            <div className="landing-features-row">
-                                <div className="feature-pill">
-                                    <span>🎯</span>
-                                    <span>Alta precisión</span>
-                                </div>
-                                <div className="feature-pill">
-                                    <span>💬</span>
-                                    <span>Chat instantáneo</span>
-                                </div>
-                                <div className="feature-pill">
-                                    <span>📸</span>
-                                    <span>Stories 12h</span>
-                                </div>
-                            </div>
-                            
-                            <button className="google-signin-btn" onClick={handleGoogleSignIn}>
-                                <svg className="google-icon" viewBox="0 0 24 24">
+                            {/* Google Sign In Button */}
+                            <button 
+                                onClick={handleGoogleSignIn}
+                                style={{
+                                    width: '100%',
+                                    maxWidth: '300px',
+                                    padding: '12px 24px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #30363d',
+                                    background: '#161b22',
+                                    color: '#e6edf3',
+                                    fontSize: '14px',
+                                    fontWeight: '400',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '10px',
+                                    transition: 'all 0.15s ease'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.currentTarget.style.background = '#1f2937';
+                                    e.currentTarget.style.borderColor = '#484f58';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.currentTarget.style.background = '#161b22';
+                                    e.currentTarget.style.borderColor = '#30363d';
+                                }}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24">
                                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -3894,8 +3628,18 @@
                                 Continuar con Google
                             </button>
                             
-                            <p className="landing-footer-text">
-                                Únete a miles de personas conectando a tu alrededor
+                            {/* Terms */}
+                            <p style={{
+                                color: '#6e7681',
+                                fontSize: '12px',
+                                marginTop: '24px',
+                                textAlign: 'center',
+                                lineHeight: '1.6'
+                            }}>
+                                Al continuar, aceptas los{' '}
+                                <span style={{ color: '#8b949e' }}>Términos</span>
+                                {' '}y{' '}
+                                <span style={{ color: '#8b949e' }}>Privacidad</span>
                             </p>
                         </div>
                     </div>
@@ -4058,7 +3802,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.3.3</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.4.2</span>
                             </div>
                         </div>
                     </div>
@@ -4130,7 +3874,10 @@
                                         .slice(0, 10)
                                         .map(user => (
                                             <div key={user.id} className="inbox-note-item" onClick={() => { 
-                                                if (user.hasStory) setViewingStory(user);
+                                                if (user.hasStory) {
+                                                    setViewedStories(prev => ({ ...prev, [user.id]: Date.now() }));
+                                                    setViewingStory(user);
+                                                }
                                                 else { openChat(user); setShowInbox(false); }
                                             }}>
                                                 <div className="inbox-note-avatar-container">
