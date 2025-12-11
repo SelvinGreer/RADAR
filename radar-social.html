@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.0.1 Build: 2025-12-11 | Bug fixes: story ring, notifications, thought bubbles -->
+    <!-- v7.0.2 Build: 2025-12-11 | Inbox fixes, unread indicators, smaller avatars, notification sound -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -719,7 +719,7 @@
 
         /* Notes/Thoughts Section - Horizontal scroll */
         .inbox-notes-section {
-            padding: 16px 0;
+            padding: 40px 0 16px 0;
             border-bottom: 1px solid rgba(48, 54, 61, 0.5);
         }
 
@@ -1868,6 +1868,35 @@
             const [chatHistory, setChatHistory] = useState([]); // Lista de chats con historial
             const [initialLoadComplete, setInitialLoadComplete] = useState(false); // Para evitar notificaciones al conectar
             const [knownUserIds, setKnownUserIds] = useState(new Set()); // IDs de usuarios ya conocidos
+            const [unreadMessages, setUnreadMessages] = useState({}); // {oderId: count}
+            const [totalUnread, setTotalUnread] = useState(0); // Total de mensajes no leídos
+            
+            // Audio para notificaciones
+            const notificationSound = useRef(null);
+            
+            // Crear sonido de notificación (suave ping)
+            useEffect(() => {
+                // Crear un AudioContext para generar el sonido
+                const createNotificationSound = () => {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = 800; // Frecuencia del tono
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                };
+                
+                notificationSound.current = createNotificationSound;
+            }, []);
             
             const [techSettings, setTechSettings] = useState({
                 mode: 'auto', gps: true, kalman: true, deadReckoning: true, ultrasonic: true
@@ -2033,12 +2062,18 @@
                 const avatarContainer = document.createElement('div');
                 avatarContainer.style.cssText = `width:${size}px;height:${size}px;position:relative;`;
                 
-                // Ring - Colored if has UNSEEN story, otherwise gray
+                // Check for unread messages
+                const userUnreadCount = !isCurrentUser ? (unreadMessages[user.id] || 0) : 0;
+                
+                // Ring - Priority: Unread messages (yellow) > Unseen story (gradient) > Default (gray)
                 const ring = document.createElement('div');
                 let ringStyle;
                 const hasUnseenStory = user.hasStory && !viewedStories[user.id];
                 
-                if (hasUnseenStory) {
+                if (userUnreadCount > 0) {
+                    // Unread messages - Yellow ring
+                    ringStyle = 'background: linear-gradient(45deg, #f7d046, #ffb347, #f7d046);';
+                } else if (hasUnseenStory) {
                     // Story ring - Instagram gradient (only if NOT viewed)
                     ringStyle = 'background:linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);';
                 } else {
@@ -2060,6 +2095,31 @@
                 innerContainer.appendChild(avatarImg);
                 ring.appendChild(innerContainer);
                 avatarContainer.appendChild(ring);
+                
+                // Badge de mensajes no leídos - círculo naranja con contador
+                if (userUnreadCount > 0) {
+                    const unreadBadge = document.createElement('div');
+                    unreadBadge.style.cssText = `
+                        position: absolute;
+                        bottom: -2px;
+                        right: -2px;
+                        min-width: 18px;
+                        height: 18px;
+                        background: linear-gradient(135deg, #ff6b35, #f7931e);
+                        border-radius: 9px;
+                        border: 2px solid #0d1117;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 10px;
+                        font-weight: 700;
+                        color: #fff;
+                        padding: 0 4px;
+                    `;
+                    unreadBadge.textContent = userUnreadCount > 9 ? '9+' : userUnreadCount;
+                    avatarContainer.appendChild(unreadBadge);
+                }
+                
                 markerDiv.appendChild(avatarContainer);
                 
                 // Name + Distance label - ONLY for other users
@@ -2140,8 +2200,8 @@
             
             // Calculate orbital positions around user (circular)
             const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
-                // Orbit radius ~200 meters
-                const orbitRadius = 0.0018; // ~200 meters in lat/lng
+                // Orbit radius ~160 meters (reduced 20% from 200m)
+                const orbitRadius = 0.00144; // ~160 meters in lat/lng
                 const angle = (index * (360 / totalSlots)) * (Math.PI / 180);
                 return {
                     lat: centerLat + (orbitRadius * Math.cos(angle)),
@@ -2161,7 +2221,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.0.1 - Bug fixes: story ring, notifications, thought bubbles');
+                console.log('🚀 RADAR SOCIAL v7.0.2 - Inbox fixes, unread indicators, smaller avatars, notification sound');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2340,6 +2400,50 @@
                 initializeGoogleMap(currentUser.latitude, currentUser.longitude);
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
 
+            // Listen for unread messages
+            useEffect(() => {
+                if (!currentUser?.id) return;
+                
+                const unsubscribe = db.collection('chats')
+                    .where('participants', 'array-contains', currentUser.id)
+                    .onSnapshot((snapshot) => {
+                        const unreadCounts = {};
+                        let total = 0;
+                        
+                        snapshot.forEach((doc) => {
+                            const data = doc.data();
+                            const myUnreadField = `unreadCount_${currentUser.id}`;
+                            const count = data[myUnreadField] || 0;
+                            
+                            if (count > 0) {
+                                // Encontrar el ID del otro usuario
+                                const otherUserId = data.participants?.find(id => id !== currentUser.id);
+                                if (otherUserId) {
+                                    // Verificar si es un mensaje nuevo (comparar con el anterior)
+                                    const previousCount = unreadMessages[otherUserId] || 0;
+                                    if (count > previousCount && previousCount >= 0) {
+                                        // ¡Nuevo mensaje! Reproducir sonido
+                                        if (notificationSound.current && initialLoadComplete) {
+                                            try {
+                                                notificationSound.current();
+                                            } catch (e) {
+                                                console.log('Audio not ready');
+                                            }
+                                        }
+                                    }
+                                    unreadCounts[otherUserId] = count;
+                                    total += count;
+                                }
+                            }
+                        });
+                        
+                        setUnreadMessages(unreadCounts);
+                        setTotalUnread(total);
+                    });
+                
+                return () => unsubscribe();
+            }, [currentUser?.id, initialLoadComplete]);
+
             // Recalculate distances when current user moves
             useEffect(() => {
                 if (!currentUser?.latitude || currentUser.latitude === 0) return;
@@ -2385,8 +2489,8 @@
                 // Clear existing markers
                 clearAllMarkers();
                 
-                // Create current user marker (largest - 70px) - NO label, centered
-                const currentUserMarker = createUserMarker(currentUser, googleMap, 70, true);
+                // Create current user marker (largest - 56px, reduced 20%) - NO label, centered
+                const currentUserMarker = createUserMarker(currentUser, googleMap, 56, true);
                 markersRef.current.push(currentUserMarker);
                 
                 // First 8 closest go in orbital positions around user
@@ -2399,18 +2503,18 @@
                         displayLat: orbitalPos.lat,
                         displayLng: orbitalPos.lng
                     };
-                    const marker = createUserMarker(userWithPos, googleMap, 56, false);
+                    const marker = createUserMarker(userWithPos, googleMap, 45, false);
                     markersRef.current.push(marker);
                 });
                 
-                // Users beyond the 8 closest - show at real position with smaller size (44px)
+                // Users beyond the 8 closest - show at real position with smaller size (35px)
                 const farUsers = usersInRange.slice(8);
                 farUsers.forEach(user => {
-                    const marker = createUserMarker(user, googleMap, 44, false);
+                    const marker = createUserMarker(user, googleMap, 35, false);
                     markersRef.current.push(marker);
                 });
                 
-            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, users, radius, viewedStories]);
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, users, radius, viewedStories, unreadMessages]);
             
             // Center map on user - only when position changes significantly
             useEffect(() => {
@@ -2541,6 +2645,19 @@
                 setShowInstagramModal(false);
                 
                 const chatId = [currentUser.id, user.id].sort().join('_');
+                
+                // Marcar mensajes como leídos
+                db.collection('chats').doc(chatId).update({
+                    [`unreadCount_${currentUser.id}`]: 0
+                }).catch(() => {}); // Ignorar si el chat no existe aún
+                
+                // Limpiar contador local
+                setUnreadMessages(prev => {
+                    const updated = { ...prev };
+                    delete updated[user.id];
+                    return updated;
+                });
+                
                 db.collection('chats').doc(chatId).collection('messages')
                     .orderBy('timestamp', 'asc')
                     .onSnapshot((snapshot) => {
@@ -2854,9 +2971,32 @@
                                     <span className="map-people-counter-number">{usersInRange.length}</span>
                                     <span className="map-people-counter-text">cerca</span>
                                 </div>
-                                <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" onClick={() => setShowInbox(true)}>
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-                                </svg>
+                                <div style={{ position: 'relative' }} onClick={() => setShowInbox(true)}>
+                                    <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                                    </svg>
+                                    {totalUnread > 0 && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '-6px',
+                                            right: '-6px',
+                                            minWidth: '18px',
+                                            height: '18px',
+                                            background: 'linear-gradient(135deg, #ff6b35, #f7931e)',
+                                            borderRadius: '9px',
+                                            border: '2px solid #0d1117',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '10px',
+                                            fontWeight: '700',
+                                            color: '#fff',
+                                            padding: '0 4px'
+                                        }}>
+                                            {totalUnread > 9 ? '9+' : totalUnread}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             
                             
@@ -2927,7 +3067,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.0.1</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.0.2</span>
                             </div>
                         </div>
                     </div>
@@ -3042,7 +3182,10 @@
                                     users
                                         .filter(u => u.isOnline)
                                         .sort((a, b) => {
-                                            // Favoritos primero, luego por distancia
+                                            // Mensajes no leídos primero, luego favoritos, luego por distancia
+                                            const aUnread = unreadMessages[a.id] ? 0 : 1;
+                                            const bUnread = unreadMessages[b.id] ? 0 : 1;
+                                            if (aUnread !== bUnread) return aUnread - bUnread;
                                             const aFav = favoriteUsers.includes(a.id) ? 0 : 1;
                                             const bFav = favoriteUsers.includes(b.id) ? 0 : 1;
                                             if (aFav !== bFav) return aFav - bFav;
@@ -3051,15 +3194,41 @@
                                         .map(user => (
                                             <div key={user.id} className="inbox-item" onClick={() => { openChat(user); setShowInbox(false); }}>
                                                 <div className="inbox-avatar-container">
-                                                    <img src={user.photo} alt={user.name} className="inbox-avatar"/>
+                                                    <img 
+                                                        src={user.photo} 
+                                                        alt={user.name} 
+                                                        className="inbox-avatar"
+                                                        style={unreadMessages[user.id] ? { border: '3px solid #f7d046' } : {}}
+                                                    />
                                                     {user.isOnline && <div className="inbox-online-indicator"/>}
+                                                    {unreadMessages[user.id] > 0 && (
+                                                        <div style={{
+                                                            position: 'absolute',
+                                                            bottom: '-2px',
+                                                            right: '-2px',
+                                                            minWidth: '18px',
+                                                            height: '18px',
+                                                            background: 'linear-gradient(135deg, #ff6b35, #f7931e)',
+                                                            borderRadius: '9px',
+                                                            border: '2px solid #0d1117',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: '10px',
+                                                            fontWeight: '700',
+                                                            color: '#fff',
+                                                            padding: '0 4px'
+                                                        }}>
+                                                            {unreadMessages[user.id] > 9 ? '9+' : unreadMessages[user.id]}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="inbox-info">
                                                     <div className="inbox-name-row">
-                                                        <span className="inbox-name">{user.name}</span>
+                                                        <span className="inbox-name" style={unreadMessages[user.id] ? { fontWeight: '700' } : {}}>{user.name}</span>
                                                         <span className="inbox-time">· {user.distance}m</span>
                                                     </div>
-                                                    <div className="inbox-preview">
+                                                    <div className={`inbox-preview ${unreadMessages[user.id] ? 'unread' : ''}`}>
                                                         {user.thought ? `"${user.thought}"` : 'Toca para iniciar chat'}
                                                     </div>
                                                 </div>
