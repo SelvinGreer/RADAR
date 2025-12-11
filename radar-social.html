@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.2.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.2.1 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2716,11 +2716,11 @@
                 if (!isCurrentUser) {
                     const nameLabel = document.createElement('div');
                     nameLabel.style.cssText = `
-                        margin-top: 4px;
+                        margin-top: 2px;
                         background: rgba(0,0,0,0.65);
-                        padding: 3px 8px;
+                        padding: 2px 5px;
                         border-radius: 999px;
-                        font-size: 11px;
+                        font-size: 7px;
                         font-weight: 500;
                         color: #fff;
                         white-space: nowrap;
@@ -2822,8 +2822,8 @@
             
             // Calculate orbital positions around user (circular)
             const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
-                // Orbit radius ~50 meters visual display (only users ≤50m real distance go to orbit)
-                const orbitRadius = 0.00045; // ~50 meters in lat/lng for visual display
+                // Orbit radius ~70 meters visual display (only users ≤50m real distance go to orbit)
+                const orbitRadius = 0.00065; // ~70 meters in lat/lng for visual display
                 const angle = (index * (360 / totalSlots)) * (Math.PI / 180);
                 return {
                     lat: centerLat + (orbitRadius * Math.cos(angle)),
@@ -2843,7 +2843,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.2.0 - Interest filtering, profile interests display, movement intelligence');
+                console.log('🚀 RADAR SOCIAL v7.2.1 - Interest filtering, profile interests display, movement intelligence');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3844,6 +3844,25 @@
                             
                         </div>
                         
+                        {/* GPS accuracy indicator - subtle */}
+                        <div style={{
+                            position: 'fixed',
+                            bottom: '140px',
+                            right: '12px',
+                            background: 'rgba(0,0,0,0.5)',
+                            padding: '3px 8px',
+                            borderRadius: '10px',
+                            fontSize: '9px',
+                            color: locationAccuracy <= 20 ? '#38bd62' : locationAccuracy <= 50 ? '#f7d046' : '#f85149',
+                            zIndex: 15,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}>
+                            <span style={{ fontSize: '8px' }}>📍</span>
+                            ±{Math.round(locationAccuracy)}m
+                        </div>
+                        
                         <div className="range-slider-container">
                             <div className="range-slider-label">
                                 <span className="range-slider-title">Radio de búsqueda</span>
@@ -3922,7 +3941,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.2.0</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.2.1</span>
                             </div>
                         </div>
                     </div>
