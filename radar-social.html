@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v6.9.2 Build: 2025-12-11 | Live distance updates + slider from 0m -->
+    <!-- v6.9.3 Build: 2025-12-11 | Story fixes + notifications + thought visibility -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1753,8 +1753,8 @@
                 const markerDiv = document.createElement('div');
                 markerDiv.style.cssText = `display:flex;flex-direction:column;align-items:center;cursor:pointer;`;
                 
-                // Thought bubble with circles (Instagram Notes style) - only for OTHER users
-                if (user.thought && user.thought.trim() && !isCurrentUser) {
+                // Thought bubble with circles (Instagram Notes style) - for ALL users including current user
+                if (user.thought && user.thought.trim()) {
                     // Main bubble container
                     const bubbleContainer = document.createElement('div');
                     bubbleContainer.style.cssText = `display:flex;flex-direction:column;align-items:center;margin-bottom:2px;`;
@@ -1802,19 +1802,26 @@
                 const ring = document.createElement('div');
                 let ringStyle;
                 if (user.hasStory) {
-                    // Story ring - Instagram gradient
+                    // Story ring - Instagram gradient (only the ring, not the avatar)
                     ringStyle = 'background:linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);';
                 } else {
                     // Default ring - gray (no green "online" indicator)
                     ringStyle = 'background: #404040;';
                 }
-                ring.style.cssText = `position:absolute;width:100%;height:100%;border-radius:50%;${ringStyle}padding:3px;`;
+                ring.style.cssText = `position:absolute;width:100%;height:100%;border-radius:50%;${ringStyle}display:flex;align-items:center;justify-content:center;`;
+                
+                // Inner container to create the ring effect (dark background between ring and avatar)
+                const innerContainer = document.createElement('div');
+                const innerSize = size - 6; // 3px ring on each side
+                innerContainer.style.cssText = `width:${innerSize}px;height:${innerSize}px;border-radius:50%;background:#0d1117;display:flex;align-items:center;justify-content:center;`;
                 
                 const avatarImg = document.createElement('img');
                 avatarImg.src = user.photo;
-                avatarImg.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid #0d1117;';
+                const imgSize = innerSize - 4; // 2px padding
+                avatarImg.style.cssText = `width:${imgSize}px;height:${imgSize}px;border-radius:50%;object-fit:cover;`;
                 
-                ring.appendChild(avatarImg);
+                innerContainer.appendChild(avatarImg);
+                ring.appendChild(innerContainer);
                 avatarContainer.appendChild(ring);
                 markerDiv.appendChild(avatarContainer);
                 
@@ -1833,7 +1840,7 @@
                         text-align: center;
                     `;
                     const firstName = user.name.split(' ')[0];
-                    nameLabel.textContent = user.distance ? `${firstName} ${user.distance}m` : firstName;
+                    nameLabel.textContent = user.distance ? `${firstName} / ${user.distance}m` : firstName;
                     markerDiv.appendChild(nameLabel);
                 }
                 
@@ -1917,7 +1924,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v6.9.2 - Live distance updates + slider from 0m');
+                console.log('🚀 RADAR SOCIAL v6.9.3 - Story fixes + notifications + thought visibility');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2379,6 +2386,103 @@
                 return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
             };
 
+            // Format time ago for stories
+            const formatTimeAgo = (timestamp) => {
+                if (!timestamp) return 'Hace un momento';
+                const now = Date.now();
+                const time = typeof timestamp === 'number' ? timestamp : (timestamp.toMillis ? timestamp.toMillis() : timestamp);
+                const diff = now - time;
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                
+                if (minutes < 1) return 'Hace un momento';
+                if (minutes < 60) return `Hace ${minutes}m`;
+                if (hours < 24) return `Hace ${hours}h`;
+                return 'Hace más de 1 día';
+            };
+
+            // Send reaction to story
+            const sendStoryReaction = async (emoji) => {
+                if (!viewingStory || !currentUser || viewingStory.id === currentUser.id) return;
+                
+                const chatId = [currentUser.id, viewingStory.id].sort().join('_');
+                try {
+                    await db.collection('chats').doc(chatId).collection('messages').add({
+                        text: `Reaccionó ${emoji} a tu historia`,
+                        senderId: currentUser.id,
+                        senderName: currentUser.name,
+                        senderPhoto: currentUser.photo,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        type: 'story_reaction',
+                        emoji: emoji
+                    });
+                    await db.collection('chats').doc(chatId).set({
+                        participants: [currentUser.id, viewingStory.id],
+                        lastMessage: `${emoji}`,
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        [`unreadCount_${viewingStory.id}`]: firebase.firestore.FieldValue.increment(1)
+                    }, { merge: true });
+                    
+                    // Close story and show confirmation
+                    setViewedStories(prev => ({ ...prev, [viewingStory.id]: Date.now() }));
+                    setViewingStory(null);
+                } catch (error) {
+                    console.error('Error sending reaction:', error);
+                }
+            };
+
+            // Auto-close story after 5 seconds
+            useEffect(() => {
+                if (!viewingStory) return;
+                
+                const timer = setTimeout(() => {
+                    setViewedStories(prev => ({ ...prev, [viewingStory.id]: Date.now() }));
+                    setViewingStory(null);
+                }, 5000); // 5 seconds
+                
+                return () => clearTimeout(timer);
+            }, [viewingStory]);
+
+            // Proximity notifications - notify when new user enters range
+            useEffect(() => {
+                if (!currentUser?.latitude || users.length === 0) return;
+                
+                const closeUsers = users.filter(u => u.distance <= 100 && u.isOnline);
+                
+                closeUsers.forEach(user => {
+                    const lastSeen = lastSeenUsers[user.id];
+                    const now = Date.now();
+                    
+                    // If user wasn't seen before or was seen more than 5 minutes ago
+                    if (!lastSeen || (now - lastSeen) > 300000) {
+                        // Show notification
+                        setSocialNotifications(prev => {
+                            // Don't add duplicate notifications
+                            if (prev.some(n => n.userId === user.id)) return prev;
+                            return [...prev, {
+                                id: `${user.id}-${now}`,
+                                userId: user.id,
+                                user: user,
+                                message: `${user.name} está a ${user.distance}m de ti`,
+                                timestamp: now
+                            }];
+                        });
+                    }
+                    
+                    // Update last seen
+                    setLastSeenUsers(prev => ({ ...prev, [user.id]: now }));
+                });
+                
+                // Auto-remove notifications after 8 seconds
+                const cleanupInterval = setInterval(() => {
+                    setSocialNotifications(prev => 
+                        prev.filter(n => (Date.now() - n.timestamp) < 8000)
+                    );
+                }, 1000);
+                
+                return () => clearInterval(cleanupInterval);
+            }, [users, currentUser?.latitude]);
+
             // Render
             if (showLanding) {
                 return (
@@ -2581,7 +2685,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.9.2</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.9.3</span>
                             </div>
                         </div>
                     </div>
@@ -2736,7 +2840,12 @@
                                 <div className="story-header">
                                     <div className="story-user-info">
                                         <img src={viewingStory.photo} alt={viewingStory.name} className="story-user-avatar"/>
-                                        <span className="story-user-name">{viewingStory.name}</span>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span className="story-user-name">{viewingStory.name}</span>
+                                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>
+                                                {viewingStory.storyTimestamp ? formatTimeAgo(viewingStory.storyTimestamp) : 'Hace un momento'}
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="story-close" onClick={() => { setViewedStories(prev => ({ ...prev, [viewingStory.id]: Date.now() })); setViewingStory(null); }}>
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -2747,7 +2856,7 @@
                                     <>
                                         <div className="story-reactions">
                                             {['❤️', '🔥', '😍', '😂', '👏'].map(emoji => (
-                                                <button key={emoji} className="story-reaction-btn">{emoji}</button>
+                                                <button key={emoji} className="story-reaction-btn" onClick={() => sendStoryReaction(emoji)}>{emoji}</button>
                                             ))}
                                         </div>
                                         <button className="story-message-btn" onClick={() => { setViewingStory(null); openChat(viewingStory); }}>
@@ -2819,6 +2928,34 @@
                             </>
                         )}
                     </div>
+
+                    {/* Social Proximity Notifications */}
+                    {socialNotifications.map((notification, index) => (
+                        <div key={notification.id} className="social-notification" style={{ top: `${100 + index * 110}px` }}>
+                            <button className="social-notification-close" onClick={() => setSocialNotifications(prev => prev.filter(n => n.id !== notification.id))}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                            <div className="social-notification-header">
+                                <img src={notification.user.photo} alt={notification.user.name} className="social-notification-avatar"/>
+                                <div className="social-notification-info">
+                                    <div className="social-notification-name">{notification.user.name}</div>
+                                    <div className="social-notification-distance">📍 A {notification.user.distance}m de ti</div>
+                                </div>
+                            </div>
+                            <div className="social-notification-message">
+                                {notification.user.thought ? `"${notification.user.thought}"` : '¡Hay alguien cerca! ¿Por qué no saludas?'}
+                            </div>
+                            <div className="social-notification-actions">
+                                <button className="social-notification-btn social-notification-btn-primary" onClick={() => { openChat(notification.user); setSocialNotifications(prev => prev.filter(n => n.id !== notification.id)); }}>
+                                    <svg style={{ width: 16, height: 16 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    Saludar
+                                </button>
+                                <button className="social-notification-btn social-notification-btn-secondary" onClick={() => setSocialNotifications(prev => prev.filter(n => n.id !== notification.id))}>
+                                    Ahora no
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </>
             );
         }
