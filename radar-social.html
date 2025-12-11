@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.1.4 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.1.6 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2530,11 +2530,11 @@
                 
                 // Thought bubble with circles (Instagram Notes style) - for ALL users including current user
                 if (user.thought && user.thought.trim()) {
-                    // Adjust position based on avatar size
-                    const offsetTop = isCurrentUser ? -5 : (size === 45 ? 5 : 10);
-                    const offsetLeft = isCurrentUser ? -55 : (size === 45 ? -45 : -40);
+                    // Adjust position based on avatar size - orbitals at 11 o'clock
+                    const offsetTop = isCurrentUser ? -5 : 0;
+                    const offsetLeft = isCurrentUser ? -55 : -25;
                     
-                    // Main bubble container - positioned at 10 o'clock
+                    // Main bubble container - positioned at 10 o'clock (main) or 11 o'clock (orbitals)
                     const bubbleContainer = document.createElement('div');
                     bubbleContainer.style.cssText = `
                         position: absolute;
@@ -2542,7 +2542,7 @@
                         left: ${offsetLeft}px;
                         display: flex;
                         flex-direction: column;
-                        align-items: flex-end;
+                        align-items: ${isCurrentUser ? 'flex-end' : 'flex-end'};
                         z-index: 10;
                     `;
                     
@@ -2569,17 +2569,17 @@
                         flex-direction: column;
                         align-items: flex-end;
                         margin-top: 1px;
-                        margin-right: -5px;
+                        margin-right: ${isCurrentUser ? '-5px' : '-3px'};
                     `;
                     
                     // Medium circle
                     const circle1 = document.createElement('div');
-                    circle1.style.cssText = `width:8px;height:8px;background:#3a3a3a;border-radius:50%;margin-bottom:1px;`;
+                    circle1.style.cssText = `width:6px;height:6px;background:#3a3a3a;border-radius:50%;margin-bottom:1px;`;
                     circlesContainer.appendChild(circle1);
                     
                     // Small circle
                     const circle2 = document.createElement('div');
-                    circle2.style.cssText = `width:5px;height:5px;background:#3a3a3a;border-radius:50%;margin-right:-3px;`;
+                    circle2.style.cssText = `width:4px;height:4px;background:#3a3a3a;border-radius:50%;margin-right:-2px;`;
                     circlesContainer.appendChild(circle2);
                     
                     bubbleContainer.appendChild(circlesContainer);
@@ -2781,7 +2781,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.1.4 - Interest filtering, profile interests display, movement intelligence');
+                console.log('🚀 RADAR SOCIAL v7.1.6 - Interest filtering, profile interests display, movement intelligence');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3818,7 +3818,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.1.4</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.1.6</span>
                             </div>
                         </div>
                     </div>
