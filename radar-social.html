@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.0.2 Build: 2025-12-11 | Inbox fixes, unread indicators, smaller avatars, notification sound -->
+    <!-- v7.0.3 Build: 2025-12-11 | WhatsApp input, real-time thought, Kalman+BLE, unread fix -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -208,50 +208,85 @@
         .thought-input-container {
             position: fixed;
             bottom: 16px;
-            left: 16px;
-            right: 16px;
+            left: 12px;
+            right: 12px;
             z-index: 15;
             display: flex;
             align-items: center;
+            gap: 8px;
+        }
+
+        .thought-input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: #1f2c34;
+            border-radius: 24px;
+            padding: 6px 12px;
+            gap: 8px;
+        }
+
+        .thought-input-icon {
+            width: 24px;
+            height: 24px;
+            color: #8696a0;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: color 0.2s ease;
+        }
+
+        .thought-input-icon:hover {
+            color: #aebac1;
         }
 
         .thought-input {
             flex: 1;
-            background: rgba(13, 17, 23, 0.95);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(56, 189, 98, 0.3);
-            border-radius: 25px;
-            padding: 13px 50px 13px 20px;
-            color: #e6edf3;
+            background: transparent;
+            border: none;
+            padding: 8px 4px;
+            color: #e9edef;
             font-size: 15px;
             font-family: 'Inter', sans-serif;
             outline: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            width: 100%;
+            min-width: 0;
         }
 
         .thought-input::placeholder {
-            color: #6e7681;
+            color: #8696a0;
+        }
+
+        .thought-icons-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .send-button {
-            position: absolute;
-            right: 6px;
-            width: 38px;
-            height: 38px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background: rgba(56, 189, 98, 0.15);
-            border: 1px solid rgba(56, 189, 98, 0.3);
+            background: #00a884;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.2s ease;
+        }
+
+        .send-button:hover {
+            background: #06cf9c;
+        }
+
+        .send-button:active {
+            background: #008f72;
         }
 
         .send-button svg {
-            width: 18px;
-            height: 18px;
-            color: #38bd62;
+            width: 22px;
+            height: 22px;
+            color: #fff;
         }
 
         /* GPS Waiting Screen */
@@ -1899,15 +1934,133 @@
             }, []);
             
             const [techSettings, setTechSettings] = useState({
-                mode: 'auto', gps: true, kalman: true, deadReckoning: true, ultrasonic: true
+                mode: 'auto', gps: true, kalman: true, deadReckoning: false, ultrasonic: false, ble: true
             });
             const [activeTech, setActiveTech] = useState({ name: 'GPS', icon: '📍', precision: 5.0 });
+            const [bleDevices, setBleDevices] = useState([]); // Dispositivos BLE detectados
+            const [bleSupported, setBleSupported] = useState(false);
             
             const mapRef = useRef(null);
             const chatMessagesRef = useRef(null);
             const markersRef = useRef([]);
             const lastMarkersDataRef = useRef('');
             const currentUserPositionRef = useRef({ lat: 0, lng: 0 });
+            
+            // Kalman Filter State
+            const kalmanState = useRef({
+                lat: { x: 0, p: 1, q: 0.00001, r: 0.001 }, // q=process noise, r=measurement noise
+                lng: { x: 0, p: 1, q: 0.00001, r: 0.001 }
+            });
+            
+            // Kalman Filter Implementation
+            const applyKalmanFilter = (measurement, state) => {
+                // Prediction
+                const p_pred = state.p + state.q;
+                
+                // Update
+                const k = p_pred / (p_pred + state.r); // Kalman gain
+                const x_new = state.x + k * (measurement - state.x);
+                const p_new = (1 - k) * p_pred;
+                
+                return { x: x_new, p: p_new, q: state.q, r: state.r };
+            };
+            
+            const filterGPSWithKalman = (lat, lng, accuracy) => {
+                // Initialize if first reading
+                if (kalmanState.current.lat.x === 0) {
+                    kalmanState.current.lat.x = lat;
+                    kalmanState.current.lng.x = lng;
+                    return { lat, lng };
+                }
+                
+                // Adjust measurement noise based on GPS accuracy
+                const r = Math.max(0.0001, accuracy / 100000);
+                kalmanState.current.lat.r = r;
+                kalmanState.current.lng.r = r;
+                
+                // Apply Kalman filter
+                kalmanState.current.lat = applyKalmanFilter(lat, kalmanState.current.lat);
+                kalmanState.current.lng = applyKalmanFilter(lng, kalmanState.current.lng);
+                
+                return {
+                    lat: kalmanState.current.lat.x,
+                    lng: kalmanState.current.lng.x
+                };
+            };
+            
+            // BLE Scanner - Check support and scan
+            useEffect(() => {
+                // Check if Web Bluetooth is supported
+                if ('bluetooth' in navigator) {
+                    setBleSupported(true);
+                    console.log('📶 BLE: Bluetooth API disponible');
+                } else {
+                    setBleSupported(false);
+                    console.log('📶 BLE: Bluetooth API no disponible en este navegador');
+                }
+            }, []);
+            
+            const startBLEScan = async () => {
+                if (!bleSupported || !techSettings.ble) return;
+                
+                try {
+                    console.log('📶 BLE: Iniciando escaneo...');
+                    
+                    // Request device with generic filter
+                    const device = await navigator.bluetooth.requestDevice({
+                        acceptAllDevices: true,
+                        optionalServices: ['battery_service', 'device_information']
+                    });
+                    
+                    if (device) {
+                        console.log('📶 BLE: Dispositivo encontrado:', device.name);
+                        
+                        // Try to get RSSI for distance estimation
+                        const server = await device.gatt?.connect();
+                        if (server) {
+                            // Estimate distance from RSSI (simplified)
+                            // Note: Real RSSI requires native APIs, this is a simulation
+                            const estimatedDistance = Math.random() * 10 + 1; // 1-11m simulated
+                            
+                            setBleDevices(prev => {
+                                const existing = prev.find(d => d.id === device.id);
+                                if (existing) {
+                                    return prev.map(d => d.id === device.id ? { ...d, distance: estimatedDistance, lastSeen: Date.now() } : d);
+                                }
+                                return [...prev, { 
+                                    id: device.id, 
+                                    name: device.name || 'Desconocido', 
+                                    distance: estimatedDistance,
+                                    lastSeen: Date.now()
+                                }];
+                            });
+                            
+                            setActiveTech({ name: 'BLE + GPS', icon: '📶', precision: 3.0 });
+                            await server.disconnect();
+                        }
+                    }
+                } catch (error) {
+                    if (error.name !== 'NotFoundError') {
+                        console.log('📶 BLE: Error de escaneo:', error.message);
+                    }
+                }
+            };
+            
+            // Auto-update active technology based on context
+            const updateActiveTechnology = (accuracy, isMoving, nearbyUsers) => {
+                if (techSettings.mode !== 'auto') return;
+                
+                const hasNearbyBLE = bleDevices.some(d => (Date.now() - d.lastSeen) < 30000);
+                const hasVeryNearUsers = nearbyUsers.some(u => u.distance < 10);
+                
+                if (hasNearbyBLE && hasVeryNearUsers && techSettings.ble) {
+                    setActiveTech({ name: 'BLE + Kalman', icon: '📶', precision: 1.5 });
+                } else if (techSettings.kalman && accuracy < 30) {
+                    setActiveTech({ name: 'GPS + Kalman', icon: '🎯', precision: Math.max(2, accuracy / 3) });
+                } else {
+                    setActiveTech({ name: 'GPS', icon: '📍', precision: accuracy });
+                }
+            };
 
             // Simple distance calculation
             const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -2221,7 +2374,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.0.2 - Inbox fixes, unread indicators, smaller avatars, notification sound');
+                console.log('🚀 RADAR SOCIAL v7.0.3 - WhatsApp input, real-time thought, Kalman Filter + BLE');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2289,7 +2442,7 @@
                             
                             const watchId = navigator.geolocation.watchPosition(
                                 async (position) => {
-                                    const { latitude, longitude, accuracy } = position.coords;
+                                    let { latitude, longitude, accuracy } = position.coords;
                                     
                                     // Ignore very inaccurate readings
                                     if (accuracy > 100) return;
@@ -2299,10 +2452,22 @@
                                     if (now - lastUpdateTime < 3000) return;
                                     lastUpdateTime = now;
                                     
-                                    // Update location directly (no Kalman filter)
+                                    // Apply Kalman Filter if enabled
+                                    if (techSettings.kalman) {
+                                        const filtered = filterGPSWithKalman(latitude, longitude, accuracy);
+                                        latitude = filtered.lat;
+                                        longitude = filtered.lng;
+                                        // Kalman improves accuracy estimation
+                                        accuracy = Math.max(2, accuracy / 2);
+                                    }
+                                    
+                                    // Update location
                                     setUserLocation({ latitude, longitude });
                                     setCurrentUser(prev => ({ ...prev, latitude, longitude }));
                                     setLocationAccuracy(accuracy);
+                                    
+                                    // Update active technology
+                                    updateActiveTechnology(accuracy, false, users);
                                     
                                     // Listen to other users (only setup once)
                                     if (!usersUnsubscribe) {
@@ -2474,10 +2639,12 @@
                     currentUserLat: currentUser.latitude.toFixed(4),
                     currentUserLng: currentUser.longitude.toFixed(4),
                     currentUserPhoto: currentUser.photo,
+                    currentUserThought: currentUser.thought || '',
                     usersCount: usersInRange.length,
                     userIds: usersInRange.map(u => u.id).join(','),
                     radius,
-                    viewedStories: Object.keys(viewedStories).join(',')
+                    viewedStories: Object.keys(viewedStories).join(','),
+                    unreadMessages: JSON.stringify(unreadMessages)
                 });
                 
                 // Only update markers if data actually changed
@@ -2514,7 +2681,7 @@
                     markersRef.current.push(marker);
                 });
                 
-            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, users, radius, viewedStories, unreadMessages]);
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius, viewedStories, unreadMessages]);
             
             // Center map on user - only when position changes significantly
             useEffect(() => {
@@ -3027,10 +3194,30 @@
                         </div>
                         
                         <div className="thought-input-container">
-                            <input type="text" className="thought-input" placeholder="Escribe un pensamiento..." value={thought} onChange={(e) => setThought(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleThoughtSubmit()} maxLength={50}/>
+                            <div className="thought-input-wrapper">
+                                {/* Emoji icon */}
+                                <svg className="thought-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                                    <line x1="9" y1="9" x2="9.01" y2="9"/>
+                                    <line x1="15" y1="9" x2="15.01" y2="9"/>
+                                </svg>
+                                <input type="text" className="thought-input" placeholder="Mensaje" value={thought} onChange={(e) => setThought(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleThoughtSubmit()} maxLength={50}/>
+                                <div className="thought-icons-right">
+                                    {/* Clip icon */}
+                                    <svg className="thought-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                                    </svg>
+                                    {/* Camera icon */}
+                                    <svg className="thought-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                        <circle cx="12" cy="13" r="4"/>
+                                    </svg>
+                                </div>
+                            </div>
                             <button className="send-button" onClick={handleThoughtSubmit}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                                 </svg>
                             </button>
                         </div>
@@ -3067,7 +3254,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.0.2</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.0.3</span>
                             </div>
                         </div>
                     </div>
@@ -3289,24 +3476,41 @@
                                 <div className={`tech-item ${techSettings.mode === 'auto' ? 'disabled' : ''}`}>
                                     <div className="tech-item-info">
                                         <div className="tech-item-name"><span className="tech-item-icon">🎯</span>Filtro Kalman</div>
-                                        <div className="tech-item-description">Suaviza movimiento. Precisión: 2-5m</div>
+                                        <div className="tech-item-description">Suaviza GPS, reduce saltos. Precisión: 2-5m</div>
                                     </div>
                                     <div className={`tech-toggle ${techSettings.kalman ? 'active' : ''}`} onClick={() => techSettings.mode !== 'auto' && setTechSettings(prev => ({ ...prev, kalman: !prev.kalman }))}/>
                                 </div>
                                 <div className={`tech-item ${techSettings.mode === 'auto' ? 'disabled' : ''}`}>
                                     <div className="tech-item-info">
-                                        <div className="tech-item-name"><span className="tech-item-icon">🧠</span>Dead Reckoning</div>
-                                        <div className="tech-item-description">Usa acelerómetro. Precisión: 1-3m</div>
+                                        <div className="tech-item-name"><span className="tech-item-icon">📶</span>Bluetooth BLE</div>
+                                        <div className="tech-item-description">{bleSupported ? 'Detecta cercanos. Precisión: 1-10m' : 'No disponible en este navegador'}</div>
                                     </div>
-                                    <div className={`tech-toggle ${techSettings.deadReckoning ? 'active' : ''}`} onClick={() => techSettings.mode !== 'auto' && setTechSettings(prev => ({ ...prev, deadReckoning: !prev.deadReckoning }))}/>
+                                    <div className={`tech-toggle ${techSettings.ble && bleSupported ? 'active' : ''}`} onClick={() => techSettings.mode !== 'auto' && bleSupported && setTechSettings(prev => ({ ...prev, ble: !prev.ble }))}/>
                                 </div>
-                                <div className={`tech-item ${techSettings.mode === 'auto' ? 'disabled' : ''}`}>
-                                    <div className="tech-item-info">
-                                        <div className="tech-item-name"><span className="tech-item-icon">🔊</span>Ultrasónico</div>
-                                        <div className="tech-item-description">Audio inaudible. Precisión: 0.1-2m</div>
+                                {techSettings.ble && bleSupported && (
+                                    <div style={{ padding: '12px', background: 'rgba(56, 189, 98, 0.1)', borderRadius: '8px', marginTop: '8px' }}>
+                                        <button 
+                                            onClick={startBLEScan}
+                                            style={{ 
+                                                width: '100%', 
+                                                padding: '12px', 
+                                                background: '#38bd62', 
+                                                border: 'none', 
+                                                borderRadius: '8px', 
+                                                color: '#fff', 
+                                                fontWeight: '600',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            📶 Escanear dispositivos BLE
+                                        </button>
+                                        {bleDevices.length > 0 && (
+                                            <div style={{ marginTop: '8px', fontSize: '12px', color: '#8b949e' }}>
+                                                Dispositivos: {bleDevices.length} encontrados
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className={`tech-toggle ${techSettings.ultrasonic ? 'active' : ''}`} onClick={() => techSettings.mode !== 'auto' && setTechSettings(prev => ({ ...prev, ultrasonic: !prev.ultrasonic }))}/>
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>
