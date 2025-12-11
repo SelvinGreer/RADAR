@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.3.1 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.3.2 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2900,7 +2900,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.3.1 - Smooth movement, breathing avatars');
+                console.log('🚀 RADAR SOCIAL v7.3.2 - Instant story/thought updates, breathing avatars');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3223,7 +3223,9 @@
                     userIds: usersInRange.map(u => u.id).join(','),
                     userPositions: usersInRange.map(u => `${u.latitude.toFixed(5)},${u.longitude.toFixed(5)}`).join('|'),
                     userThoughts: usersInRange.map(u => u.thought || '').join('|'),
+                    userStories: usersInRange.map(u => u.hasStory ? '1' : '0').join(''),
                     currentThought: currentUser.thought || '',
+                    currentHasStory: currentUser.hasStory || false,
                     currentLat: currentUser.latitude.toFixed(5),
                     currentLng: currentUser.longitude.toFixed(5)
                 });
@@ -3255,13 +3257,28 @@
                 const currentUserId = 'current_user';
                 activeMarkerIds.add(currentUserId);
                 
-                if (markersRef.current[currentUserId]) {
-                    // Update existing marker position
-                    markersRef.current[currentUserId].marker.updatePosition(currentUser.latitude, currentUser.longitude);
+                const existingCurrentMarker = markersRef.current[currentUserId];
+                const currentUserChanged = existingCurrentMarker && (
+                    existingCurrentMarker.hasStory !== currentUser.hasStory ||
+                    existingCurrentMarker.thought !== (currentUser.thought || '')
+                );
+                
+                if (existingCurrentMarker && !currentUserChanged) {
+                    // Update existing marker position only
+                    existingCurrentMarker.marker.updatePosition(currentUser.latitude, currentUser.longitude);
                 } else {
-                    // Create new marker
+                    // Remove old marker if exists and create new one (story/thought changed)
+                    if (existingCurrentMarker) removeMarker(currentUserId);
+                    
                     const marker = createUserMarker(currentUser, googleMap, 48, true, true, -1);
-                    markersRef.current[currentUserId] = { marker, type: 'current', lat: currentUser.latitude, lng: currentUser.longitude };
+                    markersRef.current[currentUserId] = { 
+                        marker, 
+                        type: 'current', 
+                        lat: currentUser.latitude, 
+                        lng: currentUser.longitude,
+                        hasStory: currentUser.hasStory,
+                        thought: currentUser.thought || ''
+                    };
                 }
                 
                 // Update or create orbital markers
@@ -3270,12 +3287,16 @@
                     activeMarkerIds.add(user.id);
                     
                     const existingMarker = markersRef.current[user.id];
+                    const userChanged = existingMarker && (
+                        existingMarker.hasStory !== user.hasStory ||
+                        existingMarker.thought !== (user.thought || '')
+                    );
                     
-                    if (existingMarker && existingMarker.type === 'orbital') {
+                    if (existingMarker && existingMarker.type === 'orbital' && !userChanged) {
                         // Update existing orbital marker - smooth transition
                         existingMarker.marker.updatePosition(orbitalPos.lat, orbitalPos.lng);
                     } else {
-                        // Remove if exists with different type, then create new
+                        // Remove if exists, then create new
                         if (existingMarker) removeMarker(user.id);
                         
                         const userWithPos = {
@@ -3284,7 +3305,14 @@
                             displayLng: orbitalPos.lng
                         };
                         const marker = createUserMarker(userWithPos, googleMap, 38, false, true, index);
-                        markersRef.current[user.id] = { marker, type: 'orbital', lat: orbitalPos.lat, lng: orbitalPos.lng };
+                        markersRef.current[user.id] = { 
+                            marker, 
+                            type: 'orbital', 
+                            lat: orbitalPos.lat, 
+                            lng: orbitalPos.lng,
+                            hasStory: user.hasStory,
+                            thought: user.thought || ''
+                        };
                     }
                 });
                 
@@ -3294,16 +3322,27 @@
                     activeMarkerIds.add(user.id);
                     
                     const existingMarker = markersRef.current[user.id];
+                    const userChanged = existingMarker && (
+                        existingMarker.hasStory !== user.hasStory ||
+                        existingMarker.thought !== (user.thought || '')
+                    );
                     
-                    if (existingMarker && existingMarker.type === 'explorer') {
+                    if (existingMarker && existingMarker.type === 'explorer' && !userChanged) {
                         // Update existing explorer marker - smooth transition to real GPS position
                         existingMarker.marker.updatePosition(user.latitude, user.longitude);
                     } else {
-                        // Remove if exists with different type, then create new
+                        // Remove if exists, then create new
                         if (existingMarker) removeMarker(user.id);
                         
                         const marker = createUserMarker(user, googleMap, 22, false, false, -1);
-                        markersRef.current[user.id] = { marker, type: 'explorer', lat: user.latitude, lng: user.longitude };
+                        markersRef.current[user.id] = { 
+                            marker, 
+                            type: 'explorer', 
+                            lat: user.latitude, 
+                            lng: user.longitude,
+                            hasStory: user.hasStory,
+                            thought: user.thought || ''
+                        };
                     }
                 });
                 
@@ -3314,7 +3353,7 @@
                     }
                 });
                 
-            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius, viewedStories, unreadMessages, userPreferences.lookingFor, userPreferences.ageRangeMin, userPreferences.ageRangeMax, userPreferences.genderPreference, markerRefreshTick]);
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, currentUser?.hasStory, users, radius, viewedStories, unreadMessages, userPreferences.lookingFor, userPreferences.ageRangeMin, userPreferences.ageRangeMax, userPreferences.genderPreference, markerRefreshTick]);
             
             // Center map on user - only when position changes significantly
             useEffect(() => {
@@ -4015,7 +4054,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.3.1</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.3.2</span>
                             </div>
                         </div>
                     </div>
