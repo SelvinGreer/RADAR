@@ -123,7 +123,13 @@
 
         // Marker visual (avatar + aro + pensamiento + nombre/distancia)
         const createUserMarker = (user, map, size, isCurrentUser = false) => {
-            const markerDiv = document.createElement('div');
+    // PATCH — evitar crash cuando google maps no existe aún
+    if (typeof google === 'undefined' || !google.maps) {
+        console.warn('Intento de crear marcador sin Google Maps cargado');
+        return null;
+    }
+
+    const markerDiv = document.createElement('div');
             markerDiv.style.cssText = `
                 display:flex;
                 flex-direction:column;
