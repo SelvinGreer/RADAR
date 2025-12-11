@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v6.9.3 Build: 2025-12-11 | Story fixes + notifications + thought visibility -->
+    <!-- v7.0 Build: 2025-12-11 | Inbox redesign Instagram style -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -712,31 +712,214 @@
 
         /* Inbox */
         .inbox-list {
-            padding: 8px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Notes/Thoughts Section - Horizontal scroll */
+        .inbox-notes-section {
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+        }
+
+        .inbox-notes-scroll {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding: 0 16px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .inbox-notes-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .inbox-note-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 72px;
+            cursor: pointer;
+        }
+
+        .inbox-note-avatar-container {
+            position: relative;
+            margin-bottom: 6px;
+        }
+
+        .inbox-note-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .inbox-note-ring {
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            padding: 3px;
+        }
+
+        .inbox-note-ring.has-story {
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+        }
+
+        .inbox-note-ring.online {
+            background: #38bd62;
+        }
+
+        .inbox-note-ring.default {
+            background: #404040;
+        }
+
+        .inbox-note-ring-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #0d1117;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .inbox-note-thought {
+            position: absolute;
+            top: -32px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #3a3a3a;
+            color: #e0e0e0;
+            padding: 6px 10px;
+            border-radius: 14px;
+            font-size: 11px;
+            white-space: nowrap;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .inbox-note-thought::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: #3a3a3a;
+            border-radius: 50%;
+        }
+
+        .inbox-note-name {
+            font-size: 11px;
+            color: #e6edf3;
+            text-align: center;
+            max-width: 72px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .inbox-note-distance {
+            font-size: 10px;
+            color: #38bd62;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .inbox-note-add {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(56, 189, 98, 0.1);
+            border: 2px dashed rgba(56, 189, 98, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #38bd62;
+            font-size: 24px;
+        }
+
+        /* Tabs */
+        .inbox-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+        }
+
+        .inbox-tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #8b949e;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .inbox-tab.active {
+            color: #f0f6fc;
+            border-bottom-color: #f0f6fc;
+        }
+
+        .inbox-tab-badge {
+            background: #f85149;
+            color: #fff;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 6px;
+        }
+
+        /* Chat Items */
+        .inbox-chats-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
         }
 
         .inbox-item {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 14px 12px;
-            background: rgba(22, 27, 34, 0.5);
-            border-radius: 12px;
-            margin-bottom: 8px;
+            padding: 12px 16px;
             cursor: pointer;
-            border: 1px solid transparent;
+            transition: background 0.2s ease;
         }
 
         .inbox-item:hover {
+            background: rgba(22, 27, 34, 0.6);
+        }
+
+        .inbox-item:active {
             background: rgba(22, 27, 34, 0.8);
-            border-color: rgba(56, 189, 98, 0.3);
+        }
+
+        .inbox-avatar-container {
+            position: relative;
         }
 
         .inbox-avatar {
-            width: 48px;
-            height: 48px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
-            border: 2px solid rgba(71, 85, 105, 0.5);
+            object-fit: cover;
+        }
+
+        .inbox-online-indicator {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 14px;
+            height: 14px;
+            background: #38bd62;
+            border: 3px solid #0d1117;
+            border-radius: 50%;
         }
 
         .inbox-info {
@@ -744,24 +927,59 @@
             min-width: 0;
         }
 
+        .inbox-name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
         .inbox-name {
             font-size: 15px;
             font-weight: 600;
             color: #f0f6fc;
-            margin-bottom: 4px;
+        }
+
+        .inbox-time {
+            font-size: 12px;
+            color: #6e7681;
         }
 
         .inbox-preview {
-            font-size: 13px;
+            font-size: 14px;
             color: #8b949e;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .inbox-distance {
-            font-size: 11px;
+        .inbox-preview.unread {
+            color: #f0f6fc;
+            font-weight: 500;
+        }
+
+        .inbox-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .inbox-favorite {
             color: #6e7681;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .inbox-favorite.active {
+            color: #f7d046;
+        }
+
+        .inbox-unread-dot {
+            width: 10px;
+            height: 10px;
+            background: #58a6ff;
+            border-radius: 50%;
         }
 
         .inbox-empty {
@@ -1633,6 +1851,9 @@
             const [isDraggingDial, setIsDraggingDial] = useState(false);
             const [enteringUsers, setEnteringUsers] = useState(new Set());
             const [lastSeenUsers, setLastSeenUsers] = useState({});
+            const [inboxTab, setInboxTab] = useState('messages'); // 'messages' or 'requests'
+            const [favoriteUsers, setFavoriteUsers] = useState([]);
+            const [chatHistory, setChatHistory] = useState([]); // Lista de chats con historial
             
             const [techSettings, setTechSettings] = useState({
                 mode: 'auto', gps: true, kalman: true, deadReckoning: true, ultrasonic: true
@@ -1924,7 +2145,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v6.9.3 - Story fixes + notifications + thought visibility');
+                console.log('🚀 RADAR SOCIAL v7.0 - Inbox redesign Instagram style');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2685,7 +2906,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.9.3</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.0</span>
                             </div>
                         </div>
                     </div>
@@ -2716,30 +2937,135 @@
                         </div>
                     </div>
 
-                    {/* Inbox */}
+                    {/* Inbox - Redesigned */}
                     <div className={`inbox-overlay ${showInbox ? 'active' : ''}`}>
                         <div className="inbox-header">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 24, height: 24, cursor: 'pointer', color: '#8b949e' }} onClick={() => setShowInbox(false)}><polyline points="15 18 9 12 15 6"/></svg>
                             <h2>Mensajes</h2>
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 22, height: 22, cursor: 'pointer', color: '#8b949e' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </div>
                         </div>
+                        
                         <div className="inbox-list">
-                            {users.length === 0 ? (
-                                <div className="inbox-empty">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                                    <p>No hay conversaciones aún</p>
-                                </div>
-                            ) : (
-                                users.map(user => (
-                                    <div key={user.id} className="inbox-item" onClick={() => { openChat(user); setShowInbox(false); }}>
-                                        <img src={user.photo} alt={user.name} className="inbox-avatar"/>
-                                        <div className="inbox-info">
-                                            <div className="inbox-name">{user.name}</div>
-                                            <div className="inbox-preview">{user.thought || 'Toca para chatear'}</div>
+                            {/* Notes/Thoughts Section */}
+                            <div className="inbox-notes-section">
+                                <div className="inbox-notes-scroll">
+                                    {/* Your Note */}
+                                    <div className="inbox-note-item" onClick={() => { setShowInbox(false); }}>
+                                        <div className="inbox-note-avatar-container">
+                                            {currentUser?.thought && (
+                                                <div className="inbox-note-thought">{currentUser.thought}</div>
+                                            )}
+                                            <div className={`inbox-note-ring ${currentUser?.hasStory ? 'has-story' : 'default'}`}>
+                                                <div className="inbox-note-ring-inner">
+                                                    <img src={currentUser?.photo} alt="Tu nota" className="inbox-note-avatar"/>
+                                                </div>
+                                            </div>
+                                            {!currentUser?.thought && (
+                                                <div style={{ position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, background: '#38bd62', borderRadius: '50%', border: '2px solid #0d1117', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <span style={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>+</span>
+                                                </div>
+                                            )}
                                         </div>
-                                        <span className="inbox-distance">{user.distance}m</span>
+                                        <span className="inbox-note-name">Tu nota</span>
                                     </div>
-                                ))
-                            )}
+                                    
+                                    {/* Nearby users with thoughts - sorted by distance */}
+                                    {users
+                                        .filter(u => u.isOnline && u.latitude !== 0)
+                                        .sort((a, b) => a.distance - b.distance)
+                                        .slice(0, 10)
+                                        .map(user => (
+                                            <div key={user.id} className="inbox-note-item" onClick={() => { 
+                                                if (user.hasStory) setViewingStory(user);
+                                                else { openChat(user); setShowInbox(false); }
+                                            }}>
+                                                <div className="inbox-note-avatar-container">
+                                                    {user.thought && (
+                                                        <div className="inbox-note-thought">{user.thought}</div>
+                                                    )}
+                                                    <div className={`inbox-note-ring ${user.hasStory ? 'has-story' : user.isOnline ? 'online' : 'default'}`}>
+                                                        <div className="inbox-note-ring-inner">
+                                                            <img src={user.photo} alt={user.name} className="inbox-note-avatar"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span className="inbox-note-name">{user.name.split(' ')[0]}</span>
+                                                <span className="inbox-note-distance">📍{user.distance}m</span>
+                                            </div>
+                                        ))
+                                    }
+                                </div>
+                            </div>
+                            
+                            {/* Tabs */}
+                            <div className="inbox-tabs">
+                                <div className={`inbox-tab ${inboxTab === 'messages' ? 'active' : ''}`} onClick={() => setInboxTab('messages')}>
+                                    Mensajes
+                                </div>
+                                <div className={`inbox-tab ${inboxTab === 'requests' ? 'active' : ''}`} onClick={() => setInboxTab('requests')}>
+                                    Solicitudes
+                                </div>
+                            </div>
+                            
+                            {/* Chat List */}
+                            <div className="inbox-chats-list">
+                                {users.length === 0 ? (
+                                    <div className="inbox-empty">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                        <p>No hay conversaciones aún</p>
+                                        <p style={{ fontSize: '13px', marginTop: '8px' }}>¡Saluda a alguien cercano!</p>
+                                    </div>
+                                ) : (
+                                    users
+                                        .filter(u => u.isOnline)
+                                        .sort((a, b) => {
+                                            // Favoritos primero, luego por distancia
+                                            const aFav = favoriteUsers.includes(a.id) ? 0 : 1;
+                                            const bFav = favoriteUsers.includes(b.id) ? 0 : 1;
+                                            if (aFav !== bFav) return aFav - bFav;
+                                            return a.distance - b.distance;
+                                        })
+                                        .map(user => (
+                                            <div key={user.id} className="inbox-item" onClick={() => { openChat(user); setShowInbox(false); }}>
+                                                <div className="inbox-avatar-container">
+                                                    <img src={user.photo} alt={user.name} className="inbox-avatar"/>
+                                                    {user.isOnline && <div className="inbox-online-indicator"/>}
+                                                </div>
+                                                <div className="inbox-info">
+                                                    <div className="inbox-name-row">
+                                                        <span className="inbox-name">{user.name}</span>
+                                                        <span className="inbox-time">· {user.distance}m</span>
+                                                    </div>
+                                                    <div className="inbox-preview">
+                                                        {user.thought ? `"${user.thought}"` : 'Toca para iniciar chat'}
+                                                    </div>
+                                                </div>
+                                                <div className="inbox-actions">
+                                                    <svg 
+                                                        viewBox="0 0 24 24" 
+                                                        fill={favoriteUsers.includes(user.id) ? '#f7d046' : 'none'} 
+                                                        stroke="currentColor" 
+                                                        strokeWidth="2" 
+                                                        className={`inbox-favorite ${favoriteUsers.includes(user.id) ? 'active' : ''}`}
+                                                        style={{ width: 20, height: 20 }}
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation();
+                                                            setFavoriteUsers(prev => 
+                                                                prev.includes(user.id) 
+                                                                    ? prev.filter(id => id !== user.id)
+                                                                    : [...prev, user.id]
+                                                            );
+                                                        }}
+                                                    >
+                                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        ))
+                                )}
+                            </div>
                         </div>
                     </div>
 
