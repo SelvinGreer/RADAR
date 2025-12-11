@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.2.6 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.3.1 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -483,6 +483,20 @@
         @keyframes floatAvatar {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-15px); }
+        }
+        
+        /* Avatar breathing animations */
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            15% { transform: scale(1.08); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.06); }
+            60% { transform: scale(1); }
         }
 
         .avatar-1 { top: 12%; left: 8%; animation-delay: 0s; }
@@ -2301,7 +2315,7 @@
             
             const mapRef = useRef(null);
             const chatMessagesRef = useRef(null);
-            const markersRef = useRef([]);
+            const markersRef = useRef({}); // Changed to object: { oderId: {marker, overlay, lat, lng} }
             const lastMarkersDataRef = useRef('');
             const lastTickRef = useRef(0);
             const currentUserPositionRef = useRef({ lat: 0, lng: 0 });
@@ -2652,15 +2666,29 @@
                 
                 // Avatar container
                 const avatarContainer = document.createElement('div');
-                avatarContainer.style.cssText = `width:${size}px;height:${size}px;position:relative;`;
                 
                 // Check for unread messages
                 const userUnreadCount = !isCurrentUser ? (unreadMessages[user.id] || 0) : 0;
+                const hasUnseenStory = user.hasStory && !viewedStories[user.id];
+                
+                // Determine breathing animation - stronger for notifications
+                let breatheAnimation;
+                if (userUnreadCount > 0 || hasUnseenStory) {
+                    // Heartbeat for users with notifications (stories/messages)
+                    breatheAnimation = 'animation: heartbeat 2s ease-in-out infinite;';
+                } else {
+                    // Gentle breathing for all others
+                    breatheAnimation = 'animation: breathe 3s ease-in-out infinite;';
+                }
+                
+                // Random delay to desync animations
+                const animDelay = `animation-delay: ${(Math.random() * 2).toFixed(1)}s;`;
+                
+                avatarContainer.style.cssText = `width:${size}px;height:${size}px;position:relative;${breatheAnimation}${animDelay}`;
                 
                 // Ring - Priority: Unread messages (yellow) > Unseen story (gradient) > Default (gray)
                 const ring = document.createElement('div');
                 let ringStyle;
-                const hasUnseenStory = user.hasStory && !viewedStories[user.id];
                 
                 if (userUnreadCount > 0) {
                     // Unread messages - Yellow ring
@@ -2782,6 +2810,8 @@
                         this.position = position;
                         this.content = content;
                         this.isFirstDraw = true;
+                        // Add smooth transition for movement
+                        this.content.style.transition = 'left 1s ease-out, top 1s ease-out';
                     }
                     onAdd() { 
                         this.getPanes().overlayMouseTarget.appendChild(this.content); 
@@ -2794,6 +2824,7 @@
                             if (this.isFirstDraw) {
                                 // First draw: wait for layout calculation before positioning
                                 this.isFirstDraw = false;
+                                this.content.style.transition = 'none'; // No transition on first draw
                                 requestAnimationFrame(() => {
                                     requestAnimationFrame(() => {
                                         // Double RAF ensures layout is complete
@@ -2802,16 +2833,25 @@
                                         this.content.style.left = (pos.x - width / 2) + 'px';
                                         this.content.style.top = (pos.y - height) + 'px';
                                         this.content.style.opacity = '1';
+                                        // Re-enable transition after initial positioning
+                                        setTimeout(() => {
+                                            this.content.style.transition = 'left 1s ease-out, top 1s ease-out';
+                                        }, 50);
                                     });
                                 });
                             } else {
-                                // Subsequent draws: position immediately
+                                // Subsequent draws: position with smooth transition
                                 const width = this.content.offsetWidth || 70;
                                 const height = this.content.offsetHeight || 100;
                                 this.content.style.left = (pos.x - width / 2) + 'px';
                                 this.content.style.top = (pos.y - height) + 'px';
                             }
                         }
+                    }
+                    // Update position with smooth animation
+                    updatePosition(newLat, newLng) {
+                        this.position = new google.maps.LatLng(newLat, newLng);
+                        this.draw();
                     }
                     onRemove() { 
                         if (this.content.parentElement) {
@@ -2840,17 +2880,27 @@
             
             // Clear all markers
             const clearAllMarkers = () => {
-                markersRef.current.forEach(marker => {
-                    if (marker && marker.setMap) {
-                        marker.setMap(null);
+                Object.values(markersRef.current).forEach(item => {
+                    if (item && item.marker && item.marker.setMap) {
+                        item.marker.setMap(null);
                     }
                 });
-                markersRef.current = [];
+                markersRef.current = {};
+            };
+            
+            // Remove specific marker
+            const removeMarker = (userId) => {
+                if (markersRef.current[userId]) {
+                    if (markersRef.current[userId].marker && markersRef.current[userId].marker.setMap) {
+                        markersRef.current[userId].marker.setMap(null);
+                    }
+                    delete markersRef.current[userId];
+                }
             };
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.2.6 - Interest filtering, profile interests display, movement intelligence');
+                console.log('🚀 RADAR SOCIAL v7.3.1 - Smooth movement, breathing avatars');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3167,13 +3217,11 @@
                     .sort((a, b) => a.distance - b.distance);
                 
                 // Create a signature to compare if data actually changed
-                // Include user states to detect online/offline changes
-                // Include refreshTick to force periodic updates
-                // Create a signature to compare if data actually changed (prevents flickering)
+                // Include user positions to detect movement (now with smooth animation, no flickering)
                 const currentDataSignature = JSON.stringify({
                     usersCount: usersInRange.length,
                     userIds: usersInRange.map(u => u.id).join(','),
-                    userDistances: usersInRange.map(u => Math.round(u.distance / 10) * 10).join(','),
+                    userPositions: usersInRange.map(u => `${u.latitude.toFixed(5)},${u.longitude.toFixed(5)}`).join('|'),
                     userThoughts: usersInRange.map(u => u.thought || '').join('|'),
                     currentThought: currentUser.thought || '',
                     currentLat: currentUser.latitude.toFixed(5),
@@ -3189,12 +3237,8 @@
                 }
                 lastMarkersDataRef.current = currentDataSignature;
                 
-                // Clear existing markers
-                clearAllMarkers();
-                
-                // Create current user marker (largest - 56px, reduced 20%) - NO label, centered
-                const currentUserMarker = createUserMarker(currentUser, googleMap, 48, true, true, -1);
-                markersRef.current.push(currentUserMarker);
+                // Track which markers should exist
+                const activeMarkerIds = new Set();
                 
                 // Only users within 50m go in orbital positions (max 8)
                 const closeUsers = usersInRange.filter(u => u.distance <= 50);
@@ -3203,30 +3247,71 @@
                 
                 // Debug log
                 console.log(`📍 Orbitales: ${closeUsers.length} (≤50m), Exploradores: ${farFromOrbit.length} (>50m)`);
-                if (usersInRange.length > 0) {
-                    usersInRange.forEach(u => console.log(`  - ${u.name}: ${u.distance}m (${u.distance <= 50 ? 'ORBITAL' : 'EXPLORADOR'})`));
-                }
                 
                 // Users close but beyond 8 orbital slots go to real position
                 const closeButNotOrbital = closeUsers.slice(8);
                 
+                // Update or create current user marker
+                const currentUserId = 'current_user';
+                activeMarkerIds.add(currentUserId);
+                
+                if (markersRef.current[currentUserId]) {
+                    // Update existing marker position
+                    markersRef.current[currentUserId].marker.updatePosition(currentUser.latitude, currentUser.longitude);
+                } else {
+                    // Create new marker
+                    const marker = createUserMarker(currentUser, googleMap, 48, true, true, -1);
+                    markersRef.current[currentUserId] = { marker, type: 'current', lat: currentUser.latitude, lng: currentUser.longitude };
+                }
+                
+                // Update or create orbital markers
                 orbitUsers.forEach((user, index) => {
                     const orbitalPos = getOrbitalPosition(currentUser.latitude, currentUser.longitude, index, 8);
-                    const userWithPos = {
-                        ...user,
-                        displayLat: orbitalPos.lat,
-                        displayLng: orbitalPos.lng
-                    };
-                    // Pass orbital index to determine thought bubble side
-                    const marker = createUserMarker(userWithPos, googleMap, 38, false, true, index);
-                    markersRef.current.push(marker);
+                    activeMarkerIds.add(user.id);
+                    
+                    const existingMarker = markersRef.current[user.id];
+                    
+                    if (existingMarker && existingMarker.type === 'orbital') {
+                        // Update existing orbital marker - smooth transition
+                        existingMarker.marker.updatePosition(orbitalPos.lat, orbitalPos.lng);
+                    } else {
+                        // Remove if exists with different type, then create new
+                        if (existingMarker) removeMarker(user.id);
+                        
+                        const userWithPos = {
+                            ...user,
+                            displayLat: orbitalPos.lat,
+                            displayLng: orbitalPos.lng
+                        };
+                        const marker = createUserMarker(userWithPos, googleMap, 38, false, true, index);
+                        markersRef.current[user.id] = { marker, type: 'orbital', lat: orbitalPos.lat, lng: orbitalPos.lng };
+                    }
                 });
                 
-                // Explorers beyond 50m OR beyond 8 orbital slots - show at real position (50% smaller)
+                // Update or create explorer markers (beyond 50m OR beyond 8 orbital slots)
                 const realPositionUsers = [...farFromOrbit, ...closeButNotOrbital];
                 realPositionUsers.forEach(user => {
-                    const marker = createUserMarker(user, googleMap, 22, false, false, -1);
-                    markersRef.current.push(marker);
+                    activeMarkerIds.add(user.id);
+                    
+                    const existingMarker = markersRef.current[user.id];
+                    
+                    if (existingMarker && existingMarker.type === 'explorer') {
+                        // Update existing explorer marker - smooth transition to real GPS position
+                        existingMarker.marker.updatePosition(user.latitude, user.longitude);
+                    } else {
+                        // Remove if exists with different type, then create new
+                        if (existingMarker) removeMarker(user.id);
+                        
+                        const marker = createUserMarker(user, googleMap, 22, false, false, -1);
+                        markersRef.current[user.id] = { marker, type: 'explorer', lat: user.latitude, lng: user.longitude };
+                    }
+                });
+                
+                // Remove markers for users no longer in range
+                Object.keys(markersRef.current).forEach(userId => {
+                    if (!activeMarkerIds.has(userId)) {
+                        removeMarker(userId);
+                    }
                 });
                 
             }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius, viewedStories, unreadMessages, userPreferences.lookingFor, userPreferences.ageRangeMin, userPreferences.ageRangeMax, userPreferences.genderPreference, markerRefreshTick]);
@@ -3930,7 +4015,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.2.6</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.3.1</span>
                             </div>
                         </div>
                     </div>
