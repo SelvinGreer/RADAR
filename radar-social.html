@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.2.5 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.2.6 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2132,7 +2132,7 @@
         function RadarSocialApp() {
             // State
             const [showLanding, setShowLanding] = useState(true);
-            const [radius, setRadius] = useState(100);
+            const [radius, setRadius] = useState(1000);
             const [thought, setThought] = useState('');
             const [currentUser, setCurrentUser] = useState(null);
             const [userLocation, setUserLocation] = useState(null);
@@ -2588,14 +2588,14 @@
                         `;
                     }
                     
-                    // Thought bubble - single line (reduced 35% total, explorers 50% smaller)
+                    // Thought bubble - single line (reduced 35% total, explorers ~40% smaller than orbitals)
                     const thoughtBubble = document.createElement('div');
                     thoughtBubble.style.cssText = `
                         background: #3a3a3a;
                         color: #e0e0e0;
-                        padding: ${isExplorer ? '2px 3px' : '4px 6px'};
-                        border-radius: ${isExplorer ? '5px' : '9px'};
-                        font-size: ${isExplorer ? '5px' : '8px'};
+                        padding: ${isExplorer ? '2px 4px' : '4px 6px'};
+                        border-radius: ${isExplorer ? '6px' : '9px'};
+                        font-size: ${isExplorer ? '6px' : '8px'};
                         font-weight: 400;
                         white-space: nowrap;
                         text-align: center;
@@ -2638,12 +2638,12 @@
                     
                     // Medium circle
                     const circle1 = document.createElement('div');
-                    circle1.style.cssText = `width:${isExplorer ? '2' : '4'}px;height:${isExplorer ? '2' : '4'}px;background:#3a3a3a;border-radius:50%;margin-bottom:1px;`;
+                    circle1.style.cssText = `width:${isExplorer ? '3' : '4'}px;height:${isExplorer ? '3' : '4'}px;background:#3a3a3a;border-radius:50%;margin-bottom:1px;`;
                     circlesContainer.appendChild(circle1);
                     
                     // Small circle
                     const circle2 = document.createElement('div');
-                    circle2.style.cssText = `width:${isExplorer ? '1' : '2'}px;height:${isExplorer ? '1' : '2'}px;background:#3a3a3a;border-radius:50%;`;
+                    circle2.style.cssText = `width:${isExplorer ? '2' : '2'}px;height:${isExplorer ? '2' : '2'}px;background:#3a3a3a;border-radius:50%;`;
                     circlesContainer.appendChild(circle2);
                     
                     bubbleContainer.appendChild(circlesContainer);
@@ -2675,13 +2675,16 @@
                 ring.style.cssText = `position:absolute;width:100%;height:100%;border-radius:50%;${ringStyle}display:flex;align-items:center;justify-content:center;`;
                 
                 // Inner container to create the ring effect (dark background between ring and avatar)
+                // Explorers have thinner ring (2px vs 3px)
                 const innerContainer = document.createElement('div');
-                const innerSize = size - 6; // 3px ring on each side
+                const ringThickness = isExplorer ? 4 : 6; // 2px or 3px on each side
+                const innerSize = size - ringThickness;
                 innerContainer.style.cssText = `width:${innerSize}px;height:${innerSize}px;border-radius:50%;background:#0d1117;display:flex;align-items:center;justify-content:center;`;
                 
                 const avatarImg = document.createElement('img');
                 avatarImg.src = user.photo;
-                const imgSize = innerSize - 4; // 2px padding
+                const imgPadding = isExplorer ? 2 : 4; // Less padding for explorers
+                const imgSize = innerSize - imgPadding;
                 avatarImg.style.cssText = `width:${imgSize}px;height:${imgSize}px;border-radius:50%;object-fit:cover;`;
                 
                 innerContainer.appendChild(avatarImg);
@@ -2691,22 +2694,24 @@
                 // Badge de mensajes no leídos - círculo naranja con contador
                 if (userUnreadCount > 0) {
                     const unreadBadge = document.createElement('div');
+                    const badgeSize = isExplorer ? 12 : 18;
+                    const badgeFontSize = isExplorer ? 7 : 10;
                     unreadBadge.style.cssText = `
                         position: absolute;
                         bottom: -2px;
                         right: -2px;
-                        min-width: 18px;
-                        height: 18px;
+                        min-width: ${badgeSize}px;
+                        height: ${badgeSize}px;
                         background: linear-gradient(135deg, #ff6b35, #f7931e);
-                        border-radius: 9px;
-                        border: 2px solid #0d1117;
+                        border-radius: ${badgeSize/2}px;
+                        border: ${isExplorer ? '1' : '2'}px solid #0d1117;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-size: 10px;
+                        font-size: ${badgeFontSize}px;
                         font-weight: 700;
                         color: #fff;
-                        padding: 0 4px;
+                        padding: 0 ${isExplorer ? '2' : '4'}px;
                     `;
                     unreadBadge.textContent = userUnreadCount > 9 ? '9+' : userUnreadCount;
                     avatarContainer.appendChild(unreadBadge);
@@ -2720,9 +2725,9 @@
                     nameLabel.style.cssText = `
                         margin-top: ${isExplorer ? '1px' : '2px'};
                         background: rgba(0,0,0,0.65);
-                        padding: ${isExplorer ? '1px 3px' : '2px 5px'};
+                        padding: ${isExplorer ? '1px 4px' : '2px 5px'};
                         border-radius: 999px;
-                        font-size: ${isExplorer ? '5px' : '7px'};
+                        font-size: ${isExplorer ? '6px' : '7px'};
                         font-weight: 500;
                         color: #fff;
                         white-space: nowrap;
@@ -2845,7 +2850,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.2.5 - Interest filtering, profile interests display, movement intelligence');
+                console.log('🚀 RADAR SOCIAL v7.2.6 - Interest filtering, profile interests display, movement intelligence');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3220,7 +3225,7 @@
                 // Explorers beyond 50m OR beyond 8 orbital slots - show at real position (50% smaller)
                 const realPositionUsers = [...farFromOrbit, ...closeButNotOrbital];
                 realPositionUsers.forEach(user => {
-                    const marker = createUserMarker(user, googleMap, 19, false, false, -1);
+                    const marker = createUserMarker(user, googleMap, 22, false, false, -1);
                     markersRef.current.push(marker);
                 });
                 
@@ -3925,7 +3930,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.2.5</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.2.6</span>
                             </div>
                         </div>
                     </div>
