@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.0.3 Build: 2025-12-11 | WhatsApp input, real-time thought, Kalman+BLE, unread fix -->
+    <!-- v7.1.1 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -207,13 +207,20 @@
         /* v6.1 FIX: Input container - fixed bottom, no safe-area */
         .thought-input-container {
             position: fixed;
-            bottom: 16px;
-            left: 12px;
-            right: 12px;
+            bottom: 0;
+            left: 0;
+            right: 0;
             z-index: 15;
             display: flex;
-            align-items: center;
+            align-items: flex-end;
             gap: 8px;
+            padding: 50px 12px 16px 12px;
+            background: linear-gradient(to bottom, 
+                rgba(13, 17, 23, 0) 0%, 
+                rgba(13, 17, 23, 0.8) 40%, 
+                rgba(13, 17, 23, 1) 70%,
+                rgba(13, 17, 23, 1) 100%
+            );
         }
 
         .thought-input-wrapper {
@@ -224,6 +231,8 @@
             border-radius: 24px;
             padding: 6px 12px;
             gap: 8px;
+            border: 1px solid rgba(134, 150, 160, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .thought-input-icon {
@@ -1165,6 +1174,258 @@
             background: #38bd62;
         }
 
+        /* Preferences Panel */
+        .preferences-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .preferences-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .preferences-container {
+            background: #161b22;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 420px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid rgba(48, 54, 61, 0.5);
+        }
+
+        .preferences-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: #161b22;
+            z-index: 10;
+        }
+
+        .preferences-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #e6edf3;
+        }
+
+        .preferences-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(139, 148, 158, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .preferences-close svg {
+            width: 18px;
+            height: 18px;
+            color: #8b949e;
+        }
+
+        .preferences-section {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.3);
+        }
+
+        .preferences-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8b949e;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .preferences-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .preferences-label {
+            font-size: 14px;
+            color: #e6edf3;
+        }
+
+        .preferences-select {
+            background: #21262d;
+            border: 1px solid rgba(48, 54, 61, 0.5);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #e6edf3;
+            font-size: 14px;
+            outline: none;
+            min-width: 120px;
+        }
+
+        .preferences-input {
+            background: #21262d;
+            border: 1px solid rgba(48, 54, 61, 0.5);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #e6edf3;
+            font-size: 14px;
+            outline: none;
+            width: 70px;
+            text-align: center;
+        }
+
+        .age-range-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .age-range-separator {
+            color: #8b949e;
+        }
+
+        /* Interest chips */
+        .interests-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .interest-chip {
+            padding: 8px 14px;
+            background: #21262d;
+            border: 1px solid rgba(48, 54, 61, 0.5);
+            border-radius: 20px;
+            font-size: 13px;
+            color: #8b949e;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .interest-chip.selected {
+            background: rgba(56, 189, 98, 0.2);
+            border-color: #38bd62;
+            color: #38bd62;
+        }
+
+        .interest-chip:hover {
+            border-color: #8b949e;
+        }
+
+        /* Looking for options */
+        .looking-for-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .looking-for-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #21262d;
+            border: 1px solid rgba(48, 54, 61, 0.5);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .looking-for-option.selected {
+            background: rgba(56, 189, 98, 0.15);
+            border-color: #38bd62;
+        }
+
+        .looking-for-checkbox {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid #8b949e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .looking-for-option.selected .looking-for-checkbox {
+            background: #38bd62;
+            border-color: #38bd62;
+        }
+
+        .looking-for-checkbox svg {
+            width: 14px;
+            height: 14px;
+            color: #fff;
+            opacity: 0;
+        }
+
+        .looking-for-option.selected .looking-for-checkbox svg {
+            opacity: 1;
+        }
+
+        .looking-for-label {
+            font-size: 14px;
+            color: #e6edf3;
+        }
+
+        .preferences-save-btn {
+            width: 100%;
+            padding: 14px;
+            background: #38bd62;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .preferences-save-btn:hover {
+            background: #2ea44f;
+        }
+
+        /* Direction indicator for far users */
+        .direction-indicator {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 9px;
+        }
+
+        .direction-indicator.approaching {
+            color: #38bd62;
+        }
+
+        .direction-indicator.leaving {
+            color: #f85149;
+        }
+
+        .direction-arrow {
+            font-size: 10px;
+        }
+
         /* Chat */
         .chat-header {
             background: #1f2c33;
@@ -1905,6 +2166,103 @@
             const [knownUserIds, setKnownUserIds] = useState(new Set()); // IDs de usuarios ya conocidos
             const [unreadMessages, setUnreadMessages] = useState({}); // {oderId: count}
             const [totalUnread, setTotalUnread] = useState(0); // Total de mensajes no leídos
+            const [showPreferences, setShowPreferences] = useState(false); // Panel de preferencias
+            
+            // Preferencias de usuario
+            const [userPreferences, setUserPreferences] = useState({
+                age: 25,
+                gender: '', // '', 'male', 'female', 'other'
+                interests: [],
+                lookingFor: [], // ['friendship', 'casual', 'networking', 'romance']
+                ageRangeMin: 18,
+                ageRangeMax: 50,
+                genderPreference: 'all' // 'all', 'male', 'female', 'other'
+            });
+            
+            // Lista de intereses disponibles
+            const availableInterests = [
+                { id: 'gym', label: '🏋️ Gym', emoji: '🏋️' },
+                { id: 'coffee', label: '☕ Café', emoji: '☕' },
+                { id: 'party', label: '🎉 Fiesta', emoji: '🎉' },
+                { id: 'reading', label: '📚 Lectura', emoji: '📚' },
+                { id: 'gaming', label: '🎮 Gaming', emoji: '🎮' },
+                { id: 'music', label: '🎵 Música', emoji: '🎵' },
+                { id: 'travel', label: '✈️ Viajes', emoji: '✈️' },
+                { id: 'food', label: '🍕 Comida', emoji: '🍕' },
+                { id: 'sports', label: '⚽ Deportes', emoji: '⚽' },
+                { id: 'art', label: '🎨 Arte', emoji: '🎨' },
+                { id: 'movies', label: '🎬 Cine', emoji: '🎬' },
+                { id: 'nature', label: '🌿 Naturaleza', emoji: '🌿' },
+                { id: 'tech', label: '💻 Tecnología', emoji: '💻' },
+                { id: 'pets', label: '🐕 Mascotas', emoji: '🐕' },
+                { id: 'yoga', label: '🧘 Yoga', emoji: '🧘' },
+                { id: 'dance', label: '💃 Baile', emoji: '💃' }
+            ];
+            
+            // Opciones de "Qué busco"
+            const lookingForOptions = [
+                { id: 'friendship', label: '👋 Amistad', emoji: '👋' },
+                { id: 'casual', label: '😊 Conexión casual', emoji: '😊' },
+                { id: 'networking', label: '💼 Networking', emoji: '💼' },
+                { id: 'romance', label: '❤️ Romance', emoji: '❤️' }
+            ];
+            
+            // Historial de posiciones para inteligencia de movimiento
+            const userPositionHistory = useRef({}); // {oderId: [{lat, lng, timestamp}, ...]}
+            
+            // Calcular velocidad y dirección de un usuario
+            const calculateMovement = (userId, currentLat, currentLng) => {
+                const history = userPositionHistory.current[userId] || [];
+                const now = Date.now();
+                
+                // Agregar posición actual al historial
+                history.push({ lat: currentLat, lng: currentLng, timestamp: now });
+                
+                // Mantener solo las últimas 5 posiciones (últimos ~15 segundos)
+                if (history.length > 5) history.shift();
+                userPositionHistory.current[userId] = history;
+                
+                // Necesitamos al menos 2 puntos para calcular movimiento
+                if (history.length < 2) {
+                    return { speed: 0, direction: 0, approaching: null };
+                }
+                
+                const oldest = history[0];
+                const newest = history[history.length - 1];
+                const timeDiff = (newest.timestamp - oldest.timestamp) / 1000; // segundos
+                
+                if (timeDiff < 1) return { speed: 0, direction: 0, approaching: null };
+                
+                // Calcular distancia recorrida
+                const distance = calculateDistance(oldest.lat, oldest.lng, newest.lat, newest.lng);
+                const speed = distance / timeDiff; // m/s
+                const speedKmh = speed * 3.6; // km/h
+                
+                // Calcular dirección (ángulo en radianes)
+                const direction = Math.atan2(
+                    newest.lng - oldest.lng,
+                    newest.lat - oldest.lat
+                ) * (180 / Math.PI); // convertir a grados
+                
+                return { speed: speedKmh, direction, approaching: null };
+            };
+            
+            // Determinar si usuario se acerca o aleja
+            const isApproaching = (userId, userLat, userLng, myLat, myLng) => {
+                const history = userPositionHistory.current[userId] || [];
+                if (history.length < 2) return null;
+                
+                const oldest = history[0];
+                const newest = history[history.length - 1];
+                
+                const oldDistance = calculateDistance(oldest.lat, oldest.lng, myLat, myLng);
+                const newDistance = calculateDistance(newest.lat, newest.lng, myLat, myLng);
+                
+                const diff = oldDistance - newDistance;
+                if (Math.abs(diff) < 5) return null; // Menos de 5m de diferencia = estático
+                
+                return diff > 0; // true = acercándose, false = alejándose
+            };
             
             // Audio para notificaciones
             const notificationSound = useRef(null);
@@ -2166,7 +2524,7 @@
             };
 
             // Create user marker on map - Instagram Notes style
-            const createUserMarker = (user, map, size, isCurrentUser = false) => {
+            const createUserMarker = (user, map, size, isCurrentUser = false, isOrbital = true) => {
                 const markerDiv = document.createElement('div');
                 markerDiv.style.cssText = `display:flex;flex-direction:column;align-items:center;cursor:pointer;`;
                 
@@ -2292,6 +2650,38 @@
                     const firstName = user.name.split(' ')[0];
                     nameLabel.textContent = user.distance ? `${firstName} / ${user.distance}m` : firstName;
                     markerDiv.appendChild(nameLabel);
+                    
+                    // Direction indicator - ONLY for non-orbital users (beyond the 8 closest)
+                    if (!isOrbital && user.approaching !== null && user.movement?.speed > 0.5) {
+                        const directionIndicator = document.createElement('div');
+                        const isApproachingUser = user.approaching === true;
+                        const speedText = user.movement.speed.toFixed(1);
+                        
+                        directionIndicator.style.cssText = `
+                            margin-top: 2px;
+                            display: flex;
+                            align-items: center;
+                            gap: 3px;
+                            background: rgba(0,0,0,0.75);
+                            padding: 2px 6px;
+                            border-radius: 10px;
+                            font-size: 9px;
+                            color: ${isApproachingUser ? '#38bd62' : '#f85149'};
+                        `;
+                        
+                        const arrow = document.createElement('span');
+                        arrow.textContent = isApproachingUser ? '↗' : '↘';
+                        arrow.style.fontSize = '11px';
+                        
+                        const speedLabel = document.createElement('span');
+                        speedLabel.textContent = isApproachingUser 
+                            ? `${speedText}km/h →` 
+                            : `${speedText}km/h ←`;
+                        
+                        directionIndicator.appendChild(arrow);
+                        directionIndicator.appendChild(speedLabel);
+                        markerDiv.appendChild(directionIndicator);
+                    }
                 }
                 
                 markerDiv.addEventListener('click', () => handleAvatarClick(user));
@@ -2374,7 +2764,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.0.3 - WhatsApp input, real-time thought, Kalman Filter + BLE');
+                console.log('🚀 RADAR SOCIAL v7.1.1 - Interest filtering, profile interests display, movement intelligence');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2396,6 +2786,11 @@
                                     storyUrl = userData.storyUrl;
                                     storyTimestamp = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
                                 }
+                            }
+                            // Cargar preferencias del usuario
+                            if (userData.preferences) {
+                                setUserPreferences(userData.preferences);
+                                console.log('✅ Preferencias cargadas:', userData.preferences);
                             }
                         }
                         
@@ -2521,7 +2916,14 @@
                                                                     thought: displayThought,
                                                                     hasStory: hasActiveStory, storyUrl, storyTimestamp,
                                                                     distance, isOnline: true,
-                                                                    latitude: userLat, longitude: userLon
+                                                                    latitude: userLat, longitude: userLon,
+                                                                    preferences: userData.preferences || null,
+                                                                    // Calcular movimiento
+                                                                    movement: calculateMovement(userData.uid, userLat, userLon),
+                                                                    approaching: isApproaching(
+                                                                        userData.uid, userLat, userLon,
+                                                                        currentUserState.latitude, currentUserState.longitude
+                                                                    )
                                                                 });
                                                             }
                                                         }
@@ -2629,8 +3031,26 @@
                 if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
                 
                 // Get users in range and sort by distance
+                // Apply interest filter if user has interests configured
                 const usersInRange = users
-                    .filter(u => u.distance <= radius && u.isOnline && u.latitude !== 0)
+                    .filter(u => {
+                        // Basic filters
+                        if (u.distance > radius || !u.isOnline || u.latitude === 0) return false;
+                        
+                        // Interest filter: only apply if current user has interests set
+                        if (userPreferences.interests.length > 0) {
+                            // If other user has no preferences, show them (they haven't configured yet)
+                            if (!u.preferences?.interests || u.preferences.interests.length === 0) return true;
+                            
+                            // Check for at least one common interest
+                            const hasCommonInterest = u.preferences.interests.some(
+                                interest => userPreferences.interests.includes(interest)
+                            );
+                            if (!hasCommonInterest) return false;
+                        }
+                        
+                        return true;
+                    })
                     .sort((a, b) => a.distance - b.distance);
                 
                 // Create a signature to compare if data actually changed
@@ -2657,7 +3077,7 @@
                 clearAllMarkers();
                 
                 // Create current user marker (largest - 56px, reduced 20%) - NO label, centered
-                const currentUserMarker = createUserMarker(currentUser, googleMap, 56, true);
+                const currentUserMarker = createUserMarker(currentUser, googleMap, 56, true, true);
                 markersRef.current.push(currentUserMarker);
                 
                 // First 8 closest go in orbital positions around user
@@ -2670,18 +3090,19 @@
                         displayLat: orbitalPos.lat,
                         displayLng: orbitalPos.lng
                     };
-                    const marker = createUserMarker(userWithPos, googleMap, 45, false);
+                    const marker = createUserMarker(userWithPos, googleMap, 45, false, true); // isOrbital = true
                     markersRef.current.push(marker);
                 });
                 
                 // Users beyond the 8 closest - show at real position with smaller size (35px)
+                // These users get direction indicators
                 const farUsers = usersInRange.slice(8);
                 farUsers.forEach(user => {
-                    const marker = createUserMarker(user, googleMap, 35, false);
+                    const marker = createUserMarker(user, googleMap, 35, false, false); // isOrbital = false
                     markersRef.current.push(marker);
                 });
                 
-            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius, viewedStories, unreadMessages]);
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.photo, currentUser?.thought, users, radius, viewedStories, unreadMessages, userPreferences.interests]);
             
             // Center map on user - only when position changes significantly
             useEffect(() => {
@@ -2716,6 +3137,82 @@
                 }, 10000);
                 return () => clearInterval(interval);
             }, [currentUser]);
+
+            // Guardar preferencias en Firebase
+            const savePreferences = async () => {
+                if (!currentUser?.id) return;
+                
+                try {
+                    await db.collection('users').doc(currentUser.id).update({
+                        preferences: userPreferences,
+                        preferencesUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    setShowPreferences(false);
+                    console.log('✅ Preferencias guardadas');
+                } catch (error) {
+                    console.error('Error guardando preferencias:', error);
+                }
+            };
+            
+            // Cargar preferencias de Firebase
+            const loadPreferences = async (userId) => {
+                try {
+                    const doc = await db.collection('users').doc(userId).get();
+                    if (doc.exists && doc.data().preferences) {
+                        setUserPreferences(doc.data().preferences);
+                        console.log('✅ Preferencias cargadas');
+                    }
+                } catch (error) {
+                    console.error('Error cargando preferencias:', error);
+                }
+            };
+            
+            // Toggle interest selection
+            const toggleInterest = (interestId) => {
+                setUserPreferences(prev => ({
+                    ...prev,
+                    interests: prev.interests.includes(interestId)
+                        ? prev.interests.filter(i => i !== interestId)
+                        : [...prev.interests, interestId]
+                }));
+            };
+            
+            // Toggle lookingFor selection
+            const toggleLookingFor = (optionId) => {
+                setUserPreferences(prev => ({
+                    ...prev,
+                    lookingFor: prev.lookingFor.includes(optionId)
+                        ? prev.lookingFor.filter(i => i !== optionId)
+                        : [...prev.lookingFor, optionId]
+                }));
+            };
+            
+            // Calcular intereses en común
+            const getCommonInterests = (userInterests) => {
+                if (!userPreferences.interests || !userInterests) return [];
+                return userPreferences.interests.filter(i => userInterests.includes(i));
+            };
+            
+            // Filtrar usuarios por preferencias
+            const filterByPreferences = (usersList) => {
+                return usersList.filter(user => {
+                    // Si no hay preferencias configuradas, mostrar todos
+                    if (!user.preferences) return true;
+                    
+                    // Filtrar por edad
+                    if (user.preferences.age) {
+                        if (user.preferences.age < userPreferences.ageRangeMin) return false;
+                        if (user.preferences.age > userPreferences.ageRangeMax) return false;
+                    }
+                    
+                    // Filtrar por género
+                    if (userPreferences.genderPreference !== 'all' && user.preferences.gender) {
+                        if (user.preferences.gender !== userPreferences.genderPreference) return false;
+                    }
+                    
+                    return true;
+                });
+            };
 
             // Handlers
             const handleGoogleSignIn = async () => {
@@ -3105,7 +3602,21 @@
                 );
             }
 
-            const usersInRange = users.filter(u => u.distance <= radius && u.isOnline && u.latitude !== 0);
+            const usersInRange = users.filter(u => {
+                // Basic filters
+                if (u.distance > radius || !u.isOnline || u.latitude === 0) return false;
+                
+                // Interest filter: only apply if current user has interests set
+                if (userPreferences.interests.length > 0) {
+                    if (!u.preferences?.interests || u.preferences.interests.length === 0) return true;
+                    const hasCommonInterest = u.preferences.interests.some(
+                        interest => userPreferences.interests.includes(interest)
+                    );
+                    if (!hasCommonInterest) return false;
+                }
+                
+                return true;
+            });
             const chatId = selectedUser ? [currentUser?.id, selectedUser.id].sort().join('_') : null;
             const chatMessages = chatId ? (messages[chatId] || []) : [];
 
@@ -3203,21 +3714,10 @@
                                     <line x1="15" y1="9" x2="15.01" y2="9"/>
                                 </svg>
                                 <input type="text" className="thought-input" placeholder="Mensaje" value={thought} onChange={(e) => setThought(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleThoughtSubmit()} maxLength={50}/>
-                                <div className="thought-icons-right">
-                                    {/* Clip icon */}
-                                    <svg className="thought-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                                    </svg>
-                                    {/* Camera icon */}
-                                    <svg className="thought-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                        <circle cx="12" cy="13" r="4"/>
-                                    </svg>
-                                </div>
                             </div>
                             <button className="send-button" onClick={handleThoughtSubmit}>
-                                <svg viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M5 12h14M12 5l7 7-7 7"/>
                                 </svg>
                             </button>
                         </div>
@@ -3249,12 +3749,16 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                                 <span>Subir Historia</span>
                             </div>
+                            <div className="sidebar-item" onClick={() => { setShowPreferences(true); setShowSidebar(false); }}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                <span>Mis Preferencias</span>
+                            </div>
                             <div className="sidebar-item" style={{ marginTop: 'auto', color: '#f87171' }} onClick={handleLogout}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.0.3</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.1.1</span>
                             </div>
                         </div>
                     </div>
@@ -3446,6 +3950,133 @@
                         </div>
                     </div>
 
+                    {/* Preferences Panel */}
+                    <div className={`preferences-overlay ${showPreferences ? 'active' : ''}`}>
+                        <div className="preferences-container">
+                            <div className="preferences-header">
+                                <h2>⚙️ Mis Preferencias</h2>
+                                <div className="preferences-close" onClick={() => setShowPreferences(false)}>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            {/* Mi información */}
+                            <div className="preferences-section">
+                                <div className="preferences-section-title">👤 Mi información</div>
+                                <div className="preferences-row">
+                                    <span className="preferences-label">Mi edad</span>
+                                    <input 
+                                        type="number" 
+                                        className="preferences-input"
+                                        value={userPreferences.age}
+                                        onChange={(e) => setUserPreferences(prev => ({ ...prev, age: parseInt(e.target.value) || 18 }))}
+                                        min="18"
+                                        max="99"
+                                    />
+                                </div>
+                                <div className="preferences-row">
+                                    <span className="preferences-label">Mi género</span>
+                                    <select 
+                                        className="preferences-select"
+                                        value={userPreferences.gender}
+                                        onChange={(e) => setUserPreferences(prev => ({ ...prev, gender: e.target.value }))}
+                                    >
+                                        <option value="">Prefiero no decir</option>
+                                        <option value="male">Hombre</option>
+                                        <option value="female">Mujer</option>
+                                        <option value="other">Otro</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            {/* Busco personas */}
+                            <div className="preferences-section">
+                                <div className="preferences-section-title">🔍 Busco personas</div>
+                                <div className="preferences-row">
+                                    <span className="preferences-label">Rango de edad</span>
+                                    <div className="age-range-container">
+                                        <input 
+                                            type="number" 
+                                            className="preferences-input"
+                                            value={userPreferences.ageRangeMin}
+                                            onChange={(e) => setUserPreferences(prev => ({ ...prev, ageRangeMin: parseInt(e.target.value) || 18 }))}
+                                            min="18"
+                                            max="99"
+                                        />
+                                        <span className="age-range-separator">-</span>
+                                        <input 
+                                            type="number" 
+                                            className="preferences-input"
+                                            value={userPreferences.ageRangeMax}
+                                            onChange={(e) => setUserPreferences(prev => ({ ...prev, ageRangeMax: parseInt(e.target.value) || 99 }))}
+                                            min="18"
+                                            max="99"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="preferences-row">
+                                    <span className="preferences-label">Género</span>
+                                    <select 
+                                        className="preferences-select"
+                                        value={userPreferences.genderPreference}
+                                        onChange={(e) => setUserPreferences(prev => ({ ...prev, genderPreference: e.target.value }))}
+                                    >
+                                        <option value="all">Todos</option>
+                                        <option value="male">Hombres</option>
+                                        <option value="female">Mujeres</option>
+                                        <option value="other">Otro</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            {/* Intereses */}
+                            <div className="preferences-section">
+                                <div className="preferences-section-title">💫 Mis intereses</div>
+                                <div className="interests-grid">
+                                    {availableInterests.map(interest => (
+                                        <div 
+                                            key={interest.id}
+                                            className={`interest-chip ${userPreferences.interests.includes(interest.id) ? 'selected' : ''}`}
+                                            onClick={() => toggleInterest(interest.id)}
+                                        >
+                                            {interest.label}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            {/* Qué busco ahora */}
+                            <div className="preferences-section">
+                                <div className="preferences-section-title">🎯 ¿Qué busco ahora?</div>
+                                <div className="looking-for-grid">
+                                    {lookingForOptions.map(option => (
+                                        <div 
+                                            key={option.id}
+                                            className={`looking-for-option ${userPreferences.lookingFor.includes(option.id) ? 'selected' : ''}`}
+                                            onClick={() => toggleLookingFor(option.id)}
+                                        >
+                                            <div className="looking-for-checkbox">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                                    <polyline points="20 6 9 17 4 12"/>
+                                                </svg>
+                                            </div>
+                                            <span className="looking-for-label">{option.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            {/* Guardar */}
+                            <div className="preferences-section" style={{ borderBottom: 'none' }}>
+                                <button className="preferences-save-btn" onClick={savePreferences}>
+                                    💾 Guardar Preferencias
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Tech Settings */}
                     <div className={`tech-settings-overlay ${showTechSettings ? 'active' : ''}`}>
                         <div className="tech-settings-header">
@@ -3601,6 +4232,50 @@
                                         <div className="instagram-modal-distance">📍 A {instagramModalUser.distance}m {instagramModalUser.thought && `• "${instagramModalUser.thought}"`}</div>
                                     </div>
                                 </div>
+                                
+                                {/* Intereses del usuario */}
+                                {instagramModalUser.preferences?.interests && instagramModalUser.preferences.interests.length > 0 && (
+                                    <div style={{ 
+                                        padding: '12px 16px', 
+                                        borderBottom: '1px solid rgba(48,54,61,0.3)',
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '6px'
+                                    }}>
+                                        {instagramModalUser.preferences.interests.map(interestId => {
+                                            const interest = availableInterests.find(i => i.id === interestId);
+                                            const isCommon = userPreferences.interests.includes(interestId);
+                                            return interest ? (
+                                                <span key={interestId} style={{
+                                                    padding: '4px 10px',
+                                                    borderRadius: '12px',
+                                                    fontSize: '12px',
+                                                    background: isCommon ? 'rgba(56, 189, 98, 0.2)' : 'rgba(139, 148, 158, 0.15)',
+                                                    color: isCommon ? '#38bd62' : '#8b949e',
+                                                    border: isCommon ? '1px solid rgba(56, 189, 98, 0.3)' : '1px solid transparent'
+                                                }}>
+                                                    {interest.emoji} {isCommon && '✓'}
+                                                </span>
+                                            ) : null;
+                                        })}
+                                    </div>
+                                )}
+                                
+                                {/* Qué busca */}
+                                {instagramModalUser.preferences?.lookingFor && instagramModalUser.preferences.lookingFor.length > 0 && (
+                                    <div style={{ 
+                                        padding: '8px 16px', 
+                                        borderBottom: '1px solid rgba(48,54,61,0.3)',
+                                        fontSize: '12px',
+                                        color: '#8b949e'
+                                    }}>
+                                        Busca: {instagramModalUser.preferences.lookingFor.map(id => {
+                                            const option = lookingForOptions.find(o => o.id === id);
+                                            return option?.emoji || '';
+                                        }).join(' ')}
+                                    </div>
+                                )}
+                                
                                 <div className="instagram-modal-actions">
                                     <input type="text" className="instagram-modal-input" placeholder={`Mensaje a ${instagramModalUser.name}...`} value={quickMessage} onChange={(e) => setQuickMessage(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && sendQuickMessage()}/>
                                     <div className="instagram-modal-heart" onClick={sendLike}>
