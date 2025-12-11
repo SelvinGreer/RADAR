@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe</title>
-    <!-- v7.7.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.8.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2656,7 +2656,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.7.0 - Claude.ai style landing with map preview');
+                console.log('🚀 NEXME v7.8.0 - iPhone mockup landing with full sections');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3560,13 +3560,14 @@
 
             // Render
             if (!currentUser) {
-                // Show Claude.ai style landing page for NexMe
+                // Show NexMe landing page with phone mockup
                 return (
                     <div style={{
                         minHeight: '100vh',
                         background: '#1a1a1a',
                         color: '#e6edf3',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                        overflowX: 'hidden'
                     }}>
                         {/* Header */}
                         <header style={{
@@ -3574,113 +3575,87 @@
                             justifyContent: 'space-between',
                             alignItems: 'center',
                             padding: '16px 32px',
-                            borderBottom: '1px solid #2d2d2d'
+                            borderBottom: '1px solid #2d2d2d',
+                            position: 'sticky',
+                            top: 0,
+                            background: '#1a1a1a',
+                            zIndex: 100
                         }}>
-                            {/* Logo */}
-                            <div style={{
-                                fontSize: '20px',
-                                fontWeight: '600',
-                                color: '#fff',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px'
-                            }}>
-                                <span style={{ color: '#38bd62' }}>⚡</span> NexMe
+                            <div style={{ fontSize: '20px', fontWeight: '600', color: '#fff' }}>
+                                NexMe
                             </div>
-
-                            {/* Nav Links */}
-                            <nav style={{
-                                display: 'flex',
-                                gap: '32px',
-                                fontSize: '14px',
-                                color: '#a0a0a0'
-                            }}>
+                            <nav style={{ display: 'flex', gap: '32px', fontSize: '14px', color: '#a0a0a0' }}>
                                 <span style={{ cursor: 'pointer' }}>Características</span>
                                 <span style={{ cursor: 'pointer' }}>Cómo funciona</span>
                                 <span style={{ cursor: 'pointer' }}>Privacidad</span>
                             </nav>
-
-                            {/* CTA Buttons */}
-                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                <button 
-                                    onClick={handleGoogleSignIn}
-                                    style={{
-                                        padding: '10px 20px',
-                                        borderRadius: '6px',
-                                        border: 'none',
-                                        background: '#38bd62',
-                                        color: '#fff',
-                                        fontSize: '14px',
-                                        fontWeight: '500',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    Probar NexMe
-                                </button>
-                            </div>
+                            <button onClick={handleGoogleSignIn} style={{
+                                padding: '10px 20px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                background: '#38bd62',
+                                color: '#fff',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                cursor: 'pointer'
+                            }}>
+                                Probar NexMe
+                            </button>
                         </header>
 
-                        {/* Hero Section - Two Columns */}
+                        {/* Hero Section */}
                         <section style={{
                             display: 'grid',
                             gridTemplateColumns: '1fr 1fr',
-                            minHeight: 'calc(100vh - 70px)',
-                            maxWidth: '1400px',
+                            minHeight: '90vh',
+                            maxWidth: '1200px',
                             margin: '0 auto',
-                            padding: '60px 32px'
+                            padding: '60px 32px',
+                            alignItems: 'center'
                         }}>
-                            {/* Left Column - Text & Login */}
+                            {/* Left Column - Login */}
                             <div style={{
                                 display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'center',
-                                paddingRight: '60px'
+                                paddingLeft: '40px'
                             }}>
-                                {/* Main Title */}
                                 <h1 style={{
-                                    fontSize: '52px',
+                                    fontSize: '48px',
                                     fontWeight: '400',
                                     lineHeight: '1.15',
                                     margin: '0 0 20px 0',
                                     color: '#fff',
-                                    fontFamily: 'Georgia, serif',
-                                    fontStyle: 'italic'
+                                    fontFamily: 'Georgia, serif'
                                 }}>
-                                    ¿Solos?<br/>
-                                    <span style={{ fontStyle: 'normal' }}>Conectados.</span>
+                                    <span style={{ fontStyle: 'italic' }}>¿Solos?</span><br/>
+                                    Conectados.
                                 </h1>
 
-                                {/* Subtitle */}
                                 <p style={{
                                     fontSize: '16px',
                                     color: '#a0a0a0',
-                                    margin: '0 0 40px 0',
-                                    lineHeight: '1.5'
+                                    margin: '0 0 40px 0'
                                 }}>
                                     La app para conocer personas cerca de ti
                                 </p>
 
-                                {/* Login Box */}
-                                <div style={{ maxWidth: '340px' }}>
-                                    {/* Google Button */}
-                                    <button 
-                                        onClick={handleGoogleSignIn}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px 20px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #3d3d3d',
-                                            background: '#2d2d2d',
-                                            color: '#fff',
-                                            fontSize: '14px',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '10px',
-                                            marginBottom: '20px'
-                                        }}
-                                    >
+                                <div style={{ maxWidth: '320px' }}>
+                                    <button onClick={handleGoogleSignIn} style={{
+                                        width: '100%',
+                                        padding: '12px 20px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #3d3d3d',
+                                        background: '#2d2d2d',
+                                        color: '#fff',
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '10px',
+                                        marginBottom: '20px'
+                                    }}>
                                         <svg width="18" height="18" viewBox="0 0 24 24">
                                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -3690,59 +3665,39 @@
                                         Continuar con Google
                                     </button>
 
-                                    {/* Divider */}
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        margin: '20px 0',
-                                        color: '#666'
-                                    }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0', color: '#666' }}>
                                         <div style={{ flex: 1, height: '1px', background: '#3d3d3d' }}></div>
                                         <span style={{ padding: '0 16px', fontSize: '13px' }}>o</span>
                                         <div style={{ flex: 1, height: '1px', background: '#3d3d3d' }}></div>
                                     </div>
 
-                                    {/* Email Input */}
-                                    <input 
-                                        type="email"
-                                        placeholder="Introduce tu email"
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px 16px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #3d3d3d',
-                                            background: 'transparent',
-                                            color: '#fff',
-                                            fontSize: '14px',
-                                            marginBottom: '12px',
-                                            boxSizing: 'border-box',
-                                            outline: 'none'
-                                        }}
-                                    />
+                                    <input type="email" placeholder="Introduce tu email" style={{
+                                        width: '100%',
+                                        padding: '12px 16px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #3d3d3d',
+                                        background: 'transparent',
+                                        color: '#fff',
+                                        fontSize: '14px',
+                                        marginBottom: '12px',
+                                        boxSizing: 'border-box',
+                                        outline: 'none'
+                                    }}/>
 
-                                    {/* Email Continue Button */}
-                                    <button 
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px 20px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #3d3d3d',
-                                            background: 'transparent',
-                                            color: '#fff',
-                                            fontSize: '14px',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
+                                    <button style={{
+                                        width: '100%',
+                                        padding: '12px 20px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #3d3d3d',
+                                        background: 'transparent',
+                                        color: '#fff',
+                                        fontSize: '14px',
+                                        cursor: 'pointer'
+                                    }}>
                                         Continuar con correo electrónico
                                     </button>
 
-                                    {/* Terms */}
-                                    <p style={{
-                                        fontSize: '12px',
-                                        color: '#666',
-                                        marginTop: '20px',
-                                        lineHeight: '1.5'
-                                    }}>
+                                    <p style={{ fontSize: '12px', color: '#666', marginTop: '20px', lineHeight: '1.5' }}>
                                         Al continuar, reconoces la{' '}
                                         <span style={{ color: '#888', textDecoration: 'underline', cursor: 'pointer' }}>Política de Privacidad</span>
                                         {' '}de NexMe.
@@ -3750,329 +3705,365 @@
                                 </div>
                             </div>
 
-                            {/* Right Column - Map with Avatars */}
+                            {/* Right Column - Phone Mockup */}
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}>
+                                {/* iPhone Frame */}
                                 <div style={{
-                                    width: '100%',
-                                    maxWidth: '500px',
-                                    aspectRatio: '4/5',
-                                    borderRadius: '16px',
-                                    background: '#0d1117',
-                                    position: 'relative',
-                                    overflow: 'hidden',
-                                    boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+                                    width: '300px',
+                                    height: '620px',
+                                    background: '#000',
+                                    borderRadius: '45px',
+                                    padding: '12px',
+                                    boxShadow: '0 30px 80px rgba(0,0,0,0.6), inset 0 0 0 2px #333'
                                 }}>
-                                    {/* Fake map background - dark style */}
+                                    {/* Screen */}
                                     <div style={{
-                                        position: 'absolute',
-                                        inset: 0,
-                                        background: `
-                                            linear-gradient(90deg, transparent 49%, #1a2332 49%, #1a2332 51%, transparent 51%),
-                                            linear-gradient(0deg, transparent 49%, #1a2332 49%, #1a2332 51%, transparent 51%),
-                                            #0d1117
-                                        `,
-                                        backgroundSize: '60px 60px',
-                                        opacity: 0.5
-                                    }}/>
-                                    
-                                    {/* Main roads */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '30%',
-                                        left: 0,
-                                        right: 0,
-                                        height: '3px',
-                                        background: '#2d3748'
-                                    }}/>
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '60%',
-                                        left: 0,
-                                        right: 0,
-                                        height: '2px',
-                                        background: '#2d3748'
-                                    }}/>
-                                    <div style={{
-                                        position: 'absolute',
-                                        left: '40%',
-                                        top: 0,
-                                        bottom: 0,
-                                        width: '3px',
-                                        background: '#2d3748'
-                                    }}/>
-                                    <div style={{
-                                        position: 'absolute',
-                                        left: '70%',
-                                        top: 0,
-                                        bottom: 0,
-                                        width: '2px',
-                                        background: '#2d3748'
-                                    }}/>
-
-                                    {/* Avatar 1 - Main user (center) */}
-                                    <div className="landing-avatar avatar-main" style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        width: '56px',
-                                        height: '56px',
-                                        borderRadius: '50%',
-                                        background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
-                                        padding: '3px',
-                                        zIndex: 10
+                                        width: '100%',
+                                        height: '100%',
+                                        background: '#0d1117',
+                                        borderRadius: '35px',
+                                        overflow: 'hidden',
+                                        position: 'relative'
                                     }}>
+                                        {/* Status Bar */}
                                         <div style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            borderRadius: '50%',
-                                            background: '#0d1117',
-                                            padding: '2px'
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: '12px 24px 8px',
+                                            fontSize: '12px',
+                                            color: '#fff'
                                         }}>
-                                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" style={{
-                                                width: '100%',
-                                                height: '100%',
+                                            <span>9:41</span>
+                                            <div style={{
+                                                width: '80px',
+                                                height: '28px',
+                                                background: '#000',
+                                                borderRadius: '20px'
+                                            }}/>
+                                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                                <span>📶</span>
+                                                <span>🔋</span>
+                                            </div>
+                                        </div>
+
+                                        {/* App Header */}
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: '8px 16px'
+                                        }}>
+                                            <div style={{ fontSize: '20px' }}>☰</div>
+                                            <div style={{
+                                                background: 'rgba(56, 189, 98, 0.15)',
+                                                padding: '6px 14px',
+                                                borderRadius: '16px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}>
+                                                <span style={{ color: '#38bd62', fontWeight: '600' }}>3</span>
+                                                <span style={{ color: '#8b949e', fontSize: '13px' }}>cerca</span>
+                                            </div>
+                                            <div style={{ fontSize: '18px' }}>✉️</div>
+                                        </div>
+
+                                        {/* Map Area */}
+                                        <div style={{
+                                            position: 'relative',
+                                            flex: 1,
+                                            background: '#0d1117',
+                                            backgroundImage: 'linear-gradient(90deg, #1e2a3a 1px, transparent 1px), linear-gradient(#1e2a3a 1px, transparent 1px)',
+                                            backgroundSize: '30px 30px',
+                                            height: '400px'
+                                        }}>
+                                            {/* Roads */}
+                                            <div style={{ position: 'absolute', top: '30%', left: 0, right: 0, height: '2px', background: '#2d3748' }}/>
+                                            <div style={{ position: 'absolute', top: '60%', left: 0, right: 0, height: '3px', background: '#3d4a5c' }}/>
+                                            <div style={{ position: 'absolute', left: '35%', top: 0, bottom: 0, width: '2px', background: '#2d3748' }}/>
+                                            <div style={{ position: 'absolute', left: '70%', top: 0, bottom: 0, width: '3px', background: '#3d4a5c' }}/>
+
+                                            {/* Location labels */}
+                                            <div style={{ position: 'absolute', top: '15%', right: '10%', color: '#4a5568', fontSize: '9px', fontWeight: '500' }}>CURUNDÚ</div>
+                                            <div style={{ position: 'absolute', top: '45%', right: '5%', color: '#4a5568', fontSize: '9px', fontWeight: '500' }}>SAN MIGUEL</div>
+                                            <div style={{ position: 'absolute', bottom: '25%', left: '10%', color: '#4a5568', fontSize: '9px', fontWeight: '500' }}>ANCÓN</div>
+
+                                            {/* Main User Avatar (center) */}
+                                            <div className="phone-avatar-main" style={{
+                                                position: 'absolute',
+                                                top: '50%',
+                                                left: '50%',
+                                                transform: 'translate(-50%, -50%)',
+                                                zIndex: 10
+                                            }}>
+                                                <div style={{
+                                                    width: '50px',
+                                                    height: '50px',
+                                                    borderRadius: '50%',
+                                                    background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                                                    padding: '3px'
+                                                }}>
+                                                    <div style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        borderRadius: '50%',
+                                                        background: '#0d1117',
+                                                        padding: '2px'
+                                                    }}>
+                                                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100" style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            borderRadius: '50%',
+                                                            objectFit: 'cover'
+                                                        }}/>
+                                                    </div>
+                                                </div>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: '-30px',
+                                                    left: '50%',
+                                                    transform: 'translateX(-50%)',
+                                                    background: 'rgba(13, 17, 23, 0.95)',
+                                                    color: '#e6edf3',
+                                                    padding: '4px 8px',
+                                                    borderRadius: '8px',
+                                                    fontSize: '9px',
+                                                    whiteSpace: 'nowrap',
+                                                    border: '1px solid #30363d'
+                                                }}>
+                                                    Hola mañana vam...
+                                                </div>
+                                            </div>
+
+                                            {/* Avatar 2 - top left with thought */}
+                                            <div className="phone-avatar-float" style={{
+                                                position: 'absolute',
+                                                top: '22%',
+                                                left: '20%'
+                                            }}>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: '-26px',
+                                                    left: '50%',
+                                                    transform: 'translateX(-50%)',
+                                                    background: 'rgba(13, 17, 23, 0.95)',
+                                                    color: '#e6edf3',
+                                                    padding: '3px 7px',
+                                                    borderRadius: '7px',
+                                                    fontSize: '8px',
+                                                    whiteSpace: 'nowrap',
+                                                    border: '1px solid #30363d'
+                                                }}>
+                                                    ¿Alguien para...?
+                                                </div>
+                                                <div style={{
+                                                    width: '36px',
+                                                    height: '36px',
+                                                    borderRadius: '50%',
+                                                    background: '#38bd62',
+                                                    padding: '2px'
+                                                }}>
+                                                    <div style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        borderRadius: '50%',
+                                                        background: '#0d1117',
+                                                        padding: '2px'
+                                                    }}>
+                                                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100" style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            borderRadius: '50%',
+                                                            objectFit: 'cover'
+                                                        }}/>
+                                                    </div>
+                                                </div>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    bottom: '-14px',
+                                                    left: '50%',
+                                                    transform: 'translateX(-50%)',
+                                                    background: 'rgba(56, 189, 98, 0.2)',
+                                                    color: '#38bd62',
+                                                    padding: '2px 5px',
+                                                    borderRadius: '5px',
+                                                    fontSize: '7px',
+                                                    fontWeight: '600',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    Selvin / 850m
+                                                </div>
+                                            </div>
+
+                                            {/* Avatar 3 - bottom right */}
+                                            <div className="phone-avatar-float2" style={{
+                                                position: 'absolute',
+                                                bottom: '35%',
+                                                right: '18%'
+                                            }}>
+                                                <div style={{
+                                                    width: '32px',
+                                                    height: '32px',
+                                                    borderRadius: '50%',
+                                                    background: 'linear-gradient(45deg, #f09433, #dc2743)',
+                                                    padding: '2px'
+                                                }}>
+                                                    <div style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        borderRadius: '50%',
+                                                        background: '#0d1117',
+                                                        padding: '2px'
+                                                    }}>
+                                                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            borderRadius: '50%',
+                                                            objectFit: 'cover'
+                                                        }}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Pulse rings */}
+                                            <div className="pulse-ring" style={{
+                                                position: 'absolute',
+                                                top: '50%',
+                                                left: '50%',
+                                                transform: 'translate(-50%, -50%)',
+                                                width: '90px',
+                                                height: '90px',
                                                 borderRadius: '50%',
-                                                objectFit: 'cover'
+                                                border: '1px solid rgba(56, 189, 98, 0.3)'
+                                            }}/>
+                                            <div className="pulse-ring2" style={{
+                                                position: 'absolute',
+                                                top: '50%',
+                                                left: '50%',
+                                                transform: 'translate(-50%, -50%)',
+                                                width: '140px',
+                                                height: '140px',
+                                                borderRadius: '50%',
+                                                border: '1px solid rgba(56, 189, 98, 0.2)'
                                             }}/>
                                         </div>
-                                    </div>
 
-                                    {/* Avatar 2 - with thought bubble */}
-                                    <div className="landing-avatar avatar-float-1" style={{
-                                        position: 'absolute',
-                                        top: '25%',
-                                        right: '20%'
-                                    }}>
+                                        {/* Bottom Controls */}
                                         <div style={{
                                             position: 'absolute',
-                                            top: '-35px',
-                                            left: '50%',
-                                            transform: 'translateX(-50%)',
+                                            bottom: '16px',
+                                            left: '10px',
+                                            right: '10px',
                                             background: 'rgba(13, 17, 23, 0.95)',
-                                            color: '#e6edf3',
-                                            padding: '6px 12px',
-                                            borderRadius: '12px',
-                                            fontSize: '11px',
-                                            whiteSpace: 'nowrap',
-                                            border: '1px solid #30363d'
+                                            borderRadius: '10px',
+                                            padding: '8px 12px'
                                         }}>
-                                            Buscando café ☕
-                                        </div>
-                                        <div style={{
-                                            width: '44px',
-                                            height: '44px',
-                                            borderRadius: '50%',
-                                            background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743)',
-                                            padding: '2px'
-                                        }}>
-                                            <div style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                borderRadius: '50%',
-                                                background: '#0d1117',
-                                                padding: '2px'
-                                            }}>
-                                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100" style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    borderRadius: '50%',
-                                                    objectFit: 'cover'
-                                                }}/>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                                <span style={{ fontSize: '8px', color: '#8b949e' }}>RADIO</span>
+                                                <span style={{ fontSize: '10px', color: '#38bd62', fontWeight: '600' }}>1km</span>
+                                            </div>
+                                            <div style={{ height: '3px', background: '#21262d', borderRadius: '2px' }}>
+                                                <div style={{ width: '60%', height: '100%', background: '#38bd62', borderRadius: '2px' }}/>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </section>
 
-                                    {/* Avatar 3 - with distance */}
-                                    <div className="landing-avatar avatar-float-2" style={{
-                                        position: 'absolute',
-                                        bottom: '30%',
-                                        left: '15%'
-                                    }}>
+                        {/* How it Works Section */}
+                        <section style={{
+                            padding: '100px 32px',
+                            borderTop: '1px solid #2d2d2d',
+                            background: '#141414'
+                        }}>
+                            <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+                                <h2 style={{
+                                    fontSize: '36px',
+                                    fontWeight: '400',
+                                    marginBottom: '16px',
+                                    fontFamily: 'Georgia, serif'
+                                }}>
+                                    Cómo funciona NexMe
+                                </h2>
+                                <p style={{
+                                    color: '#888',
+                                    fontSize: '16px',
+                                    maxWidth: '600px',
+                                    margin: '0 auto 60px',
+                                    lineHeight: '1.6'
+                                }}>
+                                    Conecta con personas reales cerca de ti en 3 simples pasos
+                                </p>
+
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(3, 1fr)',
+                                    gap: '40px'
+                                }}>
+                                    <div style={{ textAlign: 'center' }}>
                                         <div style={{
-                                            width: '40px',
-                                            height: '40px',
+                                            width: '80px',
+                                            height: '80px',
                                             borderRadius: '50%',
-                                            background: '#38bd62',
-                                            padding: '2px'
+                                            background: 'rgba(56, 189, 98, 0.1)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            margin: '0 auto 20px',
+                                            fontSize: '32px'
                                         }}>
-                                            <div style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                borderRadius: '50%',
-                                                background: '#0d1117',
-                                                padding: '2px'
-                                            }}>
-                                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100" style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    borderRadius: '50%',
-                                                    objectFit: 'cover'
-                                                }}/>
-                                            </div>
+                                            📍
                                         </div>
-                                        <div style={{
-                                            position: 'absolute',
-                                            bottom: '-20px',
-                                            left: '50%',
-                                            transform: 'translateX(-50%)',
-                                            background: 'rgba(56, 189, 98, 0.2)',
-                                            color: '#38bd62',
-                                            padding: '2px 8px',
-                                            borderRadius: '8px',
-                                            fontSize: '10px',
-                                            fontWeight: '600'
-                                        }}>
-                                            25m
-                                        </div>
+                                        <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>1. Activa tu ubicación</h3>
+                                        <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
+                                            NexMe usa GPS de alta precisión para detectar personas entre 5 y 1000 metros de distancia.
+                                        </p>
                                     </div>
 
-                                    {/* Avatar 4 */}
-                                    <div className="landing-avatar avatar-float-3" style={{
-                                        position: 'absolute',
-                                        top: '35%',
-                                        left: '25%'
-                                    }}>
+                                    <div style={{ textAlign: 'center' }}>
                                         <div style={{
-                                            width: '36px',
-                                            height: '36px',
+                                            width: '80px',
+                                            height: '80px',
                                             borderRadius: '50%',
-                                            background: '#38bd62',
-                                            padding: '2px'
+                                            background: 'rgba(56, 189, 98, 0.1)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            margin: '0 auto 20px',
+                                            fontSize: '32px'
                                         }}>
-                                            <div style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                borderRadius: '50%',
-                                                background: '#0d1117',
-                                                padding: '2px'
-                                            }}>
-                                                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100" style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    borderRadius: '50%',
-                                                    objectFit: 'cover'
-                                                }}/>
-                                            </div>
+                                            👀
                                         </div>
+                                        <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>2. Descubre quién está cerca</h3>
+                                        <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
+                                            Ve los avatares de personas cercanas en el mapa en tiempo real con sus pensamientos y estados.
+                                        </p>
                                     </div>
 
-                                    {/* Avatar 5 - with thought */}
-                                    <div className="landing-avatar avatar-float-4" style={{
-                                        position: 'absolute',
-                                        bottom: '20%',
-                                        right: '25%'
-                                    }}>
+                                    <div style={{ textAlign: 'center' }}>
                                         <div style={{
-                                            position: 'absolute',
-                                            top: '-35px',
-                                            left: '50%',
-                                            transform: 'translateX(-50%)',
-                                            background: 'rgba(13, 17, 23, 0.95)',
-                                            color: '#e6edf3',
-                                            padding: '6px 12px',
-                                            borderRadius: '12px',
-                                            fontSize: '11px',
-                                            whiteSpace: 'nowrap',
-                                            border: '1px solid #30363d'
-                                        }}>
-                                            Gym? 💪
-                                        </div>
-                                        <div style={{
-                                            width: '42px',
-                                            height: '42px',
+                                            width: '80px',
+                                            height: '80px',
                                             borderRadius: '50%',
-                                            background: 'linear-gradient(45deg, #f09433, #dc2743)',
-                                            padding: '2px'
+                                            background: 'rgba(56, 189, 98, 0.1)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            margin: '0 auto 20px',
+                                            fontSize: '32px'
                                         }}>
-                                            <div style={{
-                                                width: '100%',
-                                                height: '100%',
-                                                borderRadius: '50%',
-                                                background: '#0d1117',
-                                                padding: '2px'
-                                            }}>
-                                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    borderRadius: '50%',
-                                                    objectFit: 'cover'
-                                                }}/>
-                                            </div>
+                                            💬
                                         </div>
-                                    </div>
-
-                                    {/* Pulse rings from center */}
-                                    <div className="pulse-ring pulse-1" style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        width: '100px',
-                                        height: '100px',
-                                        borderRadius: '50%',
-                                        border: '1px solid rgba(56, 189, 98, 0.4)'
-                                    }}/>
-                                    <div className="pulse-ring pulse-2" style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        width: '180px',
-                                        height: '180px',
-                                        borderRadius: '50%',
-                                        border: '1px solid rgba(56, 189, 98, 0.25)'
-                                    }}/>
-                                    <div className="pulse-ring pulse-3" style={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        width: '280px',
-                                        height: '280px',
-                                        borderRadius: '50%',
-                                        border: '1px solid rgba(56, 189, 98, 0.15)'
-                                    }}/>
-
-                                    {/* App UI overlay - search radius */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        bottom: '20px',
-                                        left: '20px',
-                                        right: '20px',
-                                        background: 'rgba(13, 17, 23, 0.9)',
-                                        borderRadius: '12px',
-                                        padding: '12px 16px',
-                                        backdropFilter: 'blur(10px)'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                            <span style={{ fontSize: '11px', color: '#8b949e' }}>RADIO DE BÚSQUEDA</span>
-                                            <span style={{ fontSize: '13px', color: '#38bd62', fontWeight: '600' }}>500m</span>
-                                        </div>
-                                        <div style={{ height: '4px', background: '#21262d', borderRadius: '2px' }}>
-                                            <div style={{ width: '50%', height: '100%', background: '#38bd62', borderRadius: '2px' }}/>
-                                        </div>
-                                    </div>
-
-                                    {/* Top counter */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '20px',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        background: 'rgba(13, 17, 23, 0.9)',
-                                        borderRadius: '20px',
-                                        padding: '8px 16px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px'
-                                    }}>
-                                        <span style={{ color: '#38bd62', fontWeight: '600' }}>4</span>
-                                        <span style={{ fontSize: '13px', color: '#8b949e' }}>cerca</span>
+                                        <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>3. Conecta y chatea</h3>
+                                        <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
+                                            Envía mensajes directos, ve sus stories y conoce gente nueva al instante.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -4080,7 +4071,152 @@
 
                         {/* Features Section */}
                         <section style={{
-                            padding: '80px 32px',
+                            padding: '100px 32px',
+                            borderTop: '1px solid #2d2d2d'
+                        }}>
+                            <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                                <h2 style={{
+                                    fontSize: '36px',
+                                    fontWeight: '400',
+                                    marginBottom: '60px',
+                                    fontFamily: 'Georgia, serif',
+                                    textAlign: 'center'
+                                }}>
+                                    Características
+                                </h2>
+
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(2, 1fr)',
+                                    gap: '40px'
+                                }}>
+                                    <div style={{
+                                        padding: '30px',
+                                        borderRadius: '16px',
+                                        border: '1px solid #2d2d2d',
+                                        background: '#1f1f1f'
+                                    }}>
+                                        <div style={{ fontSize: '28px', marginBottom: '16px' }}>🗺️</div>
+                                        <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Mapa en tiempo real</h3>
+                                        <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
+                                            Visualiza a todos los usuarios cercanos en un mapa interactivo de Google Maps. Los avatares se mueven suavemente cuando las personas se desplazan.
+                                        </p>
+                                    </div>
+
+                                    <div style={{
+                                        padding: '30px',
+                                        borderRadius: '16px',
+                                        border: '1px solid #2d2d2d',
+                                        background: '#1f1f1f'
+                                    }}>
+                                        <div style={{ fontSize: '28px', marginBottom: '16px' }}>💭</div>
+                                        <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Pensamientos</h3>
+                                        <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
+                                            Comparte qué estás buscando o pensando. "¿Café?", "Gym?", "Alguien para estudiar" - los demás ven tus intenciones al instante.
+                                        </p>
+                                    </div>
+
+                                    <div style={{
+                                        padding: '30px',
+                                        borderRadius: '16px',
+                                        border: '1px solid #2d2d2d',
+                                        background: '#1f1f1f'
+                                    }}>
+                                        <div style={{ fontSize: '28px', marginBottom: '16px' }}>📸</div>
+                                        <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Stories de 12 horas</h3>
+                                        <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
+                                            Comparte fotos que desaparecen automáticamente. Los usuarios con stories activas tienen un anillo colorido estilo Instagram.
+                                        </p>
+                                    </div>
+
+                                    <div style={{
+                                        padding: '30px',
+                                        borderRadius: '16px',
+                                        border: '1px solid #2d2d2d',
+                                        background: '#1f1f1f'
+                                    }}>
+                                        <div style={{ fontSize: '28px', marginBottom: '16px' }}>💬</div>
+                                        <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Chat instantáneo</h3>
+                                        <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
+                                            Envía mensajes directos a cualquier persona cercana. Notificaciones en tiempo real y bandeja de entrada organizada.
+                                        </p>
+                                    </div>
+
+                                    <div style={{
+                                        padding: '30px',
+                                        borderRadius: '16px',
+                                        border: '1px solid #2d2d2d',
+                                        background: '#1f1f1f'
+                                    }}>
+                                        <div style={{ fontSize: '28px', marginBottom: '16px' }}>🎯</div>
+                                        <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Filtros inteligentes</h3>
+                                        <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
+                                            Filtra por edad, género e intereses. Ajusta el radio de búsqueda de 5m a 1km para encontrar exactamente a quien buscas.
+                                        </p>
+                                    </div>
+
+                                    <div style={{
+                                        padding: '30px',
+                                        borderRadius: '16px',
+                                        border: '1px solid #2d2d2d',
+                                        background: '#1f1f1f'
+                                    }}>
+                                        <div style={{ fontSize: '28px', marginBottom: '16px' }}>🔒</div>
+                                        <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Privacidad total</h3>
+                                        <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
+                                            Tú controlas cuándo compartes tu ubicación. Desactívala cuando quieras y desapareces del mapa al instante.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Social Proof Section */}
+                        <section style={{
+                            padding: '100px 32px',
+                            borderTop: '1px solid #2d2d2d',
+                            background: '#141414',
+                            textAlign: 'center'
+                        }}>
+                            <h2 style={{
+                                fontSize: '36px',
+                                fontWeight: '400',
+                                marginBottom: '60px',
+                                fontFamily: 'Georgia, serif'
+                            }}>
+                                Conoce gente de verdad
+                            </h2>
+
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                gap: '60px',
+                                flexWrap: 'wrap',
+                                maxWidth: '800px',
+                                margin: '0 auto'
+                            }}>
+                                <div>
+                                    <div style={{ fontSize: '48px', fontWeight: '600', color: '#38bd62' }}>50m</div>
+                                    <div style={{ color: '#888', fontSize: '14px' }}>Radio mínimo</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '48px', fontWeight: '600', color: '#38bd62' }}>1km</div>
+                                    <div style={{ color: '#888', fontSize: '14px' }}>Radio máximo</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '48px', fontWeight: '600', color: '#38bd62' }}>12h</div>
+                                    <div style={{ color: '#888', fontSize: '14px' }}>Duración stories</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '48px', fontWeight: '600', color: '#38bd62' }}>∞</div>
+                                    <div style={{ color: '#888', fontSize: '14px' }}>Conexiones</div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Final CTA */}
+                        <section style={{
+                            padding: '100px 32px',
                             borderTop: '1px solid #2d2d2d',
                             textAlign: 'center'
                         }}>
@@ -4090,76 +4226,79 @@
                                 marginBottom: '16px',
                                 fontFamily: 'Georgia, serif'
                             }}>
-                                Conoce NexMe
+                                Empieza a conectar hoy
                             </h2>
                             <p style={{
                                 color: '#888',
-                                fontSize: '16px',
-                                maxWidth: '600px',
-                                margin: '0 auto 60px',
-                                lineHeight: '1.6'
+                                marginBottom: '32px',
+                                fontSize: '16px'
                             }}>
-                                NexMe es una app de proximidad diseñada para conectarte con personas reales cerca de ti, con precisión GPS y chat instantáneo.
+                                Gratis. Sin anuncios. Sin límites.
                             </p>
-
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(3, 1fr)',
-                                gap: '40px',
-                                maxWidth: '900px',
-                                margin: '0 auto'
+                            <button onClick={handleGoogleSignIn} style={{
+                                padding: '16px 40px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: '#38bd62',
+                                color: '#fff',
+                                fontSize: '16px',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '10px'
                             }}>
-                                <div style={{ textAlign: 'left' }}>
-                                    <div style={{ fontSize: '24px', marginBottom: '12px' }}>📍</div>
-                                    <h3 style={{ fontSize: '16px', marginBottom: '8px' }}>GPS en tiempo real</h3>
-                                    <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
-                                        Detecta personas de 5 a 1000 metros con actualización constante.
-                                    </p>
-                                </div>
-                                <div style={{ textAlign: 'left' }}>
-                                    <div style={{ fontSize: '24px', marginBottom: '12px' }}>💬</div>
-                                    <h3 style={{ fontSize: '16px', marginBottom: '8px' }}>Chat instantáneo</h3>
-                                    <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
-                                        Envía mensajes directos a cualquier persona cercana.
-                                    </p>
-                                </div>
-                                <div style={{ textAlign: 'left' }}>
-                                    <div style={{ fontSize: '24px', marginBottom: '12px' }}>📸</div>
-                                    <h3 style={{ fontSize: '16px', marginBottom: '8px' }}>Stories de 12h</h3>
-                                    <p style={{ color: '#888', fontSize: '14px', lineHeight: '1.6' }}>
-                                        Comparte fotos que desaparecen automáticamente.
-                                    </p>
-                                </div>
-                            </div>
+                                <svg width="20" height="20" viewBox="0 0 24 24">
+                                    <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                    <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                </svg>
+                                Comenzar con Google
+                            </button>
                         </section>
 
-                        {/* CSS for animations */}
+                        {/* Footer */}
+                        <footer style={{
+                            padding: '30px 32px',
+                            borderTop: '1px solid #2d2d2d',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            color: '#666',
+                            fontSize: '13px'
+                        }}>
+                            <span>© 2024 NexMe</span>
+                            <div style={{ display: 'flex', gap: '24px' }}>
+                                <span style={{ cursor: 'pointer' }}>Términos</span>
+                                <span style={{ cursor: 'pointer' }}>Privacidad</span>
+                                <span style={{ cursor: 'pointer' }}>Contacto</span>
+                            </div>
+                        </footer>
+
+                        {/* CSS Animations */}
                         <style>{`
                             @keyframes float {
                                 0%, 100% { transform: translateY(0px); }
-                                50% { transform: translateY(-8px); }
+                                50% { transform: translateY(-6px); }
                             }
                             @keyframes pulse {
-                                0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
-                                50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.2; }
+                                0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+                                50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.1; }
                             }
-                            .avatar-float-1 { animation: float 4s ease-in-out infinite; }
-                            .avatar-float-2 { animation: float 5s ease-in-out infinite 0.5s; }
-                            .avatar-float-3 { animation: float 4.5s ease-in-out infinite 1s; }
-                            .avatar-float-4 { animation: float 5.5s ease-in-out infinite 1.5s; }
-                            .avatar-main { animation: pulse 3s ease-in-out infinite; }
-                            .pulse-ring { animation: pulse 4s ease-in-out infinite; }
-                            .pulse-1 { animation-delay: 0s; }
-                            .pulse-2 { animation-delay: 0.5s; }
-                            .pulse-3 { animation-delay: 1s; }
+                            .phone-avatar-float { animation: float 4s ease-in-out infinite; }
+                            .phone-avatar-float2 { animation: float 5s ease-in-out infinite 1s; }
+                            .pulse-ring { animation: pulse 3s ease-in-out infinite; }
+                            .pulse-ring2 { animation: pulse 3s ease-in-out infinite 0.5s; }
                             @media (max-width: 900px) {
                                 section[style*="grid-template-columns: 1fr 1fr"] {
                                     grid-template-columns: 1fr !important;
-                                    padding: 40px 20px !important;
                                 }
-                                section[style*="grid-template-columns: 1fr 1fr"] > div:first-child {
-                                    padding-right: 0 !important;
-                                    margin-bottom: 40px;
+                                section[style*="grid-template-columns: repeat(3"] {
+                                    grid-template-columns: 1fr !important;
+                                }
+                                section[style*="grid-template-columns: repeat(2"] {
+                                    grid-template-columns: 1fr !important;
                                 }
                                 nav { display: none !important; }
                             }
@@ -4324,7 +4463,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.7.0</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.8.0</span>
                             </div>
                         </div>
                     </div>
