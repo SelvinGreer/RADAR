@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v6.9 Build: 2025-12-10 | Instagram Notes Style + Fixed Zoom -->
+    <!-- v6.9.1 Build: 2025-12-11 | Fix marker position jump -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1839,22 +1839,52 @@
                 
                 markerDiv.addEventListener('click', () => handleAvatarClick(user));
                 
+                // Start invisible to prevent flash at wrong position
+                markerDiv.style.opacity = '0';
+                markerDiv.style.transition = 'opacity 0.15s ease';
+                
                 class CustomMarker extends google.maps.OverlayView {
                     constructor(position, content) {
                         super();
                         this.position = position;
                         this.content = content;
+                        this.isFirstDraw = true;
                     }
-                    onAdd() { this.getPanes().overlayMouseTarget.appendChild(this.content); }
+                    onAdd() { 
+                        this.getPanes().overlayMouseTarget.appendChild(this.content); 
+                    }
                     draw() {
                         const pos = this.getProjection().fromLatLngToDivPixel(this.position);
                         if (pos) {
-                            this.content.style.left = pos.x - (this.content.offsetWidth / 2) + 'px';
-                            this.content.style.top = pos.y - this.content.offsetHeight + 'px';
                             this.content.style.position = 'absolute';
+                            
+                            if (this.isFirstDraw) {
+                                // First draw: wait for layout calculation before positioning
+                                this.isFirstDraw = false;
+                                requestAnimationFrame(() => {
+                                    requestAnimationFrame(() => {
+                                        // Double RAF ensures layout is complete
+                                        const width = this.content.offsetWidth || 70;
+                                        const height = this.content.offsetHeight || 100;
+                                        this.content.style.left = (pos.x - width / 2) + 'px';
+                                        this.content.style.top = (pos.y - height) + 'px';
+                                        this.content.style.opacity = '1';
+                                    });
+                                });
+                            } else {
+                                // Subsequent draws: position immediately
+                                const width = this.content.offsetWidth || 70;
+                                const height = this.content.offsetHeight || 100;
+                                this.content.style.left = (pos.x - width / 2) + 'px';
+                                this.content.style.top = (pos.y - height) + 'px';
+                            }
                         }
                     }
-                    onRemove() { if (this.content.parentElement) this.content.parentElement.removeChild(this.content); }
+                    onRemove() { 
+                        if (this.content.parentElement) {
+                            this.content.parentElement.removeChild(this.content); 
+                        }
+                    }
                 }
                 
                 const lat = user.displayLat || user.latitude;
@@ -1887,7 +1917,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v6.9 - Instagram Notes Style + Fixed Zoom');
+                console.log('🚀 RADAR SOCIAL v6.9.1 - Fix marker position jump');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -2076,9 +2106,10 @@
                     .sort((a, b) => a.distance - b.distance);
                 
                 // Create a signature to compare if data actually changed
+                // Using toFixed(4) = ~10m precision to avoid unnecessary updates
                 const currentDataSignature = JSON.stringify({
-                    currentUserLat: currentUser.latitude.toFixed(5),
-                    currentUserLng: currentUser.longitude.toFixed(5),
+                    currentUserLat: currentUser.latitude.toFixed(4),
+                    currentUserLng: currentUser.longitude.toFixed(4),
                     currentUserPhoto: currentUser.photo,
                     usersCount: usersInRange.length,
                     userIds: usersInRange.map(u => u.id).join(','),
@@ -2535,7 +2566,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.9</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v6.9.1</span>
                             </div>
                         </div>
                     </div>
