@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe</title>
-    <!-- v7.9.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.10.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2656,7 +2656,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.9.0 - Large cropped phone with real map screenshot');
+                console.log('🚀 NEXME v7.10.0 - Realistic iPhone with screenshot cropped by section');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3603,21 +3603,26 @@
                             </button>
                         </header>
 
-                        {/* Hero Section - Phone cropped at bottom */}
-                        <section style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            minHeight: '100vh',
-                            maxWidth: '1200px',
-                            margin: '0 auto',
-                            padding: '40px 32px 0',
-                            alignItems: 'center',
+                        {/* Hero Wrapper - clips the phone */}
+                        <div style={{
                             overflow: 'hidden',
                             position: 'relative'
                         }}>
-                            {/* Left Column - Login */}
-                            <div style={{
-                                display: 'flex',
+                            {/* Hero Section - Phone cropped at bottom */}
+                            <section style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                height: 'calc(100vh - 70px)',
+                                maxWidth: '1200px',
+                                margin: '0 auto',
+                                padding: '40px 32px 0',
+                                alignItems: 'center',
+                                overflow: 'visible',
+                                position: 'relative'
+                            }}>
+                                {/* Left Column - Login */}
+                                <div style={{
+                                    display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'center',
                                 paddingLeft: '40px'
@@ -3707,288 +3712,112 @@
                                 </div>
                             </div>
 
-                            {/* Right Column - Phone Mockup - Large & Cropped */}
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                justifyContent: 'center',
-                                position: 'relative',
-                                height: '100%',
-                                paddingTop: '20px'
-                            }}>
-                                {/* iPhone Frame - Large 65vh */}
+                            {/* Right Column - Phone Mockup - Cropped by next section */}
                                 <div style={{
-                                    width: '380px',
-                                    height: '85vh',
-                                    background: '#000',
-                                    borderRadius: '55px',
-                                    padding: '12px',
-                                    boxShadow: '0 50px 120px rgba(0,0,0,0.8), inset 0 0 0 3px #333',
-                                    position: 'relative'
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    justifyContent: 'center',
+                                    position: 'relative',
+                                    paddingBottom: '0'
                                 }}>
-                                    {/* Screen */}
+                                    {/* iPhone Frame - Realistic - extends beyond viewport */}
+                                    <div style={{
+                                        width: '380px',
+                                        height: '820px',
+                                        background: 'linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 50%, #0a0a0a 100%)',
+                                        borderRadius: '55px',
+                                        padding: '12px',
+                                        boxShadow: '0 50px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 0 0 1px rgba(255,255,255,0.05)',
+                                        position: 'relative',
+                                        border: '1px solid #3a3a3a',
+                                        marginTop: '40px'
+                                    }}>
+                                    {/* Inner bezel */}
                                     <div style={{
                                         width: '100%',
                                         height: '100%',
-                                        borderRadius: '45px',
-                                        overflow: 'hidden',
-                                        position: 'relative',
-                                        background: '#0d1117'
+                                        background: '#000',
+                                        borderRadius: '44px',
+                                        padding: '3px',
+                                        position: 'relative'
                                     }}>
-                                        {/* Map Background Image */}
+                                        {/* Screen with screenshot */}
                                         <div style={{
-                                            position: 'absolute',
-                                            inset: 0,
-                                            backgroundImage: 'url(nexme-map-bg.jpg)',
-                                            backgroundSize: 'cover',
-                                            backgroundPosition: 'center top'
-                                        }}/>
-
-                                        {/* App Header Overlay */}
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            right: 0,
-                                            background: 'linear-gradient(180deg, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0.8) 70%, transparent 100%)',
-                                            padding: '40px 16px 20px',
-                                            zIndex: 10
+                                            width: '100%',
+                                            height: '100%',
+                                            borderRadius: '41px',
+                                            overflow: 'hidden',
+                                            position: 'relative'
                                         }}>
-                                            <div style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center'
-                                            }}>
-                                                <div style={{ fontSize: '22px', color: '#fff' }}>☰</div>
-                                                <div style={{
-                                                    background: 'rgba(56, 189, 98, 0.15)',
-                                                    padding: '8px 18px',
-                                                    borderRadius: '20px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '8px',
-                                                    border: '1px solid rgba(56, 189, 98, 0.3)'
-                                                }}>
-                                                    <span style={{ color: '#38bd62', fontWeight: '700', fontSize: '16px' }}>3</span>
-                                                    <span style={{ color: '#8b949e', fontSize: '14px' }}>cerca</span>
-                                                </div>
-                                                <div style={{ fontSize: '20px', color: '#fff' }}>✉️</div>
-                                            </div>
-                                        </div>
-
-                                        {/* Animated Avatars on Map */}
-                                        {/* Avatar 1 - Main user with story ring and thought */}
-                                        <div className="hero-avatar-1" style={{
-                                            position: 'absolute',
-                                            top: '38%',
-                                            left: '45%',
-                                            zIndex: 5
-                                        }}>
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: '-38px',
-                                                left: '50%',
-                                                transform: 'translateX(-50%)',
-                                                background: 'rgba(13, 17, 23, 0.95)',
-                                                color: '#e6edf3',
-                                                padding: '6px 12px',
-                                                borderRadius: '12px',
-                                                fontSize: '11px',
-                                                whiteSpace: 'nowrap',
-                                                border: '1px solid rgba(56, 189, 98, 0.4)',
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                                            }}>
-                                                ¡Que xopa! 👋
-                                            </div>
-                                            <div style={{
-                                                width: '58px',
-                                                height: '58px',
-                                                borderRadius: '50%',
-                                                background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
-                                                padding: '3px',
-                                                boxShadow: '0 4px 20px rgba(240, 148, 51, 0.4)'
-                                            }}>
-                                                <div style={{
+                                            {/* Screenshot as background */}
+                                            <img 
+                                                src="nexme-map-bg.jpg" 
+                                                alt="NexMe App"
+                                                style={{
                                                     width: '100%',
                                                     height: '100%',
-                                                    borderRadius: '50%',
-                                                    background: '#0d1117',
-                                                    padding: '2px'
-                                                }}>
-                                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        borderRadius: '50%',
-                                                        objectFit: 'cover'
-                                                    }}/>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Avatar 2 - Girl looking for coffee */}
-                                        <div className="hero-avatar-2" style={{
-                                            position: 'absolute',
-                                            top: '22%',
-                                            right: '15%',
-                                            zIndex: 4
-                                        }}>
+                                                    objectFit: 'cover',
+                                                    objectPosition: 'center top'
+                                                }}
+                                            />
+                                            
+                                            {/* Dynamic Island */}
                                             <div style={{
                                                 position: 'absolute',
-                                                top: '-34px',
+                                                top: '12px',
                                                 left: '50%',
                                                 transform: 'translateX(-50%)',
-                                                background: 'rgba(13, 17, 23, 0.95)',
-                                                color: '#e6edf3',
-                                                padding: '5px 10px',
-                                                borderRadius: '10px',
-                                                fontSize: '10px',
-                                                whiteSpace: 'nowrap',
-                                                border: '1px solid #30363d',
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                                            }}>
-                                                Buscando café ☕
-                                            </div>
-                                            <div style={{
-                                                width: '46px',
-                                                height: '46px',
-                                                borderRadius: '50%',
-                                                background: 'linear-gradient(45deg, #f09433, #dc2743)',
-                                                padding: '2px',
-                                                boxShadow: '0 4px 15px rgba(220, 39, 67, 0.3)'
-                                            }}>
-                                                <div style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    borderRadius: '50%',
-                                                    background: '#0d1117',
-                                                    padding: '2px'
-                                                }}>
-                                                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        borderRadius: '50%',
-                                                        objectFit: 'cover'
-                                                    }}/>
-                                                </div>
-                                            </div>
-                                            <div style={{
-                                                position: 'absolute',
-                                                bottom: '-18px',
-                                                left: '50%',
-                                                transform: 'translateX(-50%)',
-                                                background: 'rgba(56, 189, 98, 0.2)',
-                                                color: '#38bd62',
-                                                padding: '2px 8px',
-                                                borderRadius: '8px',
-                                                fontSize: '9px',
-                                                fontWeight: '600'
-                                            }}>
-                                                María / 120m
-                                            </div>
-                                        </div>
-
-                                        {/* Avatar 3 - Guy at gym */}
-                                        <div className="hero-avatar-3" style={{
-                                            position: 'absolute',
-                                            bottom: '35%',
-                                            left: '18%',
-                                            zIndex: 4
-                                        }}>
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: '-34px',
-                                                left: '50%',
-                                                transform: 'translateX(-50%)',
-                                                background: 'rgba(13, 17, 23, 0.95)',
-                                                color: '#e6edf3',
-                                                padding: '5px 10px',
-                                                borderRadius: '10px',
-                                                fontSize: '10px',
-                                                whiteSpace: 'nowrap',
-                                                border: '1px solid #30363d',
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                                            }}>
-                                                Gym? 💪
-                                            </div>
-                                            <div style={{
-                                                width: '42px',
-                                                height: '42px',
-                                                borderRadius: '50%',
-                                                background: '#38bd62',
-                                                padding: '2px',
-                                                boxShadow: '0 4px 15px rgba(56, 189, 98, 0.3)'
-                                            }}>
-                                                <div style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    borderRadius: '50%',
-                                                    background: '#0d1117',
-                                                    padding: '2px'
-                                                }}>
-                                                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150" style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        borderRadius: '50%',
-                                                        objectFit: 'cover'
-                                                    }}/>
-                                                </div>
-                                            </div>
-                                            <div style={{
-                                                position: 'absolute',
-                                                bottom: '-18px',
-                                                left: '50%',
-                                                transform: 'translateX(-50%)',
-                                                background: 'rgba(56, 189, 98, 0.2)',
-                                                color: '#38bd62',
-                                                padding: '2px 8px',
-                                                borderRadius: '8px',
-                                                fontSize: '9px',
-                                                fontWeight: '600'
-                                            }}>
-                                                Carlos / 85m
-                                            </div>
-                                        </div>
-
-                                        {/* Bottom Controls Overlay */}
-                                        <div style={{
-                                            position: 'absolute',
-                                            bottom: 0,
-                                            left: 0,
-                                            right: 0,
-                                            background: 'linear-gradient(0deg, rgba(13,17,23,0.98) 0%, rgba(13,17,23,0.9) 70%, transparent 100%)',
-                                            padding: '30px 16px 20px',
-                                            zIndex: 10
-                                        }}>
-                                            <div style={{ marginBottom: '8px' }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                                    <span style={{ fontSize: '10px', color: '#8b949e', fontWeight: '500' }}>RADIO DE BÚSQUEDA</span>
-                                                    <span style={{ fontSize: '14px', color: '#38bd62', fontWeight: '700' }}>1000m</span>
-                                                </div>
-                                                <div style={{ position: 'relative', height: '6px', background: '#21262d', borderRadius: '3px' }}>
-                                                    <div style={{ width: '100%', height: '100%', background: 'linear-gradient(90deg, #38bd62, #2ea55c)', borderRadius: '3px' }}/>
-                                                    <div style={{
-                                                        position: 'absolute',
-                                                        right: '-4px',
-                                                        top: '50%',
-                                                        transform: 'translateY(-50%)',
-                                                        width: '14px',
-                                                        height: '14px',
-                                                        background: '#38bd62',
-                                                        borderRadius: '50%',
-                                                        border: '2px solid #0d1117'
-                                                    }}/>
-                                                </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                                                    <span style={{ fontSize: '9px', color: '#6e7681' }}>0m</span>
-                                                    <span style={{ fontSize: '9px', color: '#6e7681' }}>500m</span>
-                                                    <span style={{ fontSize: '9px', color: '#6e7681' }}>1km</span>
-                                                </div>
-                                            </div>
+                                                width: '120px',
+                                                height: '35px',
+                                                background: '#000',
+                                                borderRadius: '20px'
+                                            }}/>
                                         </div>
                                     </div>
+                                    
+                                    {/* Side buttons - Volume */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        left: '-3px',
+                                        top: '120px',
+                                        width: '4px',
+                                        height: '30px',
+                                        background: 'linear-gradient(90deg, #1a1a1a, #2a2a2a)',
+                                        borderRadius: '2px 0 0 2px'
+                                    }}/>
+                                    <div style={{
+                                        position: 'absolute',
+                                        left: '-3px',
+                                        top: '170px',
+                                        width: '4px',
+                                        height: '55px',
+                                        background: 'linear-gradient(90deg, #1a1a1a, #2a2a2a)',
+                                        borderRadius: '2px 0 0 2px'
+                                    }}/>
+                                    <div style={{
+                                        position: 'absolute',
+                                        left: '-3px',
+                                        top: '240px',
+                                        width: '4px',
+                                        height: '55px',
+                                        background: 'linear-gradient(90deg, #1a1a1a, #2a2a2a)',
+                                        borderRadius: '2px 0 0 2px'
+                                    }}/>
+                                    
+                                    {/* Side button - Power */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        right: '-3px',
+                                        top: '180px',
+                                        width: '4px',
+                                        height: '80px',
+                                        background: 'linear-gradient(270deg, #1a1a1a, #2a2a2a)',
+                                        borderRadius: '0 2px 2px 0'
+                                    }}/>
                                 </div>
                             </div>
                         </section>
+                        </div>
 
                         {/* How it Works Section */}
                         <section style={{
@@ -4488,7 +4317,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.9.0</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.10.0</span>
                             </div>
                         </div>
                     </div>
