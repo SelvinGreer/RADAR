@@ -266,7 +266,13 @@
 
         // Inicializar mapa con zoom fijo y límite de 1km de pan
         const initializeGoogleMap = (lat, lng) => {
-            if (!mapRef.current || googleMap) return;
+    // PATCH — evitar pantalla blanca si Google Maps no cargó
+    if (typeof google === 'undefined' || !google.maps) {
+        console.warn('Google Maps no está listo aún');
+        return;
+    }
+
+    if (!mapRef.current || googleMap) return;
             
             const darkStyle = [
                 { elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
