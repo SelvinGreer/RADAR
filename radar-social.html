@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.1.3 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.1.4 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2530,12 +2530,16 @@
                 
                 // Thought bubble with circles (Instagram Notes style) - for ALL users including current user
                 if (user.thought && user.thought.trim()) {
+                    // Adjust position based on avatar size
+                    const offsetTop = isCurrentUser ? -5 : (size === 45 ? 5 : 10);
+                    const offsetLeft = isCurrentUser ? -55 : (size === 45 ? -45 : -40);
+                    
                     // Main bubble container - positioned at 10 o'clock
                     const bubbleContainer = document.createElement('div');
                     bubbleContainer.style.cssText = `
                         position: absolute;
-                        top: -5px;
-                        left: -55px;
+                        top: ${offsetTop}px;
+                        left: ${offsetLeft}px;
                         display: flex;
                         flex-direction: column;
                         align-items: flex-end;
@@ -2777,7 +2781,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.1.3 - Interest filtering, profile interests display, movement intelligence');
+                console.log('🚀 RADAR SOCIAL v7.1.4 - Interest filtering, profile interests display, movement intelligence');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3814,7 +3818,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.1.3</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.1.4</span>
                             </div>
                         </div>
                     </div>
