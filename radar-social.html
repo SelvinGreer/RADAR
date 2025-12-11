@@ -1812,15 +1812,12 @@
             
             // Calculate orbital positions around user (circular)
             const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
-                // LARGE orbit radius ~120-150 meters to prevent overlap
-                const orbitRadiusLat = 0.0012;  // ~120-130m in latitude  
-                const orbitRadiusLng = 0.0015;  // ~130-150m in longitude
-                // Start from bottom and go clockwise
-                const startAngle = 90; // Start from bottom (south)
-                const angle = ((startAngle + (index * (360 / totalSlots))) * Math.PI) / 180;
+                // Orbit radius ~200 meters
+                const orbitRadius = 0.0018; // ~200 meters in lat/lng
+                const angle = (index * (360 / totalSlots)) * (Math.PI / 180);
                 return {
-                    lat: centerLat + (orbitRadiusLat * Math.cos(angle)),
-                    lng: centerLng + (orbitRadiusLng * Math.sin(angle))
+                    lat: centerLat + (orbitRadius * Math.cos(angle)),
+                    lng: centerLng + (orbitRadius * Math.sin(angle))
                 };
             };
             
