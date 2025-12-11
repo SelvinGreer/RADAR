@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.3.2 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.3.3 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2810,8 +2810,7 @@
                         this.position = position;
                         this.content = content;
                         this.isFirstDraw = true;
-                        // Add smooth transition for movement
-                        this.content.style.transition = 'left 1s ease-out, top 1s ease-out';
+                        this.isAnimating = false; // Flag for GPS movement animation
                     }
                     onAdd() { 
                         this.getPanes().overlayMouseTarget.appendChild(this.content); 
@@ -2820,36 +2819,41 @@
                         const pos = this.getProjection().fromLatLngToDivPixel(this.position);
                         if (pos) {
                             this.content.style.position = 'absolute';
+                            const width = this.content.offsetWidth || 70;
+                            const height = this.content.offsetHeight || 100;
                             
                             if (this.isFirstDraw) {
-                                // First draw: wait for layout calculation before positioning
+                                // First draw: position instantly, no animation
                                 this.isFirstDraw = false;
-                                this.content.style.transition = 'none'; // No transition on first draw
+                                this.content.style.transition = 'none';
                                 requestAnimationFrame(() => {
                                     requestAnimationFrame(() => {
-                                        // Double RAF ensures layout is complete
-                                        const width = this.content.offsetWidth || 70;
-                                        const height = this.content.offsetHeight || 100;
                                         this.content.style.left = (pos.x - width / 2) + 'px';
                                         this.content.style.top = (pos.y - height) + 'px';
                                         this.content.style.opacity = '1';
-                                        // Re-enable transition after initial positioning
-                                        setTimeout(() => {
-                                            this.content.style.transition = 'left 1s ease-out, top 1s ease-out';
-                                        }, 50);
                                     });
                                 });
+                            } else if (this.isAnimating) {
+                                // GPS position changed: animate smoothly
+                                this.content.style.transition = 'left 1s ease-out, top 1s ease-out';
+                                this.content.style.left = (pos.x - width / 2) + 'px';
+                                this.content.style.top = (pos.y - height) + 'px';
+                                // Reset flag after animation
+                                setTimeout(() => {
+                                    this.isAnimating = false;
+                                    this.content.style.transition = 'none';
+                                }, 1000);
                             } else {
-                                // Subsequent draws: position with smooth transition
-                                const width = this.content.offsetWidth || 70;
-                                const height = this.content.offsetHeight || 100;
+                                // Map panning: position instantly, no animation
+                                this.content.style.transition = 'none';
                                 this.content.style.left = (pos.x - width / 2) + 'px';
                                 this.content.style.top = (pos.y - height) + 'px';
                             }
                         }
                     }
-                    // Update position with smooth animation
+                    // Update position with smooth animation (GPS changed)
                     updatePosition(newLat, newLng) {
+                        this.isAnimating = true; // Enable animation for this update
                         this.position = new google.maps.LatLng(newLat, newLng);
                         this.draw();
                     }
@@ -2900,7 +2904,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.3.2 - Instant story/thought updates, breathing avatars');
+                console.log('🚀 RADAR SOCIAL v7.3.3 - Fixed map pan animation bug');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -4054,7 +4058,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.3.2</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>Radar Social v7.3.3</span>
                             </div>
                         </div>
                     </div>
