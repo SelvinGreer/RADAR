@@ -2535,6 +2535,7 @@
                 // Right side (thought goes RIGHT): 0, 1, 2, 3 (top to bottom-right)
                 // Left side (thought goes LEFT): 4, 5, 6, 7 (bottom to top-left)
                 const isRightSide = orbitalIndex >= 0 && orbitalIndex <= 3;
+                const isExplorer = !isOrbital && !isCurrentUser;
                 
                 // Thought bubble with circles (Instagram Notes style) - for ALL users including current user
                 if (user.thought && user.thought.trim()) {
@@ -2588,7 +2589,6 @@
                     }
                     
                     // Thought bubble - single line (reduced 35% total, explorers 50% smaller)
-                    const isExplorer = !isOrbital && !isCurrentUser;
                     const thoughtBubble = document.createElement('div');
                     thoughtBubble.style.cssText = `
                         background: #3a3a3a;
@@ -2606,7 +2606,6 @@
                     
                     // Circle connectors pointing to avatar
                     const circlesContainer = document.createElement('div');
-                    const isExplorer = !isOrbital && !isCurrentUser;
                     
                     if (isCurrentUser) {
                         // Current user: diagonal to bottom-right
@@ -2718,7 +2717,6 @@
                 // Name + Distance label - ONLY for other users
                 if (!isCurrentUser) {
                     const nameLabel = document.createElement('div');
-                    const isExplorer = !isOrbital;
                     nameLabel.style.cssText = `
                         margin-top: ${isExplorer ? '1px' : '2px'};
                         background: rgba(0,0,0,0.65);
