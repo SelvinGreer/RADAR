@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe</title>
-    <!-- v7.20.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.21.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2657,7 +2657,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.20.0 - Realistic iPhone with screenshot cropped by section');
+                console.log('🚀 NEXME v7.21.0 - Realistic iPhone with screenshot cropped by section');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3606,10 +3606,25 @@
                                 <div style={{ fontSize: '20px', fontWeight: '600', color: '#fff', paddingLeft: '40px' }}>
                                     NexMe
                                 </div>
-                            <nav style={{ display: 'flex', gap: '32px', fontSize: '14px', color: '#a0a0a0' }}>
+                            <nav style={{ display: 'flex', gap: '32px', fontSize: '14px', color: '#a0a0a0', alignItems: 'center' }}>
                                 <a href="#caracteristicas" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>Características</a>
                                 <a href="#como-funciona" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>Cómo funciona</a>
                                 <a href="#privacidad" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>Privacidad</a>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '6px', 
+                                    cursor: 'pointer',
+                                    padding: '6px 12px',
+                                    borderRadius: '20px',
+                                    border: '1px solid #3d3d3d'
+                                }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" strokeWidth="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                                    </svg>
+                                    <span style={{ fontSize: '13px' }}>ES</span>
+                                </div>
                             </nav>
                             <button onClick={handleGoogleSignIn} style={{
                                 padding: '10px 20px',
@@ -3832,7 +3847,7 @@
                         {/* Section 2: Interest Cards - Like Bumble's hobby cards */}
                         <section id="caracteristicas" style={{
                             padding: '80px 32px',
-                            background: '#141414'
+                            background: '#1f1f1f'
                         }}>
                             <div style={{ 
                                 maxWidth: '1100px', 
@@ -3922,7 +3937,7 @@
                         {/* Section 3: Feature 1 - Image Left, Text Right */}
                         <section id="como-funciona" style={{
                             padding: '100px 32px',
-                            background: '#1c1c1c'
+                            background: '#141414'
                         }}>
                             <div style={{ 
                                 maxWidth: '1100px', 
@@ -3979,7 +3994,7 @@
                         {/* Section 4: Feature 2 - Text Left, Image Right */}
                         <section style={{
                             padding: '100px 32px',
-                            background: '#141414'
+                            background: '#1f1f1f'
                         }}>
                             <div style={{ 
                                 maxWidth: '1100px', 
@@ -4036,7 +4051,7 @@
                         {/* Section 5: Two Feature Cards Side by Side */}
                         <section style={{
                             padding: '100px 32px',
-                            background: '#1c1c1c'
+                            background: '#141414'
                         }}>
                             <div style={{ 
                                 maxWidth: '1100px', 
@@ -4108,7 +4123,7 @@
                         {/* Section 6: Testimonial Quote */}
                         <section style={{
                             padding: '100px 32px',
-                            background: '#141414'
+                            background: '#1f1f1f'
                         }}>
                             <div style={{ 
                                 maxWidth: '1100px', 
@@ -4157,7 +4172,7 @@
                         {/* Section 7: Meet in Person CTA */}
                         <section style={{
                             padding: '100px 32px',
-                            background: '#1c1c1c'
+                            background: '#141414'
                         }}>
                             <div style={{ 
                                 maxWidth: '1100px', 
@@ -4246,7 +4261,7 @@
                         {/* Section 9: Final CTA - Download */}
                         <section style={{
                             padding: '120px 32px',
-                            background: '#141414',
+                            background: '#1f1f1f',
                             textAlign: 'center'
                         }}>
                             <div style={{ maxWidth: '600px', margin: '0 auto' }}>
@@ -4558,7 +4573,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.20.0</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.21.0</span>
                             </div>
                         </div>
                     </div>
