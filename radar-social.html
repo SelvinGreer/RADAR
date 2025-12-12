@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.5.1 Build: 2025-12-12 | FIX: Perfect circular orbit positioning -->
+    <!-- v7.6.0 Build: 2025-12-12 | NEW: Emoji reactions with bubble animation -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1461,6 +1461,87 @@
         }
 
         html { overscroll-behavior: none; }
+
+        .emoji-picker {
+            position: absolute;
+            bottom: 60px;
+            left: 12px;
+            background: rgba(30, 35, 42, 0.98);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 8px 12px;
+            display: flex;
+            gap: 8px;
+            border: 1px solid rgba(56, 189, 98, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            transform: scale(0) translateY(10px);
+            opacity: 0;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: bottom left;
+        }
+
+        .emoji-picker.active {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        .emoji-picker-item {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.15s ease;
+            background: transparent;
+        }
+
+        .emoji-picker-item:hover {
+            background: rgba(56, 189, 98, 0.2);
+            transform: scale(1.15);
+        }
+
+        .emoji-picker-item:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes emojiBubbleFloat {
+            0% {
+                transform: translateY(0) scale(0);
+                opacity: 0;
+            }
+            15% {
+                transform: translateY(-5px) scale(1.2);
+                opacity: 1;
+            }
+            30% {
+                transform: translateY(-15px) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-60px) scale(0.6);
+                opacity: 0;
+            }
+        }
+
+        .emoji-bubble {
+            position: absolute;
+            font-size: 16px;
+            pointer-events: none;
+            animation: emojiBubbleFloat 3s ease-out forwards;
+            z-index: 100;
+        }
+
+        .emoji-bubble:nth-child(1) { animation-delay: 0s; }
+        .emoji-bubble:nth-child(2) { animation-delay: 0.15s; }
+        .emoji-bubble:nth-child(3) { animation-delay: 0.3s; }
+        .emoji-bubble:nth-child(4) { animation-delay: 0.45s; }
+        .emoji-bubble:nth-child(5) { animation-delay: 0.6s; }
+        .emoji-bubble:nth-child(6) { animation-delay: 0.75s; }
+        .emoji-bubble:nth-child(7) { animation-delay: 0.9s; }
+        .emoji-bubble:nth-child(8) { animation-delay: 1.05s; }
     </style>
 </head>
 <body>
@@ -1516,6 +1597,9 @@
             const [unreadMessages, setUnreadMessages] = useState({});
             const [totalUnread, setTotalUnread] = useState(0);
             const [showPreferences, setShowPreferences] = useState(false);
+            const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+            const [currentEmoji, setCurrentEmoji] = useState(null);
+            const [emojiTimestamp, setEmojiTimestamp] = useState(null);
             
             const [userPreferences, setUserPreferences] = useState({
                 age: 25, gender: '', interests: [], lookingFor: [],
@@ -1547,6 +1631,8 @@
                 { id: 'networking', label: '💼 Networking', emoji: '💼' },
                 { id: 'romance', label: '❤️ Romance', emoji: '❤️' }
             ];
+            
+            const reactionEmojis = ['🔥', '❤️', '👋'];
             
             const userPositionHistory = useRef({});
             const notificationSound = useRef(null);
@@ -1771,6 +1857,22 @@
                 
                 markerDiv.appendChild(avatarContainer);
                 
+                // Emoji bubbles animation
+                const activeEmoji = isCurrentUser ? currentEmoji : user.currentEmoji;
+                if (activeEmoji) {
+                    const bubblesContainer = document.createElement('div');
+                    bubblesContainer.style.cssText = 'position:absolute;top:0;left:50%;transform:translateX(-50%);pointer-events:none;';
+                    const positions = [-12, -6, 0, 6, 12, -9, 3, 9];
+                    for (let i = 0; i < 8; i++) {
+                        const bubble = document.createElement('div');
+                        bubble.className = 'emoji-bubble';
+                        bubble.style.left = `${positions[i]}px`;
+                        bubble.textContent = activeEmoji;
+                        bubblesContainer.appendChild(bubble);
+                    }
+                    markerDiv.appendChild(bubblesContainer);
+                }
+                
                 if (!isCurrentUser) {
                     const nameLabel = document.createElement('div');
                     nameLabel.style.cssText = `margin-top:${isExplorer?1:2}px;background:rgba(0,0,0,0.65);padding:${isExplorer?'1px 4px':'2px 5px'};border-radius:999px;font-size:${isExplorer?6:7}px;font-weight:500;color:#fff;white-space:nowrap;`;
@@ -1853,7 +1955,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.5.1 - Perfect circular orbit positioning');
+                console.log('🚀 RADAR SOCIAL v7.6.0 - Emoji reactions with bubble animation');
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
                         const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
@@ -1944,12 +2046,18 @@
                                                             const ts = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
                                                             if ((Date.now() - ts) / 3600000 < 12) { hasActiveStory = true; storyUrl = userData.storyUrl; storyTimestamp = ts; }
                                                         }
+                                                        let activeEmoji = null;
+                                                        if (userData.currentEmoji && userData.emojiTimestamp) {
+                                                            const ets = userData.emojiTimestamp.toMillis ? userData.emojiTimestamp.toMillis() : userData.emojiTimestamp;
+                                                            if ((Date.now() - ets) < 3000) activeEmoji = userData.currentEmoji;
+                                                        }
                                                         otherUsers.push({
                                                             id: userData.uid, name: userData.displayName || 'Usuario',
                                                             photo: userData.photoURL || 'https://ui-avatars.com/api/?name=User&background=38bd62&color=fff',
                                                             thought: displayThought, hasStory: hasActiveStory, storyUrl, storyTimestamp,
                                                             distance, isOnline: true, latitude: userLat, longitude: userLon,
                                                             preferences: userData.preferences || null,
+                                                            currentEmoji: activeEmoji,
                                                             movement: calculateMovement(userData.uid, userLat, userLon),
                                                             approaching: isApproaching(userData.uid, userLat, userLon, currentUserState.latitude, currentUserState.longitude)
                                                         });
@@ -2036,10 +2144,12 @@
                     userPositions: usersInRange.map(u => `${u.latitude.toFixed(5)},${u.longitude.toFixed(5)}`).join('|'),
                     userThoughts: usersInRange.map(u => u.thought || '').join('|'),
                     userStories: usersInRange.map(u => u.hasStory ? '1' : '0').join(''),
+                    userEmojis: usersInRange.map(u => u.currentEmoji || '').join(''),
                     viewedStoriesState: Object.keys(viewedStories).sort().join(','),
                     unreadMessagesState: Object.entries(unreadMessages).map(([k,v]) => `${k}:${v}`).join(','),
                     currentThought: currentUser.thought || '',
                     currentHasStory: currentUser.hasStory || false,
+                    currentEmoji: currentEmoji || '',
                     currentLat: currentUser.latitude.toFixed(5),
                     currentLng: currentUser.longitude.toFixed(5)
                 });
@@ -2097,7 +2207,7 @@
                 });
                 
                 Object.keys(markersRef.current).forEach(userId => { if (!activeMarkerIds.has(userId)) removeMarker(userId); });
-            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.thought, currentUser?.hasStory, users, radius, viewedStories, unreadMessages, userPreferences, markerRefreshTick]);
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.thought, currentUser?.hasStory, users, radius, viewedStories, unreadMessages, userPreferences, markerRefreshTick, currentEmoji]);
             
             useEffect(() => {
                 if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
@@ -2242,6 +2352,24 @@
                 setViewingStory(null);
             };
 
+            const sendEmoji = async (emoji) => {
+                if (!currentUser) return;
+                const now = Date.now();
+                setCurrentEmoji(emoji);
+                setEmojiTimestamp(now);
+                setShowEmojiPicker(false);
+                setCurrentUser(prev => ({ ...prev, currentEmoji: emoji, emojiTimestamp: now }));
+                await db.collection('users').doc(currentUser.id).update({ 
+                    currentEmoji: emoji, 
+                    emojiTimestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+                setTimeout(() => {
+                    setCurrentEmoji(null);
+                    setEmojiTimestamp(null);
+                    setCurrentUser(prev => ({ ...prev, currentEmoji: null, emojiTimestamp: null }));
+                }, 3000);
+            };
+
             const formatMessageTime = (ts) => { if (!ts) return ''; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); };
             const formatTimeAgo = (ts) => { if (!ts) return 'Hace un momento'; const t = typeof ts === 'number' ? ts : (ts.toMillis ? ts.toMillis() : ts); const m = Math.floor((Date.now() - t) / 60000); const h = Math.floor((Date.now() - t) / 3600000); if (m < 1) return 'Hace un momento'; if (m < 60) return `Hace ${m}m`; if (h < 24) return `Hace ${h}h`; return 'Hace más de 1 día'; };
 
@@ -2302,9 +2430,14 @@
                         </div>
                         
                         <div className="thought-input-container">
+                            <div className={`emoji-picker ${showEmojiPicker ? 'active' : ''}`}>
+                                {reactionEmojis.map(emoji => (
+                                    <div key={emoji} className="emoji-picker-item" onClick={() => sendEmoji(emoji)}>{emoji}</div>
+                                ))}
+                            </div>
                             <div className="thought-input-wrapper">
-                                <svg className="thought-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-                                <input type="text" className="thought-input" placeholder="Mensaje" value={thought} onChange={(e) => setThought(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleThoughtSubmit()} maxLength={15}/>
+                                <svg className="thought-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ color: showEmojiPicker ? '#38bd62' : '#8696a0' }}><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                                <input type="text" className="thought-input" placeholder="Mensaje" value={thought} onChange={(e) => setThought(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleThoughtSubmit()} maxLength={15} onFocus={() => setShowEmojiPicker(false)}/>
                             </div>
                             <button className="send-button" onClick={handleThoughtSubmit}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
                         </div>
@@ -2320,7 +2453,7 @@
                             <div className="sidebar-item" onClick={() => { setShowStoryUpload(true); setShowSidebar(false); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Subir Historia</span></div>
                             <div className="sidebar-item" onClick={() => { setShowPreferences(true); setShowSidebar(false); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Mis Preferencias</span></div>
                             <div className="sidebar-item" style={{ marginTop: 'auto', color: '#f87171' }} onClick={handleLogout}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Cerrar Sesión</span></div>
-                            <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}><span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.5.1</span></div>
+                            <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}><span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.6.0</span></div>
                         </div>
                     </div>
 
