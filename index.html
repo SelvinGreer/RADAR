@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NexMe - Conecta con personas cerca de ti</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Encuentra y conecta con personas cerca de ti en tiempo real">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1a1a1a;
+            color: #e6edf3;
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Header */
+        .header-wrapper {
+            position: sticky;
+            top: 0;
+            background: #1a1a1a;
+            border-bottom: 1px solid #2d2d2d;
+            z-index: 100;
+        }
+
+        .landing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .landing-logo {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            padding-left: 16px;
+        }
+
+        .landing-nav {
+            display: flex;
+            gap: 32px;
+            font-size: 14px;
+            color: #a0a0a0;
+            align-items: center;
+        }
+
+        .landing-nav a:hover {
+            color: #fff;
+        }
+
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #3d3d3d;
+            transition: border-color 0.2s;
+        }
+
+        .lang-switcher:hover {
+            border-color: #5d5d5d;
+        }
+
+        .header-cta-btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            background: #38bd62;
+            color: #fff;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 16px;
+            transition: background 0.2s;
+        }
+
+        .header-cta-btn:hover {
+            background: #2ea556;
+        }
+
+        .install-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #3d3d3d;
+            background: transparent;
+            color: #a0a0a0;
+            font-size: 13px;
+            font-weight: 400;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Hero Section */
+        .hero-wrapper {
+            overflow: hidden;
+            position: relative;
+            height: calc(100vh - 200px);
+            background: #1a1a1a;
+        }
+
+        .hero-bg-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.06;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='800' height='800' viewBox='0 0 800 800' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0 L50 800 M150 0 L150 800 M300 0 L300 800 M450 0 L450 800 M550 0 L550 800 M700 0 L700 800 M0 100 L800 100 M0 250 L800 250 M0 400 L800 400 M0 550 L800 550 M0 700 L800 700 M0 50 L200 150 L400 50 L600 200 L800 100 M0 300 L150 400 L350 300 L500 450 L700 350 L800 400 M0 600 L100 500 L300 650 L500 550 L650 700 L800 600 M100 0 L250 200 L100 400 L300 600 L150 800 M500 0 L600 150 L450 350 L600 500 L500 700 L650 800 M750 0 L700 200 L800 350 M0 150 L100 100 M700 750 L800 700' stroke='%23ffffff' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+            background-size: 600px 600px;
+        }
+
+        .hero-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 32px 0;
+            align-items: start;
+            position: relative;
+            overflow: visible;
+        }
+
+        .hero-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding-left: 40px;
+            padding-top: 80px;
+            height: 100%;
+        }
+
+        .hero-title {
+            font-size: 48px;
+            font-weight: 400;
+            line-height: 1.15;
+            margin: 0 0 20px 0;
+            color: #fff;
+            font-family: Georgia, serif;
+        }
+
+        .hero-title em {
+            font-style: italic;
+        }
+
+        .hero-subtitle {
+            font-size: 16px;
+            color: #a0a0a0;
+            margin: 0 0 40px 0;
+        }
+
+        .login-container {
+            max-width: 320px;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid #3d3d3d;
+            background: #2d2d2d;
+            color: #fff;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .google-btn:hover {
+            background: #3d3d3d;
+            border-color: #4d4d4d;
+        }
+
+        .privacy-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+
+        .privacy-text a {
+            color: #888;
+            text-decoration: underline;
+        }
+
+        /* Phone Mockup */
+        .phone-mockup-container {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            position: relative;
+            padding-bottom: 0;
+        }
+
+        .phone-frame {
+            width: 380px;
+            height: 1000px;
+            background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 50%, #0a0a0a 100%);
+            border-radius: 55px;
+            padding: 12px;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 0 0 1px rgba(255,255,255,0.05);
+            position: relative;
+            border: 1px solid #3a3a3a;
+            margin-top: 60px;
+        }
+
+        .phone-bezel {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 44px;
+            padding: 3px;
+            position: relative;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 41px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .phone-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+        }
+
+        .dynamic-island {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 35px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 10;
+        }
+
+        .phone-btn-left {
+            position: absolute;
+            left: -3px;
+            width: 4px;
+            background: linear-gradient(90deg, #1a1a1a, #2a2a2a);
+            border-radius: 2px 0 0 2px;
+        }
+
+        .phone-btn-right {
+            position: absolute;
+            right: -3px;
+            width: 4px;
+            background: linear-gradient(270deg, #1a1a1a, #2a2a2a);
+            border-radius: 0 2px 2px 0;
+        }
+
+        /* Animated Avatars on Phone */
+        .avatar-float {
+            position: absolute;
+            z-index: 5;
+        }
+
+        .avatar-bubble {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #fff;
+            white-space: nowrap;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .avatar-img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 3px solid #38bd62;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(56,189,98,0.4);
+        }
+
+        .avatar-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-story-ring {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            padding: 3px;
+            box-shadow: 0 4px 15px rgba(220,39,67,0.4);
+        }
+
+        .avatar-story-ring .avatar-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #0d1117;
+            overflow: hidden;
+        }
+
+        .avatar-distance {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 9px;
+            color: #fff;
+        }
+
+        .avatar-status {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #38bd62;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 10px;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        /* Sections */
+        .section {
+            padding: 100px 32px;
+        }
+
+        .section-dark {
+            background: #141414;
+        }
+
+        .section-content {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .section-grid.reverse {
+            direction: rtl;
+        }
+
+        .section-grid.reverse > * {
+            direction: ltr;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 400;
+            margin-bottom: 20px;
+            font-family: Georgia, serif;
+            line-height: 1.3;
+        }
+
+        .section-text {
+            color: #888;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .section-image {
+            border-radius: 24px;
+            overflow: hidden;
+        }
+
+        .section-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Interest Cards */
+        .interest-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .interest-card {
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 3/4;
+        }
+
+        .interest-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .interest-label {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: #232323;
+            border-radius: 24px;
+            overflow: hidden;
+        }
+
+        .feature-card img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+        }
+
+        .feature-card-content {
+            padding: 32px;
+        }
+
+        .feature-card h3 {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: #888;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* Testimonial */
+        .testimonial-quote {
+            font-size: 80px;
+            color: #38bd62;
+            line-height: 1;
+            margin-bottom: 20px;
+            font-family: Georgia, serif;
+        }
+
+        .testimonial-text {
+            font-size: 24px;
+            font-style: italic;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            font-family: Georgia, serif;
+        }
+
+        .testimonial-author {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .testimonial-author strong {
+            color: #fff;
+        }
+
+        /* Stats Banner */
+        .stats-section {
+            padding: 80px 32px;
+            background: #38bd62;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .stat-label {
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 120px 32px;
+            background: #1f1f1f;
+            text-align: center;
+        }
+
+        .cta-title {
+            font-size: 42px;
+            font-weight: 400;
+            margin-bottom: 20px;
+            font-family: Georgia, serif;
+            line-height: 1.2;
+        }
+
+        .cta-text {
+            color: #888;
+            font-size: 16px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .cta-btn {
+            padding: 16px 48px;
+            border-radius: 30px;
+            border: none;
+            background: #38bd62;
+            color: #fff;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .cta-btn:hover {
+            background: #2ea556;
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 60px 32px 40px;
+            background: #0d0d0d;
+            border-top: 1px solid #2d2d2d;
+        }
+
+        .footer-content {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .footer-desc {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 280px;
+        }
+
+        .footer-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-links span {
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .footer-links span:hover {
+            color: #fff;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #2d2d2d;
+            padding-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-copy {
+            color: #555;
+            font-size: 13px;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-social span {
+            color: #555;
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .footer-social span:hover {
+            color: #fff;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+            50% { opacity: 0.8; transform: translateX(-50%) scale(1.05); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes floatAvatar {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        @keyframes walkingAvatar {
+            0% { left: 10%; }
+            50% { left: 70%; }
+            100% { left: 10%; }
+        }
+
+        .float-1 { animation: floatAvatar 3s ease-in-out infinite; }
+        .float-2 { animation: floatAvatar 4s ease-in-out infinite 0.5s; }
+        .float-3 { animation: floatAvatar 3.5s ease-in-out infinite 1s; }
+        .float-4 { animation: floatAvatar 4.5s ease-in-out infinite 0.3s; }
+        .walking { animation: walkingAvatar 8s linear infinite; }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .phone-mockup-container,
+            .landing-nav,
+            .header-cta-btn,
+            .desktop-only {
+                display: none !important;
+            }
+
+            .hero-section {
+                grid-template-columns: 1fr;
+                min-height: auto;
+                padding: 60px 24px;
+            }
+
+            .hero-left {
+                text-align: center;
+                padding-left: 0;
+            }
+
+            .hero-title {
+                font-size: 36px;
+            }
+
+            .login-container {
+                max-width: 100%;
+            }
+
+            .section-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .section-grid.reverse {
+                direction: ltr;
+            }
+
+            .interest-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-wrapper">
+        <header class="landing-header">
+            <div class="landing-logo">NexMe</div>
+            
+            <nav class="landing-nav">
+                <a href="#caracteristicas">Características</a>
+                <a href="#como-funciona">Cómo funciona</a>
+                <a href="#privacidad">Privacidad</a>
+                <div class="lang-switcher" onclick="toggleLanguage()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                    <span id="lang-code">ES</span>
+                </div>
+            </nav>
+            
+            <button onclick="signInWithGoogle()" class="header-cta-btn">Probar NexMe</button>
+        </header>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero-wrapper">
+        <div class="hero-bg-pattern"></div>
+        
+        <section class="hero-section">
+            <!-- Left Column -->
+            <div class="hero-left">
+                <h1 class="hero-title">
+                    <em>¿Solos?</em><br/>
+                    Conectados.
+                </h1>
+                
+                <p class="hero-subtitle">La app para conocer personas cerca de ti</p>
+                
+                <div class="login-container">
+                    <button onclick="signInWithGoogle()" class="google-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continuar con Google
+                    </button>
+                    
+                    <p class="privacy-text">
+                        Al continuar, reconoces la <a href="#privacidad">Política de Privacidad</a> de NexMe.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Right Column - Phone Mockup -->
+            <div class="phone-mockup-container">
+                <div class="phone-frame">
+                    <!-- Side buttons -->
+                    <div class="phone-btn-left" style="top: 120px; height: 30px;"></div>
+                    <div class="phone-btn-left" style="top: 170px; height: 55px;"></div>
+                    <div class="phone-btn-left" style="top: 240px; height: 55px;"></div>
+                    <div class="phone-btn-right" style="top: 180px; height: 80px;"></div>
+                    
+                    <div class="phone-bezel">
+                        <div class="phone-screen">
+                            <!-- Screenshot background -->
+                            <img src="nexme-map-bg.jpg" alt="NexMe App">
+                            
+                            <!-- Dynamic Island -->
+                            <div class="dynamic-island"></div>
+                            
+                            <!-- Animated Avatars -->
+                            <div class="avatar-float float-1" style="top: 25%; left: 20%;">
+                                <div class="avatar-bubble">☕ ¿Café?</div>
+                                <div class="avatar-img">
+                                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="User">
+                                </div>
+                            </div>
+                            
+                            <div class="avatar-float float-2" style="top: 40%; right: 15%;">
+                                <div class="avatar-story-ring">
+                                    <div class="avatar-inner">
+                                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" style="width:100%;height:100%;object-fit:cover;">
+                                    </div>
+                                </div>
+                                <div class="avatar-distance">120m</div>
+                            </div>
+                            
+                            <div class="avatar-float walking" style="top: 55%;">
+                                <div class="avatar-status">🚶 Explorando</div>
+                                <div class="avatar-img" style="width: 42px; height: 42px;">
+                                    <img src="https://randomuser.me/api/portraits/men/67.jpg" alt="User">
+                                </div>
+                            </div>
+                            
+                            <div class="avatar-float float-3" style="top: 60%; left: 25%;">
+                                <div class="avatar-bubble" style="top: -30px; padding: 5px 10px; font-size: 10px;">💪 Gym?</div>
+                                <div class="avatar-img" style="width: 40px; height: 40px; border-width: 2px;">
+                                    <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="User">
+                                </div>
+                            </div>
+                            
+                            <div class="avatar-float float-4" style="top: 35%; left: 55%;">
+                                <div class="avatar-img" style="width: 35px; height: 35px; border-width: 2px;">
+                                    <img src="https://randomuser.me/api/portraits/men/22.jpg" alt="User">
+                                </div>
+                                <div class="avatar-distance" style="bottom: -15px; font-size: 8px; padding: 2px 6px;">50m</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Interest Cards Section -->
+    <section class="section section-dark desktop-only" id="caracteristicas">
+        <div class="section-content">
+            <div class="interest-grid">
+                <div class="interest-card">
+                    <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=600" alt="Coffee">
+                    <div class="interest-label">☕ Tomando café</div>
+                </div>
+                <div class="interest-card">
+                    <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600" alt="Gym">
+                    <div class="interest-label">💪 En el gym</div>
+                </div>
+                <div class="interest-card">
+                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600" alt="Studying">
+                    <div class="interest-label">📚 Estudiando</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature 1: Mapa en tiempo real -->
+    <section class="section desktop-only" id="como-funciona">
+        <div class="section-content">
+            <div class="section-grid">
+                <div class="section-image">
+                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800" alt="Real-time map">
+                </div>
+                <div>
+                    <h3 class="section-title">Mapa en tiempo real</h3>
+                    <p class="section-text">Visualiza a todas las personas cercanas en un mapa interactivo. Los avatares se mueven en tiempo real cuando las personas se desplazan.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature 2: Comparte lo que buscas -->
+    <section class="section section-dark desktop-only">
+        <div class="section-content">
+            <div class="section-grid reverse">
+                <div class="section-image">
+                    <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800" alt="Share thoughts">
+                </div>
+                <div>
+                    <h3 class="section-title">Comparte lo que buscas</h3>
+                    <p class="section-text">Publica un pensamiento y deja que otros sepan qué tienes en mente. "¿Café?", "Gym?", "¿Alguien para estudiar?" - conecta con personas que buscan lo mismo.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feature Cards: Stories + Chat -->
+    <section class="section desktop-only">
+        <div class="section-content">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800" alt="Stories">
+                    <div class="feature-card-content">
+                        <h3>📸 Stories de 12 horas</h3>
+                        <p>Comparte fotos que desaparecen automáticamente. Muestra tu día, dónde estás y qué haces.</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <img src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800" alt="Chat">
+                    <div class="feature-card-content">
+                        <h3>💬 Chat instantáneo</h3>
+                        <p>Envía mensajes directos a cualquier persona cercana. Sin necesidad de match previo.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonial -->
+    <section class="section section-dark desktop-only">
+        <div class="section-content">
+            <div class="section-grid">
+                <div>
+                    <div class="testimonial-quote">"</div>
+                    <p class="testimonial-text">Conocí a mi mejor amigo en un café gracias a NexMe. Él publicó "¿Alguien para charlar?" y yo estaba a 50 metros.</p>
+                    <p class="testimonial-author"><strong>María García</strong> · Panamá City</p>
+                </div>
+                <div class="section-image">
+                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800" alt="Friends">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Conexiones reales -->
+    <section class="section desktop-only">
+        <div class="section-content">
+            <div class="section-grid">
+                <div class="section-image">
+                    <img src="https://images.unsplash.com/photo-1543807535-eceef0bc6599?w=800" alt="Real connections">
+                </div>
+                <div>
+                    <h3 class="section-title">Conexiones reales, no virtuales</h3>
+                    <p class="section-text">NexMe está diseñado para que conozcas personas en el mundo real. Encuentra gente cercana y sal a conocerla hoy mismo.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mobile: Conexiones reales (simplified) -->
+    <section class="section section-dark" style="display: none;" id="mobile-feature">
+        <div class="section-content" style="text-align: center; max-width: 600px;">
+            <h3 class="section-title">Conexiones reales, no virtuales</h3>
+            <p class="section-text">NexMe está diseñado para que conozcas personas en el mundo real. Encuentra gente cercana y sal a conocerla hoy mismo.</p>
+        </div>
+    </section>
+
+    <!-- Stats Banner -->
+    <section class="stats-section">
+        <div class="stats-grid">
+            <div>
+                <div class="stat-number">5m</div>
+                <div class="stat-label">Radio mínimo</div>
+            </div>
+            <div>
+                <div class="stat-number">1km</div>
+                <div class="stat-label">Radio máximo</div>
+            </div>
+            <div>
+                <div class="stat-number">12h</div>
+                <div class="stat-label">Stories activas</div>
+            </div>
+            <div>
+                <div class="stat-number">∞</div>
+                <div class="stat-label">Conexiones posibles</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2 class="cta-title">Empieza a conectar</h2>
+        <p class="cta-text">Únete a miles de personas que ya están conociendo gente nueva en su zona.</p>
+        <button onclick="signInWithGoogle()" class="cta-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+                <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continuar con Google
+        </button>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="privacidad">
+        <div class="footer-content">
+            <div class="footer-grid">
+                <div>
+                    <div class="footer-brand">NexMe</div>
+                    <p class="footer-desc">La forma más auténtica de conocer personas cerca de ti. Sin algoritmos, sin juegos, solo conexiones reales.</p>
+                </div>
+                <div>
+                    <div class="footer-title">Producto</div>
+                    <div class="footer-links">
+                        <span>Cómo funciona</span>
+                        <span>Características</span>
+                        <span>Descargar App</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="footer-title">Compañía</div>
+                    <div class="footer-links">
+                        <span>Sobre nosotros</span>
+                        <span>Blog</span>
+                        <span>Empleos</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="footer-title">Legal</div>
+                    <div class="footer-links">
+                        <span>Términos</span>
+                        <span>Privacidad</span>
+                        <span>Cookies</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <span class="footer-copy">© 2024 NexMe. Todos los derechos reservados.</span>
+                <div class="footer-social">
+                    <span>📷</span>
+                    <span>🐦</span>
+                    <span>📘</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Show mobile feature section on mobile
+        if (window.innerWidth <= 768) {
+            document.getElementById('mobile-feature').style.display = 'block';
+        }
+
+        // Language toggle (placeholder)
+        function toggleLanguage() {
+            const langCode = document.getElementById('lang-code');
+            langCode.textContent = langCode.textContent === 'ES' ? 'EN' : 'ES';
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+
+        // PWA Install prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show install button if needed
+            const installBtn = document.querySelector('.install-btn');
+            if (installBtn) {
+                installBtn.style.display = 'flex';
+                installBtn.addEventListener('click', async () => {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('Install outcome:', outcome);
+                    deferredPrompt = null;
+                });
+            }
+        });
+    </script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase Authentication -->
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhcfX0M5oqX7rZ6WdCZaHfxHKcxySxQl8",
+            authDomain: "radar-social-5a61f.firebaseapp.com",
+            projectId: "radar-social-5a61f",
+            storageBucket: "radar-social-5a61f.firebasestorage.app",
+            messagingSenderId: "1010787643000",
+            appId: "1:1010787643000:web:e9dc6a1c175d875b90478d"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        
+        // Create loading overlay
+        function showLoadingOverlay() {
+            const overlay = document.createElement('div');
+            overlay.id = 'auth-loading-overlay';
+            overlay.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:20px;">
+                    <div style="width:50px;height:50px;border:3px solid rgba(255,255,255,0.2);border-top-color:#38bd62;border-radius:50%;animation:spin 1s linear infinite;"></div>
+                    <span style="color:#fff;font-size:14px;font-family:'Inter',sans-serif;">Conectando...</span>
+                </div>
+            `;
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:99999;';
+            document.body.appendChild(overlay);
+            
+            // Add spin animation
+            const style = document.createElement('style');
+            style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(style);
+        }
+        
+        function hideLoadingOverlay() {
+            const overlay = document.getElementById('auth-loading-overlay');
+            if (overlay) overlay.remove();
+        }
+        
+        // Sign in with Google
+        async function signInWithGoogle() {
+            showLoadingOverlay();
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                await auth.signInWithPopup(provider);
+                // After successful sign in, redirect to app
+                window.location.href = 'radar-social.html';
+            } catch (error) {
+                hideLoadingOverlay();
+                console.error('Error signing in:', error);
+                if (error.code !== 'auth/popup-closed-by-user') {
+                    alert('Error al iniciar sesión: ' + error.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
