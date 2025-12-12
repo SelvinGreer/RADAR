@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe</title>
-    <!-- v7.19.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.21.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2017,7 +2017,22 @@
                     legal: 'Legal',
                     terms: 'Términos',
                     footerDesc: 'La forma más auténtica de conocer personas cerca de ti. Sin algoritmos, sin juegos, solo conexiones reales.',
-                    allRights: 'Todos los derechos reservados.'
+                    allRights: 'Todos los derechos reservados.',
+                    // Secciones desktop
+                    drinkingCoffee: '☕ Tomando café',
+                    atGym: '💪 En el gym',
+                    studying: '📚 Estudiando',
+                    realtimeMap: 'Mapa en tiempo real',
+                    realtimeMapDesc: 'Visualiza a todas las personas cercanas en un mapa interactivo. Los avatares se mueven en tiempo real cuando las personas se desplazan.',
+                    shareWhat: 'Comparte lo que buscas',
+                    shareWhatDesc: 'Publica un pensamiento y deja que otros sepan qué tienes en mente. "¿Café?", "Gym?", "¿Alguien para estudiar?" - conecta con personas que buscan lo mismo.',
+                    stories12h: '📸 Stories de 12 horas',
+                    stories12hDesc: 'Comparte fotos que desaparecen automáticamente. Muestra tu día, dónde estás y qué haces.',
+                    instantChat: '💬 Chat instantáneo',
+                    instantChatDesc: 'Envía mensajes directos a cualquier persona cercana. Sin necesidad de match previo.',
+                    testimonialQuote: 'Conocí a mi mejor amigo en un café gracias a NexMe. Él publicó "¿Alguien para charlar?" y yo estaba a 50 metros.',
+                    testimonialAuthor: 'María García',
+                    testimonialLocation: 'Panamá City'
                 },
                 en: {
                     features: 'Features',
@@ -2049,7 +2064,22 @@
                     legal: 'Legal',
                     terms: 'Terms',
                     footerDesc: 'The most authentic way to meet people near you. No algorithms, no games, just real connections.',
-                    allRights: 'All rights reserved.'
+                    allRights: 'All rights reserved.',
+                    // Desktop sections
+                    drinkingCoffee: '☕ Having coffee',
+                    atGym: '💪 At the gym',
+                    studying: '📚 Studying',
+                    realtimeMap: 'Real-time map',
+                    realtimeMapDesc: 'See all nearby people on an interactive map. Avatars move in real-time as people move around.',
+                    shareWhat: 'Share what you\'re looking for',
+                    shareWhatDesc: 'Post a thought and let others know what\'s on your mind. "Coffee?", "Gym?", "Anyone to study?" - connect with people looking for the same.',
+                    stories12h: '📸 12-hour Stories',
+                    stories12hDesc: 'Share photos that disappear automatically. Show your day, where you are and what you\'re doing.',
+                    instantChat: '💬 Instant chat',
+                    instantChatDesc: 'Send direct messages to anyone nearby. No match required.',
+                    testimonialQuote: 'I met my best friend at a coffee shop thanks to NexMe. He posted "Anyone to chat?" and I was 50 meters away.',
+                    testimonialAuthor: 'María García',
+                    testimonialLocation: 'Panama City'
                 }
             };
             
@@ -2796,7 +2826,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.19.0 - Realistic iPhone with screenshot cropped by section');
+                console.log('🚀 NEXME v7.21.0 - Realistic iPhone with screenshot cropped by section');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3947,6 +3977,214 @@
                                                 }}
                                             />
                                             
+                                            {/* ===== ANIMATED AVATARS ===== */}
+                                            
+                                            {/* Avatar 1 - Con pensamiento "¿Café?" */}
+                                            <div className="avatar-float" style={{
+                                                position: 'absolute',
+                                                top: '25%',
+                                                left: '20%',
+                                                animation: 'floatAvatar 3s ease-in-out infinite'
+                                            }}>
+                                                <div style={{
+                                                    position: 'relative'
+                                                }}>
+                                                    {/* Thought bubble */}
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '-35px',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        background: 'rgba(0,0,0,0.8)',
+                                                        padding: '6px 12px',
+                                                        borderRadius: '12px',
+                                                        fontSize: '11px',
+                                                        color: '#fff',
+                                                        whiteSpace: 'nowrap',
+                                                        animation: 'pulse 2s ease-in-out infinite'
+                                                    }}>
+                                                        ☕ ¿Café?
+                                                    </div>
+                                                    {/* Avatar */}
+                                                    <div style={{
+                                                        width: '45px',
+                                                        height: '45px',
+                                                        borderRadius: '50%',
+                                                        border: '3px solid #38bd62',
+                                                        overflow: 'hidden',
+                                                        boxShadow: '0 4px 15px rgba(56,189,98,0.4)'
+                                                    }}>
+                                                        <img src="https://randomuser.me/api/portraits/women/44.jpg" style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover'
+                                                        }}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Avatar 2 - Con story ring */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '40%',
+                                                right: '15%',
+                                                animation: 'floatAvatar 4s ease-in-out infinite 0.5s'
+                                            }}>
+                                                <div style={{
+                                                    width: '50px',
+                                                    height: '50px',
+                                                    borderRadius: '50%',
+                                                    background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                                                    padding: '3px',
+                                                    boxShadow: '0 4px 15px rgba(220,39,67,0.4)'
+                                                }}>
+                                                    <div style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        borderRadius: '50%',
+                                                        border: '2px solid #0d1117',
+                                                        overflow: 'hidden'
+                                                    }}>
+                                                        <img src="https://randomuser.me/api/portraits/men/32.jpg" style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover'
+                                                        }}/>
+                                                    </div>
+                                                </div>
+                                                {/* Distance label */}
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    bottom: '-18px',
+                                                    left: '50%',
+                                                    transform: 'translateX(-50%)',
+                                                    background: 'rgba(0,0,0,0.7)',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '10px',
+                                                    fontSize: '9px',
+                                                    color: '#fff'
+                                                }}>
+                                                    120m
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Avatar 3 - Explorer moviéndose */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '55%',
+                                                animation: 'walkingAvatar 8s linear infinite'
+                                            }}>
+                                                <div style={{
+                                                    position: 'relative'
+                                                }}>
+                                                    {/* Status badge */}
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '-25px',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        background: '#38bd62',
+                                                        padding: '4px 10px',
+                                                        borderRadius: '10px',
+                                                        fontSize: '10px',
+                                                        color: '#fff',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        🚶 Explorando
+                                                    </div>
+                                                    {/* Avatar */}
+                                                    <div style={{
+                                                        width: '42px',
+                                                        height: '42px',
+                                                        borderRadius: '50%',
+                                                        border: '3px solid #38bd62',
+                                                        overflow: 'hidden',
+                                                        boxShadow: '0 4px 15px rgba(56,189,98,0.5)'
+                                                    }}>
+                                                        <img src="https://randomuser.me/api/portraits/men/67.jpg" style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover'
+                                                        }}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Avatar 4 - Con pensamiento */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '70%',
+                                                left: '25%',
+                                                animation: 'floatAvatar 3.5s ease-in-out infinite 1s'
+                                            }}>
+                                                <div style={{
+                                                    position: 'relative'
+                                                }}>
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '-30px',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        background: 'rgba(0,0,0,0.8)',
+                                                        padding: '5px 10px',
+                                                        borderRadius: '10px',
+                                                        fontSize: '10px',
+                                                        color: '#fff',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        💪 Gym?
+                                                    </div>
+                                                    <div style={{
+                                                        width: '40px',
+                                                        height: '40px',
+                                                        borderRadius: '50%',
+                                                        border: '2px solid #38bd62',
+                                                        overflow: 'hidden'
+                                                    }}>
+                                                        <img src="https://randomuser.me/api/portraits/women/68.jpg" style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover'
+                                                        }}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Avatar 5 - Pequeño con distancia */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '35%',
+                                                left: '55%',
+                                                animation: 'floatAvatar 4.5s ease-in-out infinite 0.3s'
+                                            }}>
+                                                <div style={{
+                                                    width: '35px',
+                                                    height: '35px',
+                                                    borderRadius: '50%',
+                                                    border: '2px solid #38bd62',
+                                                    overflow: 'hidden'
+                                                }}>
+                                                    <img src="https://randomuser.me/api/portraits/men/22.jpg" style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover'
+                                                    }}/>
+                                                </div>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    bottom: '-15px',
+                                                    left: '50%',
+                                                    transform: 'translateX(-50%)',
+                                                    background: 'rgba(0,0,0,0.7)',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '8px',
+                                                    fontSize: '8px',
+                                                    color: '#fff'
+                                                }}>
+                                                    50m
+                                                </div>
+                                            </div>
+                                            
                                             {/* Dynamic Island */}
                                             <div style={{
                                                 position: 'absolute',
@@ -4041,7 +4279,7 @@
                                         fontSize: '14px',
                                         fontWeight: '500'
                                     }}>
-                                        ☕ Tomando café
+                                        {t.drinkingCoffee}
                                     </div>
                                 </div>
                                 <div style={{
@@ -4066,7 +4304,7 @@
                                         fontSize: '14px',
                                         fontWeight: '500'
                                     }}>
-                                        💪 En el gym
+                                        {t.atGym}
                                     </div>
                                 </div>
                                 <div style={{
@@ -4091,7 +4329,7 @@
                                         fontSize: '14px',
                                         fontWeight: '500'
                                     }}>
-                                        📚 Estudiando
+                                        {t.studying}
                                     </div>
                                 </div>
                             </div>
@@ -4128,7 +4366,7 @@
                                         fontFamily: 'Georgia, serif',
                                         lineHeight: '1.3'
                                     }}>
-                                        Mapa en tiempo real
+                                        {t.realtimeMap}
                                     </h3>
                                     <p style={{
                                         color: '#888',
@@ -4136,7 +4374,7 @@
                                         lineHeight: '1.7',
                                         marginBottom: '24px'
                                     }}>
-                                        Visualiza a todas las personas cercanas en un mapa interactivo. Los avatares se mueven en tiempo real cuando las personas se desplazan.
+                                        {t.realtimeMapDesc}
                                     </p>
                                 </div>
                             </div>
@@ -4163,7 +4401,7 @@
                                         fontFamily: 'Georgia, serif',
                                         lineHeight: '1.3'
                                     }}>
-                                        Comparte lo que buscas
+                                        {t.shareWhat}
                                     </h3>
                                     <p style={{
                                         color: '#888',
@@ -4171,7 +4409,7 @@
                                         lineHeight: '1.7',
                                         marginBottom: '24px'
                                     }}>
-                                        Publica un pensamiento y deja que otros sepan qué tienes en mente. "¿Café?", "Gym?", "¿Alguien para estudiar?" - conecta con personas que buscan lo mismo.
+                                        {t.shareWhatDesc}
                                     </p>
                                 </div>
                                 <div style={{
@@ -4215,14 +4453,14 @@
                                             fontWeight: '500',
                                             marginBottom: '12px'
                                         }}>
-                                            📸 Stories de 12 horas
+                                            {t.stories12h}
                                         </h3>
                                         <p style={{
                                             color: '#888',
                                             fontSize: '15px',
                                             lineHeight: '1.6'
                                         }}>
-                                            Comparte fotos que desaparecen automáticamente. Muestra tu día, dónde estás y qué haces.
+                                            {t.stories12hDesc}
                                         </p>
                                     </div>
                                 </div>
@@ -4242,14 +4480,14 @@
                                             fontWeight: '500',
                                             marginBottom: '12px'
                                         }}>
-                                            💬 Chat instantáneo
+                                            {t.instantChat}
                                         </h3>
                                         <p style={{
                                             color: '#888',
                                             fontSize: '15px',
                                             lineHeight: '1.6'
                                         }}>
-                                            Envía mensajes directos a cualquier persona cercana. Sin necesidad de match previo.
+                                            {t.instantChatDesc}
                                         </p>
                                     </div>
                                 </div>
@@ -4286,10 +4524,10 @@
                                         marginBottom: '24px',
                                         fontFamily: 'Georgia, serif'
                                     }}>
-                                        Conocí a mi mejor amigo en un café gracias a NexMe. Él publicó "¿Alguien para charlar?" y yo estaba a 50 metros.
+                                        {t.testimonialQuote}
                                     </p>
                                     <p style={{ color: '#888', fontSize: '14px' }}>
-                                        <strong style={{ color: '#fff' }}>María García</strong> · Panamá City
+                                        <strong style={{ color: '#fff' }}>{t.testimonialAuthor}</strong> · {t.testimonialLocation}
                                     </p>
                                 </div>
                                 <div style={{
@@ -4537,6 +4775,19 @@
                                 0%, 100% { transform: scale(1); }
                                 50% { transform: scale(1.05); }
                             }
+                            @keyframes floatAvatar {
+                                0%, 100% { transform: translateY(0px); }
+                                50% { transform: translateY(-6px); }
+                            }
+                            @keyframes walkingAvatar {
+                                0% { left: 10%; }
+                                50% { left: 70%; }
+                                100% { left: 10%; }
+                            }
+                            @keyframes pulseBubble {
+                                0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+                                50% { opacity: 0.8; transform: translateX(-50%) scale(1.05); }
+                            }
                             .hero-avatar-1 { animation: breathe 3s ease-in-out infinite; }
                             .hero-avatar-2 { animation: float 4s ease-in-out infinite 0.5s; }
                             .hero-avatar-3 { animation: floatSide 5s ease-in-out infinite 1s; }
@@ -4705,7 +4956,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.19.0</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.21.0</span>
                             </div>
                         </div>
                     </div>
