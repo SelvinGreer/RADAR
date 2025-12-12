@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe</title>
-    <!-- v7.17.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.17.1 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1876,6 +1876,34 @@
             scroll-behavior: smooth;
         }
 
+        /* ========== MOBILE - PASO 1: Básico ========== */
+        @media (max-width: 768px) {
+            /* Ocultar celular mockup */
+            .phone-mockup-container {
+                display: none !important;
+            }
+            
+            /* Ocultar nav y botón Probar */
+            .landing-nav {
+                display: none !important;
+            }
+            .header-cta-btn {
+                display: none !important;
+            }
+            
+            /* Hero: una sola columna centrada */
+            .hero-section {
+                grid-template-columns: 1fr !important;
+            }
+            .hero-left-column {
+                text-align: center !important;
+                padding: 40px 24px !important;
+            }
+            .hero-title {
+                font-size: 36px !important;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -2658,7 +2686,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.17.0 - Realistic iPhone with screenshot cropped by section');
+                console.log('🚀 NEXME v7.17.1 - Realistic iPhone with screenshot cropped by section');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3651,7 +3679,7 @@
                             background: '#1a1a1a'
                         }}>
                             {/* Hero Section - Phone cropped at bottom */}
-                            <section style={{
+                            <section className="hero-section" style={{
                                 display: 'grid',
                                 gridTemplateColumns: '1fr 1fr',
                                 height: '100%',
@@ -4526,7 +4554,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.17.0</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.17.1</span>
                             </div>
                         </div>
                     </div>
