@@ -16,6 +16,10 @@
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -199,6 +203,7 @@
             background: #2d2d2d;
             color: #fff;
             font-size: 14px;
+            font-family: 'Inter', sans-serif;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -577,6 +582,7 @@
             background: #38bd62;
             color: #fff;
             font-size: 16px;
+            font-family: 'Inter', sans-serif;
             font-weight: 600;
             cursor: pointer;
             display: inline-flex;
@@ -805,7 +811,7 @@
                 <p class="hero-subtitle">La app para conocer personas cerca de ti</p>
                 
                 <div class="login-container">
-                    <a href="radar-social.html" class="google-btn">
+                    <button onclick="signInWithGoogle()" class="google-btn">
                         <svg width="18" height="18" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -813,7 +819,7 @@
                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                         </svg>
                         Continuar con Google
-                    </a>
+                    </button>
                     
                     <p class="privacy-text">
                         Al continuar, reconoces la <a href="#privacidad">Política de Privacidad</a> de NexMe.
@@ -862,7 +868,7 @@
                                 </div>
                             </div>
                             
-                            <div class="avatar-float float-3" style="top: 70%; left: 25%;">
+                            <div class="avatar-float float-3" style="top: 60%; left: 25%;">
                                 <div class="avatar-bubble" style="top: -30px; padding: 5px 10px; font-size: 10px;">💪 Gym?</div>
                                 <div class="avatar-img" style="width: 40px; height: 40px; border-width: 2px;">
                                     <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="User">
@@ -1019,7 +1025,7 @@
     <section class="cta-section">
         <h2 class="cta-title">Empieza a conectar</h2>
         <p class="cta-text">Únete a miles de personas que ya están conociendo gente nueva en su zona.</p>
-        <a href="radar-social.html" class="cta-btn">
+        <button onclick="signInWithGoogle()" class="cta-btn">
             <svg width="20" height="20" viewBox="0 0 24 24">
                 <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -1027,7 +1033,7 @@
                 <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
             Continuar con Google
-        </a>
+        </button>
     </section>
 
     <!-- Footer -->
@@ -1104,6 +1110,45 @@
                 });
             }
         });
+    </script>
+    
+    <!-- Firebase Authentication -->
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHmACz3gdXrXKqU7Wfv6QaCE5z6oADnMA",
+            authDomain: "radar-social-b8c50.firebaseapp.com",
+            projectId: "radar-social-b8c50",
+            storageBucket: "radar-social-b8c50.firebasestorage.app",
+            messagingSenderId: "903725953518",
+            appId: "1:903725953518:web:f97c87d837d39f9c9c3a53"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        
+        // Check if already logged in
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in, redirect to app
+                window.location.href = 'radar-social.html';
+            }
+        });
+        
+        // Sign in with Google
+        async function signInWithGoogle() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                await auth.signInWithPopup(provider);
+                // After successful sign in, redirect to app
+                window.location.href = 'radar-social.html';
+            } catch (error) {
+                console.error('Error signing in:', error);
+                alert('Error al iniciar sesión: ' + error.message);
+            }
+        }
     </script>
 </body>
 </html>
