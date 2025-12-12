@@ -1,11 +1,11 @@
 const CACHE_NAME = 'nexme-v1';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/radar-social.html',
-    '/manifest.json',
-    '/icon-192.png',
-    '/icon-512.png'
+    './',
+    './index.html',
+    './radar-social.html',
+    './manifest.json',
+    './icon-192.png',
+    './icon-512.png'
 ];
 
 // Install event
