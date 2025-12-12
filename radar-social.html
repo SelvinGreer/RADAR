@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.6.4 Build: 2025-12-12 | FIX: Logout redirects to landing page -->
+    <!-- v7.6.5 Build: 2025-12-12 | FIX: Emoji reactions now work on avatar -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1959,7 +1959,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.6.4 - Logout clears all states properly');
+                console.log('🚀 RADAR SOCIAL v7.6.5 - Emoji reactions fixed');
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
                         const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
@@ -2195,13 +2195,13 @@
                 const currentUserId = 'current_user';
                 activeMarkerIds.add(currentUserId);
                 const existingCurrent = markersRef.current[currentUserId];
-                const currentChanged = existingCurrent && (existingCurrent.hasStory !== currentUser.hasStory || existingCurrent.thought !== (currentUser.thought || ''));
+                const currentChanged = existingCurrent && (existingCurrent.hasStory !== currentUser.hasStory || existingCurrent.thought !== (currentUser.thought || '') || existingCurrent.emoji !== (currentEmoji || ''));
                 if (existingCurrent && !currentChanged) {
                     existingCurrent.marker.updatePosition(currentUser.latitude, currentUser.longitude);
                 } else {
                     if (existingCurrent) removeMarker(currentUserId);
                     const marker = createUserMarker(currentUser, googleMap, 48, true, true, -1);
-                    markersRef.current[currentUserId] = { marker, type: 'current', hasStory: currentUser.hasStory, thought: currentUser.thought || '' };
+                    markersRef.current[currentUserId] = { marker, type: 'current', hasStory: currentUser.hasStory, thought: currentUser.thought || '', emoji: currentEmoji || '' };
                 }
                 
                 orbitUsers.forEach((user, index) => {
@@ -2209,13 +2209,13 @@
                     activeMarkerIds.add(user.id);
                     const existing = markersRef.current[user.id];
                     const viewedChanged = existing && existing.viewed !== !!viewedStories[user.id];
-                    const userChanged = existing && (existing.hasStory !== user.hasStory || existing.thought !== (user.thought || '') || viewedChanged);
+                    const userChanged = existing && (existing.hasStory !== user.hasStory || existing.thought !== (user.thought || '') || viewedChanged || existing.emoji !== (user.currentEmoji || ''));
                     if (existing && existing.type === 'orbital' && !userChanged) {
                         existing.marker.updatePosition(orbitalPos.lat, orbitalPos.lng);
                     } else {
                         if (existing) removeMarker(user.id);
                         const marker = createUserMarker({ ...user, displayLat: orbitalPos.lat, displayLng: orbitalPos.lng }, googleMap, 38, false, true, index);
-                        markersRef.current[user.id] = { marker, type: 'orbital', hasStory: user.hasStory, thought: user.thought || '', viewed: !!viewedStories[user.id] };
+                        markersRef.current[user.id] = { marker, type: 'orbital', hasStory: user.hasStory, thought: user.thought || '', viewed: !!viewedStories[user.id], emoji: user.currentEmoji || '' };
                     }
                 });
                 
@@ -2223,13 +2223,13 @@
                     activeMarkerIds.add(user.id);
                     const existing = markersRef.current[user.id];
                     const viewedChanged = existing && existing.viewed !== !!viewedStories[user.id];
-                    const userChanged = existing && (existing.hasStory !== user.hasStory || existing.thought !== (user.thought || '') || viewedChanged);
+                    const userChanged = existing && (existing.hasStory !== user.hasStory || existing.thought !== (user.thought || '') || viewedChanged || existing.emoji !== (user.currentEmoji || ''));
                     if (existing && existing.type === 'explorer' && !userChanged) {
                         existing.marker.updatePosition(user.latitude, user.longitude);
                     } else {
                         if (existing) removeMarker(user.id);
                         const marker = createUserMarker(user, googleMap, 22, false, false, -1);
-                        markersRef.current[user.id] = { marker, type: 'explorer', hasStory: user.hasStory, thought: user.thought || '', viewed: !!viewedStories[user.id] };
+                        markersRef.current[user.id] = { marker, type: 'explorer', hasStory: user.hasStory, thought: user.thought || '', viewed: !!viewedStories[user.id], emoji: user.currentEmoji || '' };
                     }
                 });
                 
@@ -2487,7 +2487,7 @@
                             <div className="sidebar-item" onClick={() => { setShowStoryUpload(true); setShowSidebar(false); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Subir Historia</span></div>
                             <div className="sidebar-item" onClick={() => { setShowPreferences(true); setShowSidebar(false); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Mis Preferencias</span></div>
                             <div className="sidebar-item" style={{ marginTop: 'auto', color: '#f87171' }} onClick={handleLogout}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Cerrar Sesión</span></div>
-                            <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}><span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.6.4</span></div>
+                            <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}><span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.6.5</span></div>
                         </div>
                     </div>
 
