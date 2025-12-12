@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe</title>
-    <!-- v7.23.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.27.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1876,6 +1876,35 @@
             scroll-behavior: smooth;
         }
 
+        /* ========== LANDING PAGE BASE STYLES ========== */
+        .interest-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .landing-section-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+        .feature-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            text-align: center;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+        }
+
         /* ========== LANDING PAGE MOBILE RESPONSIVE ========== */
         @media (max-width: 900px) {
             /* Hide phone mockup on mobile */
@@ -1893,55 +1922,119 @@
                 display: none !important;
             }
             
+            /* Center logo on mobile */
+            .landing-header {
+                justify-content: center !important;
+            }
+            .landing-logo {
+                padding-left: 0 !important;
+                text-align: center !important;
+            }
+            
             /* Adjust hero height */
             .hero-wrapper {
                 height: auto !important;
-                min-height: 70vh !important;
-                padding-bottom: 40px !important;
+                min-height: auto !important;
+                padding-bottom: 60px !important;
             }
             
             /* Center hero content */
             .hero-left-column {
                 text-align: center !important;
-                padding: 40px 20px !important;
-                padding-left: 20px !important;
+                padding: 60px 24px !important;
+                padding-left: 24px !important;
             }
             
             /* Smaller title on mobile */
             .hero-title {
-                font-size: 36px !important;
+                font-size: 32px !important;
+                line-height: 1.2 !important;
             }
             
-            /* Interest cards horizontal scroll */
+            /* Interest cards - ONE column full width */
             .interest-cards-grid {
                 display: flex !important;
-                overflow-x: auto !important;
-                gap: 16px !important;
-                padding-bottom: 16px !important;
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
+                flex-direction: column !important;
+                gap: 20px !important;
             }
             .interest-cards-grid > div {
-                flex: 0 0 200px !important;
-                scroll-snap-align: start;
+                width: 100% !important;
+                aspect-ratio: 4/3 !important;
             }
             
-            /* Landing page grids to single column */
-            .landing-grid-2col {
-                grid-template-columns: 1fr !important;
-            }
-            .landing-grid-3col {
-                grid-template-columns: 1fr !important;
-            }
-            .landing-grid-4col {
-                grid-template-columns: repeat(2, 1fr) !important;
-            }
-            
-            /* Footer columns */
-            .footer-grid {
-                grid-template-columns: 1fr !important;
+            /* All 2-column grids to 1 column */
+            .landing-section-grid {
+                display: flex !important;
+                flex-direction: column !important;
                 gap: 30px !important;
-                text-align: center;
+            }
+            
+            /* Images in sections - full width, rounded */
+            .landing-section-grid img {
+                width: 100% !important;
+                border-radius: 20px !important;
+                max-height: 250px !important;
+                object-fit: cover !important;
+            }
+            
+            /* Text sections - centered */
+            .landing-section-grid > div {
+                text-align: center !important;
+            }
+            
+            /* Feature cards - 1 column */
+            .feature-cards-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 24px !important;
+            }
+            
+            /* Stats grid - 2x2 */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 30px !important;
+            }
+            
+            /* Footer - 1 column centered */
+            .footer-grid {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 40px !important;
+                text-align: center !important;
+            }
+            
+            /* Section padding */
+            section {
+                padding: 50px 20px !important;
+            }
+            
+            /* Headings smaller */
+            h2 {
+                font-size: 26px !important;
+            }
+            h3 {
+                font-size: 20px !important;
+            }
+            
+            /* Paragraphs */
+            p {
+                font-size: 14px !important;
+                line-height: 1.6 !important;
+            }
+            
+            /* Buttons full width */
+            .landing-section-grid button {
+                width: 100% !important;
+                max-width: 280px !important;
+                margin: 0 auto !important;
+            }
+            
+            /* Testimonial quote smaller */
+            .testimonial-quote {
+                font-size: 18px !important;
+            }
+            .testimonial-mark {
+                font-size: 50px !important;
             }
         }
     </style>
@@ -2726,7 +2819,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.23.0 - Realistic iPhone with screenshot cropped by section');
+                console.log('🚀 NEXME v7.27.0 - Realistic iPhone with screenshot cropped by section');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3662,7 +3755,7 @@
                             borderBottom: '1px solid #2d2d2d',
                             zIndex: 100
                         }}>
-                            <header style={{
+                            <header className="landing-header" style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
@@ -3672,7 +3765,7 @@
                                 width: '100%',
                                 boxSizing: 'border-box'
                             }}>
-                                <div style={{ fontSize: '20px', fontWeight: '600', color: '#fff', paddingLeft: '40px' }}>
+                                <div className="landing-logo" style={{ fontSize: '20px', fontWeight: '600', color: '#fff', paddingLeft: '40px' }}>
                                     NexMe
                                 </div>
                             <nav className="landing-nav" style={{ display: 'flex', gap: '32px', fontSize: '14px', color: '#a0a0a0', alignItems: 'center' }}>
@@ -3920,10 +4013,7 @@
                         }}>
                             <div className="interest-cards-grid" style={{ 
                                 maxWidth: '1100px', 
-                                margin: '0 auto',
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(3, 1fr)',
-                                gap: '24px'
+                                margin: '0 auto'
                             }}>
                                 <div style={{
                                     borderRadius: '24px',
@@ -4003,373 +4093,244 @@
                             </div>
                         </section>
 
-                        {/* Section 3: Feature 1 - Image Left, Text Right */}
+                        {/* Section 3: Features - Clean text only */}
                         <section id="como-funciona" style={{
-                            padding: '100px 32px',
+                            padding: '80px 24px',
                             background: '#141414'
                         }}>
-                            <div style={{ 
-                                maxWidth: '1100px', 
-                                margin: '0 auto',
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                gap: '80px',
-                                alignItems: 'center'
-                            }}>
-                                <div style={{
-                                    borderRadius: '24px',
-                                    overflow: 'hidden'
+                            <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+                                <h2 style={{
+                                    fontSize: '28px',
+                                    fontWeight: '400',
+                                    marginBottom: '16px',
+                                    fontFamily: 'Georgia, serif',
+                                    color: '#fff'
                                 }}>
-                                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800" style={{
-                                        width: '100%',
-                                        height: 'auto',
-                                        display: 'block'
-                                    }}/>
-                                </div>
-                                <div>
-                                    <h3 style={{
-                                        fontSize: '36px',
-                                        fontWeight: '400',
-                                        marginBottom: '20px',
-                                        fontFamily: 'Georgia, serif',
-                                        lineHeight: '1.3'
-                                    }}>
-                                        Mapa en tiempo real
-                                    </h3>
-                                    <p style={{
-                                        color: '#888',
-                                        fontSize: '16px',
-                                        lineHeight: '1.7',
-                                        marginBottom: '24px'
-                                    }}>
-                                        Visualiza a todas las personas cercanas en un mapa interactivo. Los avatares se mueven en tiempo real cuando las personas se desplazan, para que siempre sepas quién está realmente cerca.
-                                    </p>
-                                    <button onClick={handleGoogleSignIn} style={{
-                                        padding: '14px 32px',
-                                        borderRadius: '30px',
-                                        border: '2px solid #38bd62',
-                                        background: 'transparent',
-                                        color: '#38bd62',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer'
-                                    }}>
-                                        Explorar mapa
-                                    </button>
-                                </div>
-                            </div>
-                        </section>
-
-                        {/* Section 4: Feature 2 - Text Left, Image Right */}
-                        <section style={{
-                            padding: '100px 32px',
-                            background: '#1f1f1f'
-                        }}>
-                            <div style={{ 
-                                maxWidth: '1100px', 
-                                margin: '0 auto',
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                gap: '80px',
-                                alignItems: 'center'
-                            }}>
-                                <div>
-                                    <h3 style={{
-                                        fontSize: '36px',
-                                        fontWeight: '400',
-                                        marginBottom: '20px',
-                                        fontFamily: 'Georgia, serif',
-                                        lineHeight: '1.3'
-                                    }}>
-                                        Comparte lo que buscas
-                                    </h3>
-                                    <p style={{
-                                        color: '#888',
-                                        fontSize: '16px',
-                                        lineHeight: '1.7',
-                                        marginBottom: '24px'
-                                    }}>
-                                        Publica un pensamiento y deja que otros sepan qué tienes en mente. "¿Café?", "Gym?", "¿Alguien para estudiar?" - conecta con personas que buscan lo mismo que tú.
-                                    </p>
-                                    <button onClick={handleGoogleSignIn} style={{
-                                        padding: '14px 32px',
-                                        borderRadius: '30px',
-                                        border: '2px solid #38bd62',
-                                        background: 'transparent',
-                                        color: '#38bd62',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer'
-                                    }}>
-                                        Publicar pensamiento
-                                    </button>
-                                </div>
-                                <div style={{
-                                    borderRadius: '24px',
-                                    overflow: 'hidden'
+                                    ¿Cómo funciona?
+                                </h2>
+                                <p style={{ color: '#888', fontSize: '15px', marginBottom: '50px' }}>
+                                    Tres pasos para conectar con personas cerca de ti
+                                </p>
+                                
+                                {/* Features Grid */}
+                                <div style={{ 
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                                    gap: '24px',
+                                    textAlign: 'center'
                                 }}>
-                                    <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800" style={{
-                                        width: '100%',
-                                        height: 'auto',
-                                        display: 'block'
-                                    }}/>
-                                </div>
-                            </div>
-                        </section>
-
-                        {/* Section 5: Two Feature Cards Side by Side */}
-                        <section style={{
-                            padding: '100px 32px',
-                            background: '#141414'
-                        }}>
-                            <div style={{ 
-                                maxWidth: '1100px', 
-                                margin: '0 auto',
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                gap: '32px'
-                            }}>
-                                {/* Card 1: Stories */}
-                                <div style={{
-                                    background: '#232323',
-                                    borderRadius: '24px',
-                                    overflow: 'hidden'
-                                }}>
-                                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800" style={{
-                                        width: '100%',
-                                        height: '280px',
-                                        objectFit: 'cover'
-                                    }}/>
-                                    <div style={{ padding: '32px' }}>
-                                        <h3 style={{
-                                            fontSize: '24px',
-                                            fontWeight: '500',
-                                            marginBottom: '12px'
-                                        }}>
-                                            📸 Stories de 12 horas
+                                    {/* Feature 1 */}
+                                    <div style={{ padding: '24px 16px' }}>
+                                        <div style={{ fontSize: '36px', marginBottom: '14px' }}>📍</div>
+                                        <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px', color: '#fff' }}>
+                                            Mapa en tiempo real
                                         </h3>
-                                        <p style={{
-                                            color: '#888',
-                                            fontSize: '15px',
-                                            lineHeight: '1.6'
-                                        }}>
-                                            Comparte fotos que desaparecen automáticamente. Muestra tu día, dónde estás y qué haces. Los usuarios con stories tienen un anillo colorido que llama la atención.
+                                        <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5' }}>
+                                            Ve quién está cerca en un mapa con avatares que se mueven.
                                         </p>
                                     </div>
-                                </div>
-
-                                {/* Card 2: Chat */}
-                                <div style={{
-                                    background: '#232323',
-                                    borderRadius: '24px',
-                                    overflow: 'hidden'
-                                }}>
-                                    <img src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800" style={{
-                                        width: '100%',
-                                        height: '280px',
-                                        objectFit: 'cover'
-                                    }}/>
-                                    <div style={{ padding: '32px' }}>
-                                        <h3 style={{
-                                            fontSize: '24px',
-                                            fontWeight: '500',
-                                            marginBottom: '12px'
-                                        }}>
-                                            💬 Chat instantáneo
+                                    
+                                    {/* Feature 2 */}
+                                    <div style={{ padding: '24px 16px' }}>
+                                        <div style={{ fontSize: '36px', marginBottom: '14px' }}>💭</div>
+                                        <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px', color: '#fff' }}>
+                                            Comparte pensamientos
                                         </h3>
-                                        <p style={{
-                                            color: '#888',
-                                            fontSize: '15px',
-                                            lineHeight: '1.6'
-                                        }}>
-                                            Envía mensajes directos a cualquier persona cercana. Sin necesidad de match previo. Recibe notificaciones en tiempo real y mantén conversaciones fluidas.
+                                        <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5' }}>
+                                            Publica qué buscas para que otros te encuentren.
+                                        </p>
+                                    </div>
+                                    
+                                    {/* Feature 3 */}
+                                    <div style={{ padding: '24px 16px' }}>
+                                        <div style={{ fontSize: '36px', marginBottom: '14px' }}>💬</div>
+                                        <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px', color: '#fff' }}>
+                                            Chat instantáneo
+                                        </h3>
+                                        <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5' }}>
+                                            Mensajes directos sin necesidad de match.
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* Section 6: Testimonial Quote */}
+                        {/* Section 4: More Features - Cards */}
                         <section style={{
-                            padding: '100px 32px',
+                            padding: '60px 24px',
                             background: '#1f1f1f'
                         }}>
-                            <div style={{ 
-                                maxWidth: '1100px', 
-                                margin: '0 auto',
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                gap: '60px',
-                                alignItems: 'center'
-                            }}>
-                                <div>
+                            <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+                                <div style={{ 
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '16px'
+                                }}>
+                                    {/* Card 1 */}
                                     <div style={{
-                                        fontSize: '80px',
-                                        color: '#38bd62',
-                                        lineHeight: '1',
-                                        marginBottom: '20px',
-                                        fontFamily: 'Georgia, serif'
+                                        background: '#2a2a2a',
+                                        borderRadius: '16px',
+                                        padding: '24px',
+                                        display: 'flex',
+                                        alignItems: 'flex-start',
+                                        gap: '16px'
                                     }}>
-                                        "
+                                        <div style={{ fontSize: '24px' }}>📸</div>
+                                        <div>
+                                            <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '6px', color: '#fff' }}>
+                                                Stories de 12 horas
+                                            </h3>
+                                            <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5', margin: 0 }}>
+                                                Comparte fotos que desaparecen automáticamente.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <p style={{
-                                        fontSize: '24px',
-                                        fontStyle: 'italic',
-                                        lineHeight: '1.6',
-                                        marginBottom: '24px',
-                                        fontFamily: 'Georgia, serif'
+                                    
+                                    {/* Card 2 */}
+                                    <div style={{
+                                        background: '#2a2a2a',
+                                        borderRadius: '16px',
+                                        padding: '24px',
+                                        display: 'flex',
+                                        alignItems: 'flex-start',
+                                        gap: '16px'
                                     }}>
-                                        Conocí a mi mejor amigo en un café gracias a NexMe. Él publicó "¿Alguien para charlar?" y yo estaba a 50 metros. Ahora somos inseparables.
-                                    </p>
-                                    <p style={{ color: '#888', fontSize: '14px' }}>
-                                        <strong style={{ color: '#fff' }}>María García</strong> · Panamá City
-                                    </p>
-                                </div>
-                                <div style={{
-                                    borderRadius: '24px',
-                                    overflow: 'hidden'
-                                }}>
-                                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800" style={{
-                                        width: '100%',
-                                        height: 'auto',
-                                        display: 'block'
-                                    }}/>
+                                        <div style={{ fontSize: '24px' }}>🔒</div>
+                                        <div>
+                                            <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '6px', color: '#fff' }}>
+                                                Privacidad total
+                                            </h3>
+                                            <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5', margin: 0 }}>
+                                                Solo eres visible cuando la app está abierta.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Card 3 */}
+                                    <div style={{
+                                        background: '#2a2a2a',
+                                        borderRadius: '16px',
+                                        padding: '24px',
+                                        display: 'flex',
+                                        alignItems: 'flex-start',
+                                        gap: '16px'
+                                    }}>
+                                        <div style={{ fontSize: '24px' }}>🎯</div>
+                                        <div>
+                                            <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '6px', color: '#fff' }}>
+                                                Radio ajustable
+                                            </h3>
+                                            <p style={{ color: '#888', fontSize: '13px', lineHeight: '1.5', margin: 0 }}>
+                                                De 5 metros a 1 kilómetro. Tú decides el alcance.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* Section 7: Meet in Person CTA */}
+                        {/* Section 5: Testimonial */}
                         <section style={{
-                            padding: '100px 32px',
-                            background: '#141414'
+                            padding: '60px 24px',
+                            background: '#141414',
+                            textAlign: 'center'
                         }}>
-                            <div style={{ 
-                                maxWidth: '1100px', 
-                                margin: '0 auto',
-                                display: 'grid',
-                                gridTemplateColumns: '1.2fr 1fr',
-                                gap: '60px',
-                                alignItems: 'center'
-                            }}>
+                            <div style={{ maxWidth: '500px', margin: '0 auto' }}>
                                 <div style={{
-                                    borderRadius: '24px',
-                                    overflow: 'hidden'
+                                    fontSize: '40px',
+                                    color: '#38bd62',
+                                    lineHeight: '1',
+                                    marginBottom: '16px'
                                 }}>
-                                    <img src="https://images.unsplash.com/photo-1543807535-eceef0bc6599?w=800" style={{
-                                        width: '100%',
-                                        height: 'auto',
-                                        display: 'block'
-                                    }}/>
+                                    "
                                 </div>
-                                <div>
-                                    <h3 style={{
-                                        fontSize: '36px',
-                                        fontWeight: '400',
-                                        marginBottom: '20px',
-                                        fontFamily: 'Georgia, serif',
-                                        lineHeight: '1.3'
-                                    }}>
-                                        Conexiones reales, no virtuales
-                                    </h3>
-                                    <p style={{
-                                        color: '#888',
-                                        fontSize: '16px',
-                                        lineHeight: '1.7',
-                                        marginBottom: '24px'
-                                    }}>
-                                        NexMe está diseñado para que conozcas personas en la vida real. Nada de chatear por semanas sin verse. Descubre quién está cerca y encuéntrense hoy mismo.
-                                    </p>
-                                    <button onClick={handleGoogleSignIn} style={{
-                                        padding: '16px 40px',
-                                        borderRadius: '30px',
-                                        border: 'none',
-                                        background: '#38bd62',
-                                        color: '#fff',
-                                        fontSize: '16px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer'
-                                    }}>
-                                        Conocer gente ahora
-                                    </button>
-                                </div>
+                                <p style={{
+                                    fontSize: '17px',
+                                    fontStyle: 'italic',
+                                    lineHeight: '1.6',
+                                    marginBottom: '20px',
+                                    fontFamily: 'Georgia, serif',
+                                    color: '#e0e0e0'
+                                }}>
+                                    Conocí a mi mejor amigo en un café gracias a NexMe. Él publicó "¿Alguien para charlar?" y yo estaba a dos mesas.
+                                </p>
+                                <p style={{ color: '#666', fontSize: '13px' }}>
+                                    — María G., Ciudad de Panamá
+                                </p>
                             </div>
                         </section>
 
-                        {/* Section 8: Stats Banner */}
+                        {/* Section 6: Stats */}
                         <section style={{
-                            padding: '80px 32px',
+                            padding: '50px 24px',
                             background: '#38bd62'
                         }}>
                             <div style={{ 
-                                maxWidth: '1000px', 
+                                maxWidth: '500px', 
                                 margin: '0 auto',
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(4, 1fr)',
-                                gap: '40px',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: '24px',
                                 textAlign: 'center'
                             }}>
                                 <div>
-                                    <div style={{ fontSize: '48px', fontWeight: '700', color: '#fff' }}>5m</div>
-                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Radio mínimo</div>
+                                    <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>5m - 1km</div>
+                                    <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px' }}>Radio</div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '48px', fontWeight: '700', color: '#fff' }}>1km</div>
-                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Radio máximo</div>
+                                    <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>12h</div>
+                                    <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px' }}>Stories</div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '48px', fontWeight: '700', color: '#fff' }}>12h</div>
-                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Stories activas</div>
+                                    <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>100%</div>
+                                    <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px' }}>Gratis</div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '48px', fontWeight: '700', color: '#fff' }}>∞</div>
-                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Conexiones</div>
+                                    <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>∞</div>
+                                    <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px' }}>Conexiones</div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* Section 9: Final CTA - Download */}
+                        {/* Section 7: Final CTA */}
                         <section style={{
-                            padding: '120px 32px',
-                            background: '#1f1f1f',
+                            padding: '70px 24px',
+                            background: '#141414',
                             textAlign: 'center'
                         }}>
-                            <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+                            <div style={{ maxWidth: '400px', margin: '0 auto' }}>
                                 <h2 style={{
-                                    fontSize: '42px',
+                                    fontSize: '24px',
                                     fontWeight: '400',
-                                    marginBottom: '20px',
-                                    fontFamily: 'Georgia, serif'
+                                    marginBottom: '12px',
+                                    fontFamily: 'Georgia, serif',
+                                    color: '#fff'
                                 }}>
                                     Empieza a conectar hoy
                                 </h2>
-                                <p style={{
-                                    color: '#888',
-                                    fontSize: '16px',
-                                    marginBottom: '40px',
-                                    lineHeight: '1.6'
-                                }}>
-                                    Descubre quién está cerca de ti ahora mismo. Gratis, sin anuncios, sin límites.
+                                <p style={{ color: '#888', fontSize: '14px', marginBottom: '28px', lineHeight: '1.5' }}>
+                                    Únete gratis y descubre quién está cerca de ti.
                                 </p>
                                 <button onClick={handleGoogleSignIn} style={{
-                                    padding: '18px 50px',
+                                    padding: '14px 36px',
                                     borderRadius: '30px',
                                     border: 'none',
                                     background: '#38bd62',
                                     color: '#fff',
-                                    fontSize: '18px',
+                                    fontSize: '14px',
                                     fontWeight: '600',
                                     cursor: 'pointer',
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    gap: '12px'
+                                    gap: '10px'
                                 }}>
-                                    <svg width="24" height="24" viewBox="0 0 24 24">
+                                    <svg width="16" height="16" viewBox="0 0 24 24">
                                         <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                         <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                                         <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                                         <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                                     </svg>
-                                    Comenzar con Google
+                                    Continuar con Google
                                 </button>
                             </div>
                         </section>
@@ -4381,10 +4342,7 @@
                             borderTop: '1px solid #2d2d2d'
                         }}>
                             <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '2fr 1fr 1fr 1fr',
-                                    gap: '60px',
+                                <div className="footer-grid" style={{
                                     marginBottom: '60px'
                                 }}>
                                     {/* Brand Column */}
@@ -4469,93 +4427,6 @@
                             .phone-avatar-float2 { animation: float 5s ease-in-out infinite 1s; }
                             .pulse-ring { animation: pulse 3s ease-in-out infinite; }
                             .pulse-ring2 { animation: pulse 3s ease-in-out infinite 0.5s; }
-                            
-                            /* Mobile Responsive */
-                            @media (max-width: 900px) {
-                                /* Grid layouts to single column */
-                                section[style*="grid-template-columns: 1fr 1fr"] {
-                                    grid-template-columns: 1fr !important;
-                                }
-                                section[style*="grid-template-columns: repeat(3"] {
-                                    grid-template-columns: 1fr !important;
-                                }
-                                section[style*="grid-template-columns: repeat(2"] {
-                                    grid-template-columns: 1fr !important;
-                                }
-                                section[style*="grid-template-columns: repeat(4"] {
-                                    grid-template-columns: repeat(2, 1fr) !important;
-                                }
-                                section[style*="grid-template-columns: 1.2fr"] {
-                                    grid-template-columns: 1fr !important;
-                                }
-                                section[style*="grid-template-columns: 2fr"] {
-                                    grid-template-columns: 1fr !important;
-                                }
-                                
-                                /* Hide nav links */
-                                nav { display: none !important; }
-                                
-                                /* Hide phone mockup on mobile */
-                                .phone-mockup-container { display: none !important; }
-                                
-                                /* Hide Probar NexMe button on mobile */
-                                .header-cta-btn { display: none !important; }
-                                
-                                /* Adjust hero height */
-                                .hero-wrapper { 
-                                    height: auto !important; 
-                                    min-height: 80vh !important;
-                                    padding-bottom: 40px !important;
-                                }
-                                
-                                /* Center hero content */
-                                .hero-left-column {
-                                    text-align: center !important;
-                                    padding: 40px 20px !important;
-                                }
-                                
-                                /* Smaller title on mobile */
-                                .hero-title {
-                                    font-size: 36px !important;
-                                }
-                                
-                                /* Full width button */
-                                .hero-google-btn {
-                                    max-width: 100% !important;
-                                }
-                                
-                                /* Interest cards horizontal scroll */
-                                .interest-cards-grid {
-                                    display: flex !important;
-                                    overflow-x: auto !important;
-                                    gap: 16px !important;
-                                    padding-bottom: 16px !important;
-                                    scroll-snap-type: x mandatory;
-                                }
-                                .interest-cards-grid > div {
-                                    flex: 0 0 200px !important;
-                                    scroll-snap-align: start;
-                                }
-                                
-                                /* Reduce section padding on mobile */
-                                section {
-                                    padding: 60px 20px !important;
-                                }
-                                
-                                /* Smaller headings */
-                                h2 {
-                                    font-size: 28px !important;
-                                }
-                                h3 {
-                                    font-size: 20px !important;
-                                }
-                                
-                                /* Footer grid */
-                                footer > div > div:first-child {
-                                    grid-template-columns: 1fr 1fr !important;
-                                    gap: 30px !important;
-                                }
-                            }
                         `}</style>
                     </div>
                 );
@@ -4717,7 +4588,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.23.0</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.27.0</span>
                             </div>
                         </div>
                     </div>
