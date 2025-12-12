@@ -16,10 +16,6 @@
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -107,6 +103,7 @@
             background: #38bd62;
             color: #fff;
             font-size: 14px;
+            font-family: 'Inter', sans-serif;
             font-weight: 500;
             cursor: pointer;
             margin-right: 16px;
@@ -792,7 +789,7 @@
                 </div>
             </nav>
             
-            <a href="radar-social.html" class="header-cta-btn">Probar NexMe</a>
+            <button onclick="signInWithGoogle()" class="header-cta-btn">Probar NexMe</button>
         </header>
     </div>
 
@@ -1111,6 +1108,10 @@
             }
         });
     </script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
     <!-- Firebase Authentication -->
     <script>
