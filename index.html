@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe</title>
-    <!-- v7.26.1 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.17.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1876,167 +1876,6 @@
             scroll-behavior: smooth;
         }
 
-        /* ========== LANDING PAGE BASE STYLES ========== */
-        .interest-cards-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-        }
-        .landing-section-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
-            align-items: center;
-        }
-        .feature-cards-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 32px;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 40px;
-            text-align: center;
-        }
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 60px;
-        }
-
-        /* ========== LANDING PAGE MOBILE RESPONSIVE ========== */
-        @media (max-width: 900px) {
-            /* Hide phone mockup on mobile */
-            .phone-mockup-container {
-                display: none !important;
-            }
-            
-            /* Hide Probar NexMe button on mobile */
-            .header-cta-btn {
-                display: none !important;
-            }
-            
-            /* Hide nav links on mobile */
-            .landing-nav {
-                display: none !important;
-            }
-            
-            /* Center logo on mobile */
-            .landing-header {
-                justify-content: center !important;
-            }
-            .landing-logo {
-                padding-left: 0 !important;
-                text-align: center !important;
-            }
-            
-            /* Adjust hero height */
-            .hero-wrapper {
-                height: auto !important;
-                min-height: auto !important;
-                padding-bottom: 60px !important;
-            }
-            
-            /* Center hero content */
-            .hero-left-column {
-                text-align: center !important;
-                padding: 60px 24px !important;
-                padding-left: 24px !important;
-            }
-            
-            /* Smaller title on mobile */
-            .hero-title {
-                font-size: 32px !important;
-                line-height: 1.2 !important;
-            }
-            
-            /* Interest cards - ONE column full width */
-            .interest-cards-grid {
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 20px !important;
-            }
-            .interest-cards-grid > div {
-                width: 100% !important;
-                aspect-ratio: 4/3 !important;
-            }
-            
-            /* All 2-column grids to 1 column */
-            .landing-section-grid {
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 30px !important;
-            }
-            
-            /* Images in sections - full width, rounded */
-            .landing-section-grid img {
-                width: 100% !important;
-                border-radius: 20px !important;
-                max-height: 250px !important;
-                object-fit: cover !important;
-            }
-            
-            /* Text sections - centered */
-            .landing-section-grid > div {
-                text-align: center !important;
-            }
-            
-            /* Feature cards - 1 column */
-            .feature-cards-grid {
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 24px !important;
-            }
-            
-            /* Stats grid - 2x2 */
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr) !important;
-                gap: 30px !important;
-            }
-            
-            /* Footer - 1 column centered */
-            .footer-grid {
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 40px !important;
-                text-align: center !important;
-            }
-            
-            /* Section padding */
-            section {
-                padding: 50px 20px !important;
-            }
-            
-            /* Headings smaller */
-            h2 {
-                font-size: 26px !important;
-            }
-            h3 {
-                font-size: 20px !important;
-            }
-            
-            /* Paragraphs */
-            p {
-                font-size: 14px !important;
-                line-height: 1.6 !important;
-            }
-            
-            /* Buttons full width */
-            .landing-section-grid button {
-                width: 100% !important;
-                max-width: 280px !important;
-                margin: 0 auto !important;
-            }
-            
-            /* Testimonial quote smaller */
-            .testimonial-quote {
-                font-size: 18px !important;
-            }
-            .testimonial-mark {
-                font-size: 50px !important;
-            }
-        }
     </style>
 </head>
 <body>
@@ -2819,7 +2658,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.26.1 - Realistic iPhone with screenshot cropped by section');
+                console.log('🚀 NEXME v7.17.0 - Realistic iPhone with screenshot cropped by section');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3742,7 +3581,7 @@
                 return (
                     <div style={{
                         minHeight: '100vh',
-                        background: '#141414',
+                        background: '#1a1a1a',
                         color: '#e6edf3',
                         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                         overflowX: 'hidden'
@@ -3751,7 +3590,7 @@
                         <div style={{
                             position: 'sticky',
                             top: 0,
-                            background: '#141414',
+                            background: '#1a1a1a',
                             borderBottom: '1px solid #2d2d2d',
                             zIndex: 100
                         }}>
@@ -3809,20 +3648,8 @@
                             overflow: 'hidden',
                             position: 'relative',
                             height: 'calc(100vh - 220px)',
-                            background: '#141414'
+                            background: '#1a1a1a'
                         }}>
-                            {/* Map pattern background - only in hero */}
-                            <div style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                opacity: 0.06,
-                                pointerEvents: 'none',
-                                backgroundImage: `url("data:image/svg+xml,%3Csvg width='800' height='800' viewBox='0 0 800 800' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0 L50 800 M150 0 L150 800 M300 0 L300 800 M450 0 L450 800 M550 0 L550 800 M700 0 L700 800 M0 100 L800 100 M0 250 L800 250 M0 400 L800 400 M0 550 L800 550 M0 700 L800 700 M0 50 L200 150 L400 50 L600 200 L800 100 M0 300 L150 400 L350 300 L500 450 L700 350 L800 400 M0 600 L100 500 L300 650 L500 550 L650 700 L800 600 M100 0 L250 200 L100 400 L300 600 L150 800 M500 0 L600 150 L450 350 L600 500 L500 700 L650 800 M750 0 L700 200 L800 350 M0 150 L100 100 M700 750 L800 700' stroke='%23ffffff' stroke-width='1' fill='none'/%3E%3C/svg%3E")`,
-                                backgroundSize: '600px 600px'
-                            }}/>
                             {/* Hero Section - Phone cropped at bottom */}
                             <section style={{
                                 display: 'grid',
@@ -4013,7 +3840,10 @@
                         }}>
                             <div className="interest-cards-grid" style={{ 
                                 maxWidth: '1100px', 
-                                margin: '0 auto'
+                                margin: '0 auto',
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                gap: '24px'
                             }}>
                                 <div style={{
                                     borderRadius: '24px',
@@ -4096,9 +3926,9 @@
                         {/* Section 3: Feature 1 - Image Left, Text Right */}
                         <section id="como-funciona" style={{
                             padding: '100px 32px',
-                            background: '#141414'
+                            background: '#1a1a1a'
                         }}>
-                            <div className="landing-section-grid" style={{ 
+                            <div className="landing-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center', 
                                 maxWidth: '1100px', 
                                 margin: '0 auto'
                             }}>
@@ -4151,7 +3981,7 @@
                             padding: '100px 32px',
                             background: '#1f1f1f'
                         }}>
-                            <div className="landing-section-grid" style={{ 
+                            <div className="landing-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center', 
                                 maxWidth: '1100px', 
                                 margin: '0 auto'
                             }}>
@@ -4202,9 +4032,9 @@
                         {/* Section 5: Two Feature Cards Side by Side */}
                         <section style={{
                             padding: '100px 32px',
-                            background: '#141414'
+                            background: '#1a1a1a'
                         }}>
-                            <div className="feature-cards-grid" style={{ 
+                            <div className="feature-cards-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', 
                                 maxWidth: '1100px', 
                                 margin: '0 auto'
                             }}>
@@ -4273,7 +4103,7 @@
                             padding: '100px 32px',
                             background: '#1f1f1f'
                         }}>
-                            <div className="landing-section-grid" style={{ 
+                            <div className="landing-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center', 
                                 maxWidth: '1100px', 
                                 margin: '0 auto'
                             }}>
@@ -4317,9 +4147,9 @@
                         {/* Section 7: Meet in Person CTA */}
                         <section style={{
                             padding: '100px 32px',
-                            background: '#141414'
+                            background: '#1a1a1a'
                         }}>
-                            <div className="landing-section-grid" style={{ 
+                            <div className="landing-section-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center', 
                                 maxWidth: '1100px', 
                                 margin: '0 auto'
                             }}>
@@ -4372,7 +4202,7 @@
                             padding: '80px 32px',
                             background: '#38bd62'
                         }}>
-                            <div className="stats-grid" style={{ 
+                            <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '40px', textAlign: 'center', 
                                 maxWidth: '1000px', 
                                 margin: '0 auto'
                             }}>
@@ -4450,7 +4280,7 @@
                             borderTop: '1px solid #2d2d2d'
                         }}>
                             <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-                                <div className="footer-grid" style={{
+                                <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '60px',
                                     marginBottom: '60px'
                                 }}>
                                     {/* Brand Column */}
@@ -4696,7 +4526,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.26.1</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.17.0</span>
                             </div>
                         </div>
                     </div>
