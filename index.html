@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe</title>
-    <!-- v7.17.5 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.19.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1905,6 +1905,21 @@
             .hero-title {
                 font-size: 36px !important;
             }
+            
+            /* Ocultar secciones intermedias en móvil */
+            .desktop-only {
+                display: none !important;
+            }
+        }
+        
+        /* Mostrar solo en móvil */
+        .mobile-only {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-only {
+                display: block !important;
+            }
         }
 
     </style>
@@ -1968,6 +1983,77 @@
             const [totalUnread, setTotalUnread] = useState(0); // Total de mensajes no leídos
             const [showPreferences, setShowPreferences] = useState(false); // Panel de preferencias
             const [installPrompt, setInstallPrompt] = useState(null); // PWA install prompt
+            const [language, setLanguage] = useState('es'); // Idioma: 'es' o 'en'
+            
+            // Traducciones
+            const translations = {
+                es: {
+                    features: 'Características',
+                    howItWorks: 'Cómo funciona',
+                    privacy: 'Privacidad',
+                    installApp: 'Instalar App',
+                    tryNexMe: 'Probar NexMe',
+                    heroTitle1: '¿Solos?',
+                    heroTitle2: 'Conectados.',
+                    heroSubtitle: 'La app para conocer personas cerca de ti',
+                    continueGoogle: 'Continuar con Google',
+                    privacyPolicy: 'Al continuar, reconoces la',
+                    privacyLink: 'Política de Privacidad',
+                    ofNexMe: 'de NexMe.',
+                    realConnections: 'Conexiones reales, no virtuales',
+                    realConnectionsDesc: 'NexMe está diseñado para que conozcas personas en el mundo real. Encuentra gente cercana y sal a conocerla hoy mismo.',
+                    minRadius: 'Radio mínimo',
+                    maxRadius: 'Radio máximo',
+                    activeStories: 'Stories activas',
+                    possibleConnections: 'Conexiones posibles',
+                    startConnecting: 'Empieza a conectar',
+                    ctaDesc: 'Únete a miles de personas que ya están conociendo gente nueva en su zona.',
+                    product: 'Producto',
+                    downloadApp: 'Descargar App',
+                    company: 'Compañía',
+                    aboutUs: 'Sobre nosotros',
+                    blog: 'Blog',
+                    careers: 'Empleos',
+                    legal: 'Legal',
+                    terms: 'Términos',
+                    footerDesc: 'La forma más auténtica de conocer personas cerca de ti. Sin algoritmos, sin juegos, solo conexiones reales.',
+                    allRights: 'Todos los derechos reservados.'
+                },
+                en: {
+                    features: 'Features',
+                    howItWorks: 'How it works',
+                    privacy: 'Privacy',
+                    installApp: 'Install App',
+                    tryNexMe: 'Try NexMe',
+                    heroTitle1: 'Alone?',
+                    heroTitle2: 'Connected.',
+                    heroSubtitle: 'The app to meet people near you',
+                    continueGoogle: 'Continue with Google',
+                    privacyPolicy: 'By continuing, you agree to the',
+                    privacyLink: 'Privacy Policy',
+                    ofNexMe: 'of NexMe.',
+                    realConnections: 'Real connections, not virtual',
+                    realConnectionsDesc: 'NexMe is designed for you to meet people in the real world. Find nearby people and go meet them today.',
+                    minRadius: 'Minimum radius',
+                    maxRadius: 'Maximum radius',
+                    activeStories: 'Active stories',
+                    possibleConnections: 'Possible connections',
+                    startConnecting: 'Start connecting',
+                    ctaDesc: 'Join thousands of people who are already meeting new people in their area.',
+                    product: 'Product',
+                    downloadApp: 'Download App',
+                    company: 'Company',
+                    aboutUs: 'About us',
+                    blog: 'Blog',
+                    careers: 'Careers',
+                    legal: 'Legal',
+                    terms: 'Terms',
+                    footerDesc: 'The most authentic way to meet people near you. No algorithms, no games, just real connections.',
+                    allRights: 'All rights reserved.'
+                }
+            };
+            
+            const t = translations[language]; // Shortcut para traducciones
             
             // Capturar evento de instalación PWA
             useEffect(() => {
@@ -2710,7 +2796,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.17.5 - Realistic iPhone with screenshot cropped by section');
+                console.log('🚀 NEXME v7.19.0 - Realistic iPhone with screenshot cropped by section');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3663,19 +3749,19 @@
                                 {/* Botón Instalar App - solo aparece cuando está disponible */}
                                 {installPrompt && (
                                     <button onClick={handleInstallApp} style={{
-                                        padding: '8px 16px',
+                                        padding: '6px 12px',
                                         borderRadius: '20px',
-                                        border: '1px solid #38bd62',
+                                        border: '1px solid #3d3d3d',
                                         background: 'transparent',
-                                        color: '#38bd62',
+                                        color: '#a0a0a0',
                                         fontSize: '13px',
-                                        fontWeight: '500',
+                                        fontWeight: '400',
                                         cursor: 'pointer',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '6px'
                                     }}>
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" strokeWidth="2">
                                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                                             <polyline points="7 10 12 15 17 10"/>
                                             <line x1="12" y1="15" x2="12" y2="3"/>
@@ -3684,10 +3770,10 @@
                                     </button>
                                 )}
                             <nav className="landing-nav" style={{ display: 'flex', gap: '32px', fontSize: '14px', color: '#a0a0a0', alignItems: 'center' }}>
-                                <a href="#caracteristicas" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>Características</a>
-                                <a href="#como-funciona" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>Cómo funciona</a>
-                                <a href="#privacidad" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>Privacidad</a>
-                                <div style={{ 
+                                <a href="#caracteristicas" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>{t.features}</a>
+                                <a href="#como-funciona" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>{t.howItWorks}</a>
+                                <a href="#privacidad" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>{t.privacy}</a>
+                                <div onClick={() => setLanguage(language === 'es' ? 'en' : 'es')} style={{ 
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     gap: '6px', 
@@ -3700,7 +3786,7 @@
                                         <circle cx="12" cy="12" r="10"/>
                                         <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                                     </svg>
-                                    <span style={{ fontSize: '13px' }}>ES</span>
+                                    <span style={{ fontSize: '13px' }}>{language.toUpperCase()}</span>
                                 </div>
                             </nav>
                             <button className="header-cta-btn" onClick={handleGoogleSignIn} style={{
@@ -3714,7 +3800,7 @@
                                 cursor: 'pointer',
                                 marginRight: '80px'
                             }}>
-                                Probar NexMe
+                                {t.tryNexMe}
                             </button>
                         </header>
                         </div>
@@ -3767,8 +3853,8 @@
                                     color: '#fff',
                                     fontFamily: 'Georgia, serif'
                                 }}>
-                                    <span style={{ fontStyle: 'italic' }}>¿Solos?</span><br/>
-                                    Conectados.
+                                    <span style={{ fontStyle: 'italic' }}>{t.heroTitle1}</span><br/>
+                                    {t.heroTitle2}
                                 </h1>
 
                                 <p style={{
@@ -3776,7 +3862,7 @@
                                     color: '#a0a0a0',
                                     margin: '0 0 40px 0'
                                 }}>
-                                    La app para conocer personas cerca de ti
+                                    {t.heroSubtitle}
                                 </p>
 
                                 <div style={{ maxWidth: '320px' }}>
@@ -3801,13 +3887,13 @@
                                             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                                         </svg>
-                                        Continuar con Google
+                                        {t.continueGoogle}
                                     </button>
 
                                     <p style={{ fontSize: '12px', color: '#666', marginTop: '20px', lineHeight: '1.5' }}>
-                                        Al continuar, reconoces la{' '}
-                                        <span style={{ color: '#888', textDecoration: 'underline', cursor: 'pointer' }}>Política de Privacidad</span>
-                                        {' '}de NexMe.
+                                        {t.privacyPolicy}{' '}
+                                        <span style={{ color: '#888', textDecoration: 'underline', cursor: 'pointer' }}>{t.privacyLink}</span>
+                                        {' '}{t.ofNexMe}
                                     </p>
                                 </div>
                             </div>
@@ -3919,8 +4005,353 @@
                         </section>
                         </div>
 
-                        {/* Section: Conexiones reales - Text only */}
-                        <section style={{
+                        {/* ============= BUMBLE STYLE SECTIONS (DESKTOP ONLY) ============= */}
+
+                        {/* Section 2: Interest Cards */}
+                        <section className="desktop-only" id="caracteristicas" style={{
+                            padding: '80px 32px',
+                            background: '#141414'
+                        }}>
+                            <div style={{ 
+                                maxWidth: '1100px', 
+                                margin: '0 auto',
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                gap: '24px'
+                            }}>
+                                <div style={{
+                                    borderRadius: '24px',
+                                    overflow: 'hidden',
+                                    position: 'relative',
+                                    aspectRatio: '3/4'
+                                }}>
+                                    <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=600" style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                    }}/>
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '20px',
+                                        left: '20px',
+                                        background: 'rgba(0,0,0,0.7)',
+                                        padding: '10px 20px',
+                                        borderRadius: '20px',
+                                        color: '#fff',
+                                        fontSize: '14px',
+                                        fontWeight: '500'
+                                    }}>
+                                        ☕ Tomando café
+                                    </div>
+                                </div>
+                                <div style={{
+                                    borderRadius: '24px',
+                                    overflow: 'hidden',
+                                    position: 'relative',
+                                    aspectRatio: '3/4'
+                                }}>
+                                    <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600" style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                    }}/>
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '20px',
+                                        left: '20px',
+                                        background: 'rgba(0,0,0,0.7)',
+                                        padding: '10px 20px',
+                                        borderRadius: '20px',
+                                        color: '#fff',
+                                        fontSize: '14px',
+                                        fontWeight: '500'
+                                    }}>
+                                        💪 En el gym
+                                    </div>
+                                </div>
+                                <div style={{
+                                    borderRadius: '24px',
+                                    overflow: 'hidden',
+                                    position: 'relative',
+                                    aspectRatio: '3/4'
+                                }}>
+                                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600" style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                    }}/>
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '20px',
+                                        left: '20px',
+                                        background: 'rgba(0,0,0,0.7)',
+                                        padding: '10px 20px',
+                                        borderRadius: '20px',
+                                        color: '#fff',
+                                        fontSize: '14px',
+                                        fontWeight: '500'
+                                    }}>
+                                        📚 Estudiando
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section 3: Feature 1 - Mapa en tiempo real */}
+                        <section className="desktop-only" id="como-funciona" style={{
+                            padding: '100px 32px',
+                            background: '#1a1a1a'
+                        }}>
+                            <div style={{ 
+                                maxWidth: '1100px', 
+                                margin: '0 auto',
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '80px',
+                                alignItems: 'center'
+                            }}>
+                                <div style={{
+                                    borderRadius: '24px',
+                                    overflow: 'hidden'
+                                }}>
+                                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800" style={{
+                                        width: '100%',
+                                        height: 'auto',
+                                        display: 'block'
+                                    }}/>
+                                </div>
+                                <div>
+                                    <h3 style={{
+                                        fontSize: '36px',
+                                        fontWeight: '400',
+                                        marginBottom: '20px',
+                                        fontFamily: 'Georgia, serif',
+                                        lineHeight: '1.3'
+                                    }}>
+                                        Mapa en tiempo real
+                                    </h3>
+                                    <p style={{
+                                        color: '#888',
+                                        fontSize: '16px',
+                                        lineHeight: '1.7',
+                                        marginBottom: '24px'
+                                    }}>
+                                        Visualiza a todas las personas cercanas en un mapa interactivo. Los avatares se mueven en tiempo real cuando las personas se desplazan.
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section 4: Feature 2 - Comparte lo que buscas */}
+                        <section className="desktop-only" style={{
+                            padding: '100px 32px',
+                            background: '#141414'
+                        }}>
+                            <div style={{ 
+                                maxWidth: '1100px', 
+                                margin: '0 auto',
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '80px',
+                                alignItems: 'center'
+                            }}>
+                                <div>
+                                    <h3 style={{
+                                        fontSize: '36px',
+                                        fontWeight: '400',
+                                        marginBottom: '20px',
+                                        fontFamily: 'Georgia, serif',
+                                        lineHeight: '1.3'
+                                    }}>
+                                        Comparte lo que buscas
+                                    </h3>
+                                    <p style={{
+                                        color: '#888',
+                                        fontSize: '16px',
+                                        lineHeight: '1.7',
+                                        marginBottom: '24px'
+                                    }}>
+                                        Publica un pensamiento y deja que otros sepan qué tienes en mente. "¿Café?", "Gym?", "¿Alguien para estudiar?" - conecta con personas que buscan lo mismo.
+                                    </p>
+                                </div>
+                                <div style={{
+                                    borderRadius: '24px',
+                                    overflow: 'hidden'
+                                }}>
+                                    <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800" style={{
+                                        width: '100%',
+                                        height: 'auto',
+                                        display: 'block'
+                                    }}/>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section 5: Stories + Chat cards */}
+                        <section className="desktop-only" style={{
+                            padding: '100px 32px',
+                            background: '#1a1a1a'
+                        }}>
+                            <div style={{ 
+                                maxWidth: '1100px', 
+                                margin: '0 auto',
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '32px'
+                            }}>
+                                <div style={{
+                                    background: '#232323',
+                                    borderRadius: '24px',
+                                    overflow: 'hidden'
+                                }}>
+                                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800" style={{
+                                        width: '100%',
+                                        height: '280px',
+                                        objectFit: 'cover'
+                                    }}/>
+                                    <div style={{ padding: '32px' }}>
+                                        <h3 style={{
+                                            fontSize: '24px',
+                                            fontWeight: '500',
+                                            marginBottom: '12px'
+                                        }}>
+                                            📸 Stories de 12 horas
+                                        </h3>
+                                        <p style={{
+                                            color: '#888',
+                                            fontSize: '15px',
+                                            lineHeight: '1.6'
+                                        }}>
+                                            Comparte fotos que desaparecen automáticamente. Muestra tu día, dónde estás y qué haces.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div style={{
+                                    background: '#232323',
+                                    borderRadius: '24px',
+                                    overflow: 'hidden'
+                                }}>
+                                    <img src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800" style={{
+                                        width: '100%',
+                                        height: '280px',
+                                        objectFit: 'cover'
+                                    }}/>
+                                    <div style={{ padding: '32px' }}>
+                                        <h3 style={{
+                                            fontSize: '24px',
+                                            fontWeight: '500',
+                                            marginBottom: '12px'
+                                        }}>
+                                            💬 Chat instantáneo
+                                        </h3>
+                                        <p style={{
+                                            color: '#888',
+                                            fontSize: '15px',
+                                            lineHeight: '1.6'
+                                        }}>
+                                            Envía mensajes directos a cualquier persona cercana. Sin necesidad de match previo.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section 6: Testimonial */}
+                        <section className="desktop-only" style={{
+                            padding: '100px 32px',
+                            background: '#141414'
+                        }}>
+                            <div style={{ 
+                                maxWidth: '1100px', 
+                                margin: '0 auto',
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '60px',
+                                alignItems: 'center'
+                            }}>
+                                <div>
+                                    <div style={{
+                                        fontSize: '80px',
+                                        color: '#38bd62',
+                                        lineHeight: '1',
+                                        marginBottom: '20px',
+                                        fontFamily: 'Georgia, serif'
+                                    }}>
+                                        "
+                                    </div>
+                                    <p style={{
+                                        fontSize: '24px',
+                                        fontStyle: 'italic',
+                                        lineHeight: '1.6',
+                                        marginBottom: '24px',
+                                        fontFamily: 'Georgia, serif'
+                                    }}>
+                                        Conocí a mi mejor amigo en un café gracias a NexMe. Él publicó "¿Alguien para charlar?" y yo estaba a 50 metros.
+                                    </p>
+                                    <p style={{ color: '#888', fontSize: '14px' }}>
+                                        <strong style={{ color: '#fff' }}>María García</strong> · Panamá City
+                                    </p>
+                                </div>
+                                <div style={{
+                                    borderRadius: '24px',
+                                    overflow: 'hidden'
+                                }}>
+                                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800" style={{
+                                        width: '100%',
+                                        height: 'auto',
+                                        display: 'block'
+                                    }}/>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section 7: Conexiones reales (Desktop) */}
+                        <section className="desktop-only" style={{
+                            padding: '100px 32px',
+                            background: '#1a1a1a'
+                        }}>
+                            <div style={{ 
+                                maxWidth: '1100px', 
+                                margin: '0 auto',
+                                display: 'grid',
+                                gridTemplateColumns: '1.2fr 1fr',
+                                gap: '60px',
+                                alignItems: 'center'
+                            }}>
+                                <div style={{
+                                    borderRadius: '24px',
+                                    overflow: 'hidden'
+                                }}>
+                                    <img src="https://images.unsplash.com/photo-1543807535-eceef0bc6599?w=800" style={{
+                                        width: '100%',
+                                        height: 'auto',
+                                        display: 'block'
+                                    }}/>
+                                </div>
+                                <div>
+                                    <h3 style={{
+                                        fontSize: '36px',
+                                        fontWeight: '400',
+                                        marginBottom: '20px',
+                                        fontFamily: 'Georgia, serif',
+                                        lineHeight: '1.3'
+                                    }}>
+                                        {t.realConnections}
+                                    </h3>
+                                    <p style={{
+                                        color: '#888',
+                                        fontSize: '16px',
+                                        lineHeight: '1.7',
+                                        marginBottom: '24px'
+                                    }}>
+                                        {t.realConnectionsDesc}
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section: Conexiones reales - Mobile only */}
+                        <section className="mobile-only" style={{
                             padding: '80px 24px',
                             background: '#141414',
                             textAlign: 'center'
@@ -3934,28 +4365,15 @@
                                     lineHeight: '1.3',
                                     color: '#fff'
                                 }}>
-                                    Conexiones reales, no virtuales
+                                    {t.realConnections}
                                 </h2>
                                 <p style={{
                                     color: '#888',
                                     fontSize: '16px',
-                                    lineHeight: '1.7',
-                                    marginBottom: '30px'
+                                    lineHeight: '1.7'
                                 }}>
-                                    NexMe está diseñado para que conozcas personas en el mundo real. Encuentra gente cercana y sal a conocerla hoy mismo.
+                                    {t.realConnectionsDesc}
                                 </p>
-                                <button onClick={handleGoogleSignIn} style={{
-                                    padding: '14px 32px',
-                                    borderRadius: '30px',
-                                    border: 'none',
-                                    background: '#38bd62',
-                                    color: '#fff',
-                                    fontSize: '14px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer'
-                                }}>
-                                    Empezar ahora
-                                </button>
                             </div>
                         </section>
 
@@ -3970,19 +4388,19 @@
                             }}>
                                 <div>
                                     <div style={{ fontSize: '48px', fontWeight: '700', color: '#fff' }}>5m</div>
-                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Radio mínimo</div>
+                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>{t.minRadius}</div>
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '48px', fontWeight: '700', color: '#fff' }}>1km</div>
-                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Radio máximo</div>
+                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>{t.maxRadius}</div>
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '48px', fontWeight: '700', color: '#fff' }}>12h</div>
-                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Stories activas</div>
+                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>{t.activeStories}</div>
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '48px', fontWeight: '700', color: '#fff' }}>∞</div>
-                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>Conexiones posibles</div>
+                                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>{t.possibleConnections}</div>
                                 </div>
                             </div>
                         </section>
@@ -4001,7 +4419,7 @@
                                     fontFamily: 'Georgia, serif',
                                     lineHeight: '1.2'
                                 }}>
-                                    Empieza a conectar hoy
+                                    {t.startConnecting}
                                 </h2>
                                 <p style={{
                                     color: '#888',
@@ -4009,7 +4427,7 @@
                                     marginBottom: '40px',
                                     lineHeight: '1.6'
                                 }}>
-                                    Únete gratis y descubre quién está cerca de ti en este momento.
+                                    {t.ctaDesc}
                                 </p>
                                 <button onClick={handleGoogleSignIn} style={{
                                     padding: '16px 48px',
@@ -4030,7 +4448,7 @@
                                         <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                                         <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                                     </svg>
-                                    Continuar con Google
+                                    {t.continueGoogle}
                                 </button>
                             </div>
                         </section>
@@ -4049,37 +4467,36 @@
                                     <div>
                                         <div style={{ fontSize: '24px', fontWeight: '600', marginBottom: '16px' }}>NexMe</div>
                                         <p style={{ color: '#666', fontSize: '14px', lineHeight: '1.6', maxWidth: '280px' }}>
-                                            Conectando personas cercanas en tiempo real. Descubre quién está a tu alrededor.
+                                            {t.footerDesc}
                                         </p>
                                     </div>
 
                                     {/* Links Column 1 */}
                                     <div>
-                                        <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '20px', color: '#888' }}>PRODUCTO</h4>
+                                        <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '20px', color: '#888' }}>{t.product.toUpperCase()}</h4>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>Cómo funciona</span>
-                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>Características</span>
-                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>Seguridad</span>
-                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>Ayuda</span>
+                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>{t.howItWorks}</span>
+                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>{t.features}</span>
+                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>{t.downloadApp}</span>
                                         </div>
                                     </div>
 
                                     {/* Links Column 2 */}
                                     <div>
-                                        <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '20px', color: '#888' }}>EMPRESA</h4>
+                                        <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '20px', color: '#888' }}>{t.company.toUpperCase()}</h4>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>Sobre nosotros</span>
-                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>Contacto</span>
-                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>Blog</span>
+                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>{t.aboutUs}</span>
+                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>{t.blog}</span>
+                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>{t.careers}</span>
                                         </div>
                                     </div>
 
                                     {/* Links Column 3 */}
                                     <div>
-                                        <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '20px', color: '#888' }}>LEGAL</h4>
+                                        <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '20px', color: '#888' }}>{t.legal.toUpperCase()}</h4>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>Términos de uso</span>
-                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>Privacidad</span>
+                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>{t.terms}</span>
+                                            <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>{t.privacy}</span>
                                             <span style={{ color: '#666', fontSize: '14px', cursor: 'pointer' }}>Cookies</span>
                                         </div>
                                     </div>
@@ -4093,7 +4510,7 @@
                                     justifyContent: 'space-between',
                                     alignItems: 'center'
                                 }}>
-                                    <span style={{ color: '#555', fontSize: '13px' }}>© 2024 NexMe. Todos los derechos reservados.</span>
+                                    <span style={{ color: '#555', fontSize: '13px' }}>© 2024 NexMe. {t.allRights}</span>
                                     <div style={{ display: 'flex', gap: '20px' }}>
                                         <span style={{ color: '#555', fontSize: '20px', cursor: 'pointer' }}>📷</span>
                                         <span style={{ color: '#555', fontSize: '20px', cursor: 'pointer' }}>🐦</span>
@@ -4288,7 +4705,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.17.5</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.19.0</span>
                             </div>
                         </div>
                     </div>
