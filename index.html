@@ -1129,14 +1129,6 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         
-        // Check if already logged in
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                // User is signed in, redirect to app
-                window.location.href = 'radar-social.html';
-            }
-        });
-        
         // Sign in with Google
         async function signInWithGoogle() {
             try {
