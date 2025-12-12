@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe</title>
-    <!-- v7.21.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.23.0 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1875,6 +1875,75 @@
             overscroll-behavior: none;
             scroll-behavior: smooth;
         }
+
+        /* ========== LANDING PAGE MOBILE RESPONSIVE ========== */
+        @media (max-width: 900px) {
+            /* Hide phone mockup on mobile */
+            .phone-mockup-container {
+                display: none !important;
+            }
+            
+            /* Hide Probar NexMe button on mobile */
+            .header-cta-btn {
+                display: none !important;
+            }
+            
+            /* Hide nav links on mobile */
+            .landing-nav {
+                display: none !important;
+            }
+            
+            /* Adjust hero height */
+            .hero-wrapper {
+                height: auto !important;
+                min-height: 70vh !important;
+                padding-bottom: 40px !important;
+            }
+            
+            /* Center hero content */
+            .hero-left-column {
+                text-align: center !important;
+                padding: 40px 20px !important;
+                padding-left: 20px !important;
+            }
+            
+            /* Smaller title on mobile */
+            .hero-title {
+                font-size: 36px !important;
+            }
+            
+            /* Interest cards horizontal scroll */
+            .interest-cards-grid {
+                display: flex !important;
+                overflow-x: auto !important;
+                gap: 16px !important;
+                padding-bottom: 16px !important;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+            .interest-cards-grid > div {
+                flex: 0 0 200px !important;
+                scroll-snap-align: start;
+            }
+            
+            /* Landing page grids to single column */
+            .landing-grid-2col {
+                grid-template-columns: 1fr !important;
+            }
+            .landing-grid-3col {
+                grid-template-columns: 1fr !important;
+            }
+            .landing-grid-4col {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            
+            /* Footer columns */
+            .footer-grid {
+                grid-template-columns: 1fr !important;
+                gap: 30px !important;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2657,7 +2726,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.21.0 - Realistic iPhone with screenshot cropped by section');
+                console.log('🚀 NEXME v7.23.0 - Realistic iPhone with screenshot cropped by section');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3606,7 +3675,7 @@
                                 <div style={{ fontSize: '20px', fontWeight: '600', color: '#fff', paddingLeft: '40px' }}>
                                     NexMe
                                 </div>
-                            <nav style={{ display: 'flex', gap: '32px', fontSize: '14px', color: '#a0a0a0', alignItems: 'center' }}>
+                            <nav className="landing-nav" style={{ display: 'flex', gap: '32px', fontSize: '14px', color: '#a0a0a0', alignItems: 'center' }}>
                                 <a href="#caracteristicas" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>Características</a>
                                 <a href="#como-funciona" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>Cómo funciona</a>
                                 <a href="#privacidad" style={{ cursor: 'pointer', color: '#a0a0a0', textDecoration: 'none' }}>Privacidad</a>
@@ -3626,7 +3695,7 @@
                                     <span style={{ fontSize: '13px' }}>ES</span>
                                 </div>
                             </nav>
-                            <button onClick={handleGoogleSignIn} style={{
+                            <button className="header-cta-btn" onClick={handleGoogleSignIn} style={{
                                 padding: '10px 20px',
                                 borderRadius: '6px',
                                 border: 'none',
@@ -3643,7 +3712,7 @@
                         </div>
 
                         {/* Hero Wrapper - clips the phone */}
-                        <div style={{
+                        <div className="hero-wrapper" style={{
                             overflow: 'hidden',
                             position: 'relative',
                             height: 'calc(100vh - 220px)',
@@ -3674,7 +3743,7 @@
                                 position: 'relative'
                             }}>
                                 {/* Left Column - Login */}
-                                <div style={{
+                                <div className="hero-left-column" style={{
                                     display: 'flex',
                                     flexDirection: 'column',
                                     justifyContent: 'flex-start',
@@ -3682,7 +3751,7 @@
                                     paddingTop: '80px',
                                     height: '100%'
                                 }}>
-                                <h1 style={{
+                                <h1 className="hero-title" style={{
                                     fontSize: '48px',
                                     fontWeight: '400',
                                     lineHeight: '1.15',
@@ -3736,7 +3805,7 @@
                             </div>
 
                             {/* Right Column - Phone Mockup - Cropped by next section */}
-                                <div style={{
+                                <div className="phone-mockup-container" style={{
                                     display: 'flex',
                                     alignItems: 'flex-start',
                                     justifyContent: 'center',
@@ -3849,7 +3918,7 @@
                             padding: '80px 32px',
                             background: '#1f1f1f'
                         }}>
-                            <div style={{ 
+                            <div className="interest-cards-grid" style={{ 
                                 maxWidth: '1100px', 
                                 margin: '0 auto',
                                 display: 'grid',
@@ -4400,7 +4469,10 @@
                             .phone-avatar-float2 { animation: float 5s ease-in-out infinite 1s; }
                             .pulse-ring { animation: pulse 3s ease-in-out infinite; }
                             .pulse-ring2 { animation: pulse 3s ease-in-out infinite 0.5s; }
+                            
+                            /* Mobile Responsive */
                             @media (max-width: 900px) {
+                                /* Grid layouts to single column */
                                 section[style*="grid-template-columns: 1fr 1fr"] {
                                     grid-template-columns: 1fr !important;
                                 }
@@ -4410,7 +4482,79 @@
                                 section[style*="grid-template-columns: repeat(2"] {
                                     grid-template-columns: 1fr !important;
                                 }
+                                section[style*="grid-template-columns: repeat(4"] {
+                                    grid-template-columns: repeat(2, 1fr) !important;
+                                }
+                                section[style*="grid-template-columns: 1.2fr"] {
+                                    grid-template-columns: 1fr !important;
+                                }
+                                section[style*="grid-template-columns: 2fr"] {
+                                    grid-template-columns: 1fr !important;
+                                }
+                                
+                                /* Hide nav links */
                                 nav { display: none !important; }
+                                
+                                /* Hide phone mockup on mobile */
+                                .phone-mockup-container { display: none !important; }
+                                
+                                /* Hide Probar NexMe button on mobile */
+                                .header-cta-btn { display: none !important; }
+                                
+                                /* Adjust hero height */
+                                .hero-wrapper { 
+                                    height: auto !important; 
+                                    min-height: 80vh !important;
+                                    padding-bottom: 40px !important;
+                                }
+                                
+                                /* Center hero content */
+                                .hero-left-column {
+                                    text-align: center !important;
+                                    padding: 40px 20px !important;
+                                }
+                                
+                                /* Smaller title on mobile */
+                                .hero-title {
+                                    font-size: 36px !important;
+                                }
+                                
+                                /* Full width button */
+                                .hero-google-btn {
+                                    max-width: 100% !important;
+                                }
+                                
+                                /* Interest cards horizontal scroll */
+                                .interest-cards-grid {
+                                    display: flex !important;
+                                    overflow-x: auto !important;
+                                    gap: 16px !important;
+                                    padding-bottom: 16px !important;
+                                    scroll-snap-type: x mandatory;
+                                }
+                                .interest-cards-grid > div {
+                                    flex: 0 0 200px !important;
+                                    scroll-snap-align: start;
+                                }
+                                
+                                /* Reduce section padding on mobile */
+                                section {
+                                    padding: 60px 20px !important;
+                                }
+                                
+                                /* Smaller headings */
+                                h2 {
+                                    font-size: 28px !important;
+                                }
+                                h3 {
+                                    font-size: 20px !important;
+                                }
+                                
+                                /* Footer grid */
+                                footer > div > div:first-child {
+                                    grid-template-columns: 1fr 1fr !important;
+                                    gap: 30px !important;
+                                }
                             }
                         `}</style>
                     </div>
@@ -4573,7 +4717,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.21.0</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.23.0</span>
                             </div>
                         </div>
                     </div>
