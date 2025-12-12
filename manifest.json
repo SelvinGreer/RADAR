@@ -1,11 +1,11 @@
 {
-  "name": "Radar Social",
-  "short_name": "Radar Social",
-  "description": "Encuentra y conecta con personas cerca de ti usando radar geolocalizado",
+  "name": "NexMe",
+  "short_name": "NexMe",
+  "description": "Encuentra y conecta con personas cerca de ti",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#0d1117",
-  "theme_color": "#0d1117",
+  "theme_color": "#38bd62",
   "orientation": "portrait",
   "scope": "/",
   "icons": [
@@ -28,8 +28,8 @@
     {
       "name": "Ver Radar",
       "short_name": "Radar",
-      "description": "Abrir el radar social",
-      "url": "/radar-social.html",
+      "description": "Abrir NexMe",
+      "url": "/index.html",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]
