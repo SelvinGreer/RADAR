@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe</title>
-    <!-- v7.17.2 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
+    <!-- v7.17.3 Build: 2025-12-11 | Interest filtering, profile interests display, movement intelligence -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2686,7 +2686,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.17.2 - Realistic iPhone with screenshot cropped by section');
+                console.log('🚀 NEXME v7.17.3 - Realistic iPhone with screenshot cropped by section');
                 
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
@@ -3632,7 +3632,7 @@
                                 width: '100%',
                                 boxSizing: 'border-box'
                             }}>
-                                <div className="landing-logo" style={{ fontSize: '20px', fontWeight: '600', color: '#fff', paddingLeft: '40px' }}>
+                                <div className="landing-logo" style={{ fontSize: '20px', fontWeight: '600', color: '#fff', paddingLeft: '16px' }}>
                                     NexMe
                                 </div>
                             <nav className="landing-nav" style={{ display: 'flex', gap: '32px', fontSize: '14px', color: '#a0a0a0', alignItems: 'center' }}>
@@ -3858,6 +3858,46 @@
                             </div>
                         </section>
                         </div>
+
+                        {/* Section: Conexiones reales - Text only */}
+                        <section style={{
+                            padding: '80px 24px',
+                            background: '#1a1a1a',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+                                <h2 style={{
+                                    fontSize: '32px',
+                                    fontWeight: '400',
+                                    marginBottom: '20px',
+                                    fontFamily: 'Georgia, serif',
+                                    lineHeight: '1.3',
+                                    color: '#fff'
+                                }}>
+                                    Conexiones reales, no virtuales
+                                </h2>
+                                <p style={{
+                                    color: '#888',
+                                    fontSize: '16px',
+                                    lineHeight: '1.7',
+                                    marginBottom: '30px'
+                                }}>
+                                    NexMe está diseñado para que conozcas personas en el mundo real. Encuentra gente cercana y sal a conocerla hoy mismo.
+                                </p>
+                                <button onClick={handleGoogleSignIn} style={{
+                                    padding: '14px 32px',
+                                    borderRadius: '30px',
+                                    border: 'none',
+                                    background: '#38bd62',
+                                    color: '#fff',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer'
+                                }}>
+                                    Empezar ahora
+                                </button>
+                            </div>
+                        </section>
 
                         {/* Section 8: Stats Banner */}
                         <section style={{
@@ -4188,7 +4228,7 @@
                                 <span>Cerrar Sesión</span>
                             </div>
                             <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.17.2</span>
+                                <span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.17.3</span>
                             </div>
                         </div>
                     </div>
