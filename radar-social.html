@@ -1591,7 +1591,7 @@
             const [viewedStories, setViewedStories] = useState({});
             const [socialNotifications, setSocialNotifications] = useState([]);
             const [googleMap, setGoogleMap] = useState(null);
-            const [waitingForGPS, setWaitingForGPS] = useState(true);
+            const [waitingForGPS, setWaitingForGPS] = useState(false);
             const [locationAccuracy, setLocationAccuracy] = useState(20);
             const [isDraggingDial, setIsDraggingDial] = useState(false);
             const [inboxTab, setInboxTab] = useState('messages');
@@ -2086,7 +2086,7 @@
                         setCurrentUser(null); 
                         setUserLocation(null);
                         setUsers([]);
-                        setWaitingForGPS(true);
+                        setWaitingForGPS(false);
                         setGoogleMap(null);
                         setSelectedUser(null);
                         setMessages({});
@@ -2428,17 +2428,6 @@
 
             return (
                 <>
-                    {waitingForGPS && (
-                        <div className="location-permission">
-                            <div className="permission-card">
-                                <svg className="permission-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                                <h2>Esperando GPS...</h2>
-                                <p>Obteniendo tu ubicación con alta precisión.</p>
-                                <div className="gps-dots"><div className="gps-dot"/><div className="gps-dot"/><div className="gps-dot"/></div>
-                            </div>
-                        </div>
-                    )}
-
                     <div className="main-container">
                         <div className="radar-container">
                             <div id="google-map" ref={mapRef}></div>
