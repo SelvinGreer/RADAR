@@ -556,6 +556,10 @@
         .inbox-story-ring.has-story {
             background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
         }
+        
+        .inbox-story-ring.has-unread {
+            background: linear-gradient(45deg, #f7d046, #ffb347, #f7d046);
+        }
 
         .inbox-story-img {
             width: 100%;
@@ -2282,19 +2286,26 @@
                 }
             }, [showInbox, showSidebar, showProfile, selectedUser, showPreferences]);
 
+            // Estado base para que el botón atrás en mapa minimice la app
+            useEffect(() => {
+                if (currentUser) {
+                    window.history.replaceState({ map: true }, '');
+                }
+            }, [currentUser]);
+
             useEffect(() => {
                 const handleBackButton = (e) => {
-                    if (selectedUser) {
-                        setSelectedUser(null);
-                    } else if (showInbox) {
-                        setShowInbox(false);
-                    } else if (showProfile) {
-                        setShowProfile(false);
-                    } else if (showSidebar) {
-                        setShowSidebar(false);
-                    } else if (showPreferences) {
-                        setShowPreferences(false);
+                    const hasOverlay = selectedUser || showInbox || showProfile || showSidebar || showPreferences;
+                    
+                    if (hasOverlay) {
+                        // Cerrar el overlay activo
+                        if (selectedUser) setSelectedUser(null);
+                        else if (showInbox) setShowInbox(false);
+                        else if (showProfile) setShowProfile(false);
+                        else if (showSidebar) setShowSidebar(false);
+                        else if (showPreferences) setShowPreferences(false);
                     }
+                    // Si no hay overlay, Android minimiza la app automáticamente
                 };
                 window.addEventListener('popstate', handleBackButton);
                 return () => window.removeEventListener('popstate', handleBackButton);
@@ -2534,7 +2545,7 @@
                             }).slice(0,10).map(user => (
                                 <div key={user.id} className="inbox-story-item" onClick={() => { if (user.hasStory && !viewedStories[user.id]) { setViewedStories(prev => ({ ...prev, [user.id]: Date.now() })); setViewingStory(user); } else { openChat(user); setShowInbox(false); } }}>
                                     {user.thought && <div className="inbox-bubble">{user.thought}</div>}
-                                    <div className={`inbox-story-ring ${user.hasStory && !viewedStories[user.id] ? 'has-story' : ''}`}>
+                                    <div className={`inbox-story-ring ${user.hasStory && !viewedStories[user.id] ? 'has-story' : unreadMessages[user.id] ? 'has-unread' : ''}`}>
                                         <img src={user.photo} alt={user.name} className="inbox-story-img"/>
                                     </div>
                                     <span className="inbox-story-name">{user.name.split(' ')[0]} / {user.distance}m</span>
@@ -2550,11 +2561,11 @@
                             users.filter(u => u.isOnline).sort((a,b) => a.distance - b.distance).map(user => (
                                 <div key={user.id} className="inbox-conv-item" onClick={() => { openChat(user); setShowInbox(false); }}>
                                     <div className="inbox-conv-avatar-wrap">
-                                        <img src={user.photo} alt={user.name} className="inbox-conv-avatar"/>
+                                        <img src={user.photo} alt={user.name} className="inbox-conv-avatar" style={unreadMessages[user.id] ? { border: '3px solid #f7d046' } : {}}/>
                                         {user.isOnline && <div className="inbox-conv-online"/>}
                                     </div>
                                     <div className="inbox-conv-info">
-                                        <span className="inbox-conv-name">{user.name}</span>
+                                        <span className="inbox-conv-name" style={unreadMessages[user.id] ? { fontWeight: '700' } : {}}>{user.name}</span>
                                         <span className="inbox-conv-preview">{user.thought ? `"${user.thought}"` : 'Toca para chatear'}</span>
                                     </div>
                                     <span className="inbox-conv-dist">{user.distance}m</span>
