@@ -400,6 +400,7 @@
             padding: 16px 20px;
             background: rgba(22, 27, 34, 0.95);
             border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+            overflow: visible;
         }
 
         .sidebar-header h2, .profile-header h2, .inbox-header h2, .tech-settings-header h2 {
@@ -951,11 +952,16 @@
             margin-top: 8px;
         }
 
-        .chat-header { background: #1f2c33; border: none; }
+        .chat-header { 
+            background: #1f2c33; 
+            border: none; 
+            padding-top: max(env(safe-area-inset-top), 16px);
+            padding-bottom: 16px;
+        }
 
-        .chat-user-info { flex: 1; display: flex; align-items: center; gap: 12px; }
+        .chat-user-info { flex: 1; display: flex; align-items: center; gap: 12px; overflow: visible; }
 
-        .chat-user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .chat-user-avatar { width: 40px; height: 40px; min-width: 40px; min-height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 
         .chat-user-details h3 { font-size: 16px; font-weight: 400; color: #e9edef; margin: 0; }
         .chat-user-details p { font-size: 13px; color: #8696a0; margin: 0; }
