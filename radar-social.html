@@ -2280,36 +2280,38 @@
             }, [viewingStory]);
 
             // Handle Android back button
+            const overlayOpenRef = React.useRef(false);
+            
             useEffect(() => {
-                if (showInbox || showSidebar || showProfile || selectedUser || showPreferences) {
+                const hasOverlay = showInbox || showSidebar || showProfile || selectedUser || showPreferences;
+                
+                if (hasOverlay && !overlayOpenRef.current) {
                     window.history.pushState({ overlay: true }, '');
+                    overlayOpenRef.current = true;
+                } else if (!hasOverlay && overlayOpenRef.current) {
+                    overlayOpenRef.current = false;
                 }
             }, [showInbox, showSidebar, showProfile, selectedUser, showPreferences]);
 
-            // Estado base para que el botón atrás en mapa minimice la app
             useEffect(() => {
-                if (currentUser) {
-                    window.history.replaceState({ map: true }, '');
-                }
-            }, [currentUser]);
-
-            useEffect(() => {
-                const handleBackButton = (e) => {
+                const handleBackButton = () => {
                     const hasOverlay = selectedUser || showInbox || showProfile || showSidebar || showPreferences;
                     
                     if (hasOverlay) {
-                        // Cerrar el overlay activo
                         if (selectedUser) setSelectedUser(null);
                         else if (showInbox) setShowInbox(false);
                         else if (showProfile) setShowProfile(false);
                         else if (showSidebar) setShowSidebar(false);
                         else if (showPreferences) setShowPreferences(false);
+                        overlayOpenRef.current = false;
+                    } else if (currentUser) {
+                        // En el mapa sin overlays: bloquear navegación hacia atrás
+                        window.history.pushState({ map: true }, '');
                     }
-                    // Si no hay overlay, Android minimiza la app automáticamente
                 };
                 window.addEventListener('popstate', handleBackButton);
                 return () => window.removeEventListener('popstate', handleBackButton);
-            }, [showInbox, showSidebar, showProfile, selectedUser, showPreferences]);
+            }, [showInbox, showSidebar, showProfile, selectedUser, showPreferences, currentUser]);
 
             const savePreferences = async () => {
                 if (!currentUser?.id) return;
