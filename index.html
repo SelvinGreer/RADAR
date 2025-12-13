@@ -1198,8 +1198,8 @@
                 const provider = new firebase.auth.GoogleAuthProvider();
                 provider.setCustomParameters({ prompt: 'select_account' });
                 await auth.signInWithPopup(provider);
-                // After successful sign in, redirect to app
-                window.location.href = 'radar-social.html';
+                // After successful sign in, redirect to welcome
+                window.location.href = 'welcome.html';
             } catch (error) {
                 console.error('Error signing in:', error);
                 if (error.code !== 'auth/popup-closed-by-user') {
