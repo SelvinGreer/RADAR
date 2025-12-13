@@ -526,28 +526,63 @@
 
         /* Stats Banner */
         .stats-section {
-            padding: 80px 32px;
+            padding: 60px 0;
             background: #38bd62;
+            overflow: hidden;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 40px;
+        .stats-carousel {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding: 20px 0;
+        }
+
+        .stats-carousel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .stat-item {
+            flex: 0 0 80%;
+            scroll-snap-align: center;
             text-align: center;
-            max-width: 1000px;
-            margin: 0 auto;
+            padding: 40px 20px;
         }
 
         .stat-number {
-            font-size: 48px;
+            font-size: 72px;
             font-weight: 700;
             color: #fff;
         }
 
         .stat-label {
-            color: rgba(255,255,255,0.8);
-            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+            font-size: 18px;
+            margin-top: 8px;
+        }
+
+        .stats-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding-bottom: 20px;
+        }
+
+        .stats-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stats-dot.active {
+            background: #fff;
+            transform: scale(1.2);
         }
 
         /* CTA Section */
@@ -750,11 +785,6 @@
 
             .feature-grid {
                 grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 30px;
             }
 
             .footer-grid {
@@ -998,23 +1028,29 @@
 
     <!-- Stats Banner -->
     <section class="stats-section">
-        <div class="stats-grid">
-            <div>
+        <div class="stats-carousel" id="statsCarousel">
+            <div class="stat-item">
                 <div class="stat-number">5m</div>
                 <div class="stat-label">Radio mínimo</div>
             </div>
-            <div>
+            <div class="stat-item">
                 <div class="stat-number">1km</div>
                 <div class="stat-label">Radio máximo</div>
             </div>
-            <div>
+            <div class="stat-item">
                 <div class="stat-number">12h</div>
                 <div class="stat-label">Stories activas</div>
             </div>
-            <div>
+            <div class="stat-item">
                 <div class="stat-number">∞</div>
                 <div class="stat-label">Conexiones posibles</div>
             </div>
+        </div>
+        <div class="stats-dots">
+            <div class="stats-dot active" data-index="0"></div>
+            <div class="stats-dot" data-index="1"></div>
+            <div class="stats-dot" data-index="2"></div>
+            <div class="stats-dot" data-index="3"></div>
         </div>
     </section>
 
@@ -1078,7 +1114,47 @@
         </div>
     </footer>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
     <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhcfX0M5oqX7rZ6WdCZaHfxHKcxySxQl8",
+            authDomain: "radar-social-5a61f.firebaseapp.com",
+            projectId: "radar-social-5a61f",
+            storageBucket: "radar-social-5a61f.firebasestorage.app",
+            messagingSenderId: "1010787643000",
+            appId: "1:1010787643000:web:e9dc6a1c175d875b90478d"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Stats Carousel
+        const carousel = document.getElementById('statsCarousel');
+        const dots = document.querySelectorAll('.stats-dot');
+        
+        // Update dots on scroll
+        carousel.addEventListener('scroll', () => {
+            const scrollLeft = carousel.scrollLeft;
+            const itemWidth = carousel.offsetWidth * 0.8;
+            const index = Math.round(scrollLeft / itemWidth);
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+        });
+        
+        // Click on dots to scroll
+        dots.forEach((dot, i) => {
+            dot.addEventListener('click', () => {
+                const itemWidth = carousel.offsetWidth * 0.8;
+                carousel.scrollTo({ left: i * itemWidth, behavior: 'smooth' });
+            });
+        });
+
         // Show mobile feature section on mobile
         if (window.innerWidth <= 768) {
             document.getElementById('mobile-feature').style.display = 'block';
@@ -1116,27 +1192,6 @@
                 });
             }
         });
-    </script>
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    
-    <!-- Firebase Authentication -->
-    <script>
-        // Firebase config
-        const firebaseConfig = {
-            apiKey: "AIzaSyAhcfX0M5oqX7rZ6WdCZaHfxHKcxySxQl8",
-            authDomain: "radar-social-5a61f.firebaseapp.com",
-            projectId: "radar-social-5a61f",
-            storageBucket: "radar-social-5a61f.firebasestorage.app",
-            messagingSenderId: "1010787643000",
-            appId: "1:1010787643000:web:e9dc6a1c175d875b90478d"
-        };
-        
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         
         // Create loading overlay
         function showLoadingOverlay() {
