@@ -532,57 +532,32 @@
         }
 
         .stats-carousel {
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            padding: 20px 0;
-        }
-
-        .stats-carousel::-webkit-scrollbar {
-            display: none;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px 32px;
         }
 
         .stat-item {
-            flex: 0 0 80%;
-            scroll-snap-align: center;
             text-align: center;
-            padding: 40px 20px;
+            padding: 20px;
         }
 
         .stat-number {
-            font-size: 72px;
+            font-size: 56px;
             font-weight: 700;
             color: #fff;
         }
 
         .stat-label {
             color: rgba(255,255,255,0.9);
-            font-size: 18px;
+            font-size: 16px;
             margin-top: 8px;
         }
 
         .stats-dots {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding-bottom: 20px;
-        }
-
-        .stats-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.4);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .stats-dot.active {
-            background: #fff;
-            transform: scale(1.2);
+            display: none;
         }
 
         /* CTA Section */
