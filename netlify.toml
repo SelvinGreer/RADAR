@@ -1,5 +1,4 @@
-# Configuración de Netlify para Radar Social
-
+# Configuración de Netlify para NexMe
 [build]
   publish = "."
 
@@ -17,7 +16,7 @@
     Permissions-Policy = "geolocation=(self), camera=(self)"
 
 [[headers]]
-  for = "/service-worker.js"
+  for = "/sw.js"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
@@ -25,7 +24,22 @@
   for = "/manifest.json"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
-    
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/welcome.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/radar-social.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 [[headers]]
   for = "/icon-*.png"
   [headers.values]
