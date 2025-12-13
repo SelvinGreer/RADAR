@@ -503,7 +503,7 @@
             transition: transform 0.3s ease;
             display: flex;
             flex-direction: column;
-            padding-top: 20px;
+            padding-top: 10px;
         }
         
         .inbox-panel.active {
@@ -513,9 +513,10 @@
         .inbox-stories {
             display: flex;
             gap: 16px;
-            padding: 20px 16px 16px 16px;
+            padding: 12px 16px 16px 16px;
             overflow-x: auto;
             border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+            align-items: flex-end;
         }
         
         .inbox-stories::-webkit-scrollbar { display: none; }
@@ -525,7 +526,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-width: 72px;
+            min-width: 75px;
             cursor: pointer;
             position: relative;
         }
@@ -554,10 +555,6 @@
         
         .inbox-story-ring.has-story {
             background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
-        }
-        
-        .inbox-story-ring.online {
-            background: #38bd62;
         }
 
         .inbox-story-img {
@@ -589,15 +586,11 @@
             font-size: 11px;
             color: #e6edf3;
             margin-top: 6px;
-            max-width: 72px;
+            max-width: 80px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-        }
-
-        .inbox-story-dist {
-            font-size: 10px;
-            color: #38bd62;
+            text-align: center;
         }
 
         .inbox-tabs-bar {
@@ -2530,14 +2523,21 @@
                                 {!currentUser?.thought && <div className="inbox-add-btn">+</div>}
                                 <span className="inbox-story-name">Tu nota</span>
                             </div>
-                            {users.filter(u => u.isOnline && u.latitude !== 0).sort((a,b) => a.distance - b.distance).slice(0,10).map(user => (
-                                <div key={user.id} className="inbox-story-item" onClick={() => { if (user.hasStory) { setViewedStories(prev => ({ ...prev, [user.id]: Date.now() })); setViewingStory(user); } else { openChat(user); setShowInbox(false); } }}>
+                            {users.filter(u => u.isOnline && u.latitude !== 0).sort((a,b) => {
+                                const aViewed = viewedStories[a.id];
+                                const bViewed = viewedStories[b.id];
+                                const aHasUnviewed = a.hasStory && !aViewed;
+                                const bHasUnviewed = b.hasStory && !bViewed;
+                                if (aHasUnviewed && !bHasUnviewed) return -1;
+                                if (!aHasUnviewed && bHasUnviewed) return 1;
+                                return a.distance - b.distance;
+                            }).slice(0,10).map(user => (
+                                <div key={user.id} className="inbox-story-item" onClick={() => { if (user.hasStory && !viewedStories[user.id]) { setViewedStories(prev => ({ ...prev, [user.id]: Date.now() })); setViewingStory(user); } else { openChat(user); setShowInbox(false); } }}>
                                     {user.thought && <div className="inbox-bubble">{user.thought}</div>}
-                                    <div className={`inbox-story-ring ${user.hasStory && !viewedStories[user.id] ? 'has-story' : user.isOnline ? 'online' : ''}`}>
+                                    <div className={`inbox-story-ring ${user.hasStory && !viewedStories[user.id] ? 'has-story' : ''}`}>
                                         <img src={user.photo} alt={user.name} className="inbox-story-img"/>
                                     </div>
-                                    <span className="inbox-story-name">{user.name.split(' ')[0]}</span>
-                                    <span className="inbox-story-dist">📍{user.distance}m</span>
+                                    <span className="inbox-story-name">{user.name.split(' ')[0]} / {user.distance}m</span>
                                 </div>
                             ))}
                         </div>
