@@ -2,7 +2,7 @@
     "name": "NexMe - Conecta con personas cerca",
     "short_name": "NexMe",
     "description": "Encuentra y conecta con personas cerca de ti en tiempo real. Descubre quién está a tu alrededor.",
-    "start_url": "./radar-social.html",
+    "start_url": "./index.html",
     "scope": "./",
     "display": "standalone",
     "background_color": "#0d1117",
