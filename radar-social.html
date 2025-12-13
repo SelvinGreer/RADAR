@@ -77,6 +77,12 @@
             width: 100%;
             height: 100%;
             z-index: 1;
+            transition: filter 1s ease, opacity 1s ease;
+        }
+
+        #google-map.map-loading {
+            filter: blur(8px);
+            opacity: 0.7;
         }
 
         .map-header {
@@ -1592,6 +1598,7 @@
             const [socialNotifications, setSocialNotifications] = useState([]);
             const [googleMap, setGoogleMap] = useState(null);
             const [waitingForGPS, setWaitingForGPS] = useState(false);
+            const [gpsReady, setGpsReady] = useState(false);
             const [locationAccuracy, setLocationAccuracy] = useState(20);
             const [isDraggingDial, setIsDraggingDial] = useState(false);
             const [inboxTab, setInboxTab] = useState('messages');
@@ -2110,9 +2117,29 @@
             }, []);
 
             useEffect(() => {
-                if (!currentUser?.latitude || currentUser.latitude === 0 || googleMap) return;
-                initializeGoogleMap(currentUser.latitude, currentUser.longitude);
-            }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
+                // Inicializar mapa inmediatamente con ubicación por defecto (Panamá)
+                if (!googleMap && mapRef.current) {
+                    initializeGoogleMap(9.0, -79.5);
+                    // Agregar clase blur
+                    if (mapRef.current) {
+                        mapRef.current.classList.add('map-loading');
+                    }
+                }
+            }, [googleMap]);
+
+            useEffect(() => {
+                // Cuando tengamos GPS real, quitar blur y centrar mapa
+                if (googleMap && currentUser?.latitude && currentUser.latitude !== 0 && !gpsReady) {
+                    setGpsReady(true);
+                    // Quitar blur con transición suave
+                    if (mapRef.current) {
+                        mapRef.current.classList.remove('map-loading');
+                    }
+                    // Mover mapa suavemente a ubicación real
+                    googleMap.panTo({ lat: currentUser.latitude, lng: currentUser.longitude });
+                    currentUserPositionRef.current = { lat: currentUser.latitude, lng: currentUser.longitude };
+                }
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, gpsReady]);
 
             useEffect(() => {
                 if (!currentUser?.id) return;
