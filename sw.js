@@ -1,7 +1,8 @@
-const CACHE_NAME = 'nexme-v2';
+const CACHE_NAME = 'nexme-v3';
 const urlsToCache = [
     './',
     './index.html',
+    './welcome.html',
     './radar-social.html',
     './manifest.json',
     './icon-192.png',
