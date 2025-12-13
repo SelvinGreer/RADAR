@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.6.6 Build: 2025-12-12 | FIX: Emoji reactions now work on avatar -->
+    <!-- v7.7.0 Build: 2025-12-13 | NEW: Redesigned inbox, Android back button, message notifications -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1962,7 +1962,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.6.6 - Emoji picker z-index fixed');
+                console.log('🚀 RADAR SOCIAL v7.7.0 - Redesigned inbox & Android back button');
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
                         const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
@@ -2119,6 +2119,7 @@
 
             useEffect(() => {
                 if (!currentUser?.id) return;
+                console.log('Iniciando listener de mensajes no leídos para:', currentUser.id);
                 const unsubscribe = db.collection('chats').where('participants', 'array-contains', currentUser.id).onSnapshot((snapshot) => {
                     const unreadCounts = {};
                     let total = 0;
@@ -2137,6 +2138,7 @@
                             }
                         }
                     });
+                    console.log('Mensajes no leídos actualizados:', unreadCounts, 'Total:', total);
                     setUnreadMessages(unreadCounts);
                     setTotalUnread(total);
                 });
@@ -2401,15 +2403,35 @@
                 const chatId = [currentUser.id, selectedUser.id].sort().join('_');
                 const text = messageInput.trim();
                 setMessageInput('');
-                await db.collection('chats').doc(chatId).collection('messages').add({ text, senderId: currentUser.id, senderName: currentUser.name, senderPhoto: currentUser.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-                await db.collection('chats').doc(chatId).set({ participants: [currentUser.id, selectedUser.id], lastMessage: text, lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), [`unreadCount_${selectedUser.id}`]: firebase.firestore.FieldValue.increment(1) }, { merge: true });
+                try {
+                    await db.collection('chats').doc(chatId).collection('messages').add({ text, senderId: currentUser.id, senderName: currentUser.name, senderPhoto: currentUser.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                    await db.collection('chats').doc(chatId).set({ 
+                        participants: [currentUser.id, selectedUser.id], 
+                        lastMessage: text, 
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), 
+                        [`unreadCount_${selectedUser.id}`]: firebase.firestore.FieldValue.increment(1) 
+                    }, { merge: true });
+                    console.log('Mensaje enviado, incrementando unreadCount para:', selectedUser.id);
+                } catch(e) {
+                    console.error('Error enviando mensaje:', e);
+                }
             };
 
             const sendQuickMessage = async () => {
                 if (!quickMessage.trim() || !instagramModalUser || !currentUser) return;
                 const chatId = [currentUser.id, instagramModalUser.id].sort().join('_');
-                await db.collection('chats').doc(chatId).collection('messages').add({ text: quickMessage.trim(), senderId: currentUser.id, senderName: currentUser.name, senderPhoto: currentUser.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-                await db.collection('chats').doc(chatId).set({ participants: [currentUser.id, instagramModalUser.id], lastMessage: quickMessage.trim(), lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), [`unreadCount_${instagramModalUser.id}`]: firebase.firestore.FieldValue.increment(1) }, { merge: true });
+                try {
+                    await db.collection('chats').doc(chatId).collection('messages').add({ text: quickMessage.trim(), senderId: currentUser.id, senderName: currentUser.name, senderPhoto: currentUser.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                    await db.collection('chats').doc(chatId).set({ 
+                        participants: [currentUser.id, instagramModalUser.id], 
+                        lastMessage: quickMessage.trim(), 
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), 
+                        [`unreadCount_${instagramModalUser.id}`]: firebase.firestore.FieldValue.increment(1) 
+                    }, { merge: true });
+                    console.log('Quick message enviado, incrementando unreadCount para:', instagramModalUser.id);
+                } catch(e) {
+                    console.error('Error enviando quick message:', e);
+                }
                 setQuickMessage('');
                 setShowInstagramModal(false);
                 openChat(instagramModalUser);
@@ -2418,16 +2440,36 @@
             const sendLike = async () => {
                 if (!instagramModalUser || !currentUser) return;
                 const chatId = [currentUser.id, instagramModalUser.id].sort().join('_');
-                await db.collection('chats').doc(chatId).collection('messages').add({ text: '❤️', senderId: currentUser.id, senderName: currentUser.name, senderPhoto: currentUser.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp(), type: 'like' });
-                await db.collection('chats').doc(chatId).set({ participants: [currentUser.id, instagramModalUser.id], lastMessage: '❤️', lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), [`unreadCount_${instagramModalUser.id}`]: firebase.firestore.FieldValue.increment(1) }, { merge: true });
+                try {
+                    await db.collection('chats').doc(chatId).collection('messages').add({ text: '❤️', senderId: currentUser.id, senderName: currentUser.name, senderPhoto: currentUser.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp(), type: 'like' });
+                    await db.collection('chats').doc(chatId).set({ 
+                        participants: [currentUser.id, instagramModalUser.id], 
+                        lastMessage: '❤️', 
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), 
+                        [`unreadCount_${instagramModalUser.id}`]: firebase.firestore.FieldValue.increment(1) 
+                    }, { merge: true });
+                    console.log('Like enviado, incrementando unreadCount para:', instagramModalUser.id);
+                } catch(e) {
+                    console.error('Error enviando like:', e);
+                }
                 setShowInstagramModal(false);
             };
 
             const sendStoryReaction = async (emoji) => {
                 if (!viewingStory || !currentUser || viewingStory.id === currentUser.id) return;
                 const chatId = [currentUser.id, viewingStory.id].sort().join('_');
-                await db.collection('chats').doc(chatId).collection('messages').add({ text: `Reaccionó ${emoji} a tu historia`, senderId: currentUser.id, senderName: currentUser.name, senderPhoto: currentUser.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp(), type: 'story_reaction', emoji });
-                await db.collection('chats').doc(chatId).set({ participants: [currentUser.id, viewingStory.id], lastMessage: emoji, lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), [`unreadCount_${viewingStory.id}`]: firebase.firestore.FieldValue.increment(1) }, { merge: true });
+                try {
+                    await db.collection('chats').doc(chatId).collection('messages').add({ text: `Reaccionó ${emoji} a tu historia`, senderId: currentUser.id, senderName: currentUser.name, senderPhoto: currentUser.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp(), type: 'story_reaction', emoji });
+                    await db.collection('chats').doc(chatId).set({ 
+                        participants: [currentUser.id, viewingStory.id], 
+                        lastMessage: emoji, 
+                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), 
+                        [`unreadCount_${viewingStory.id}`]: firebase.firestore.FieldValue.increment(1) 
+                    }, { merge: true });
+                    console.log('Story reaction enviada, incrementando unreadCount para:', viewingStory.id);
+                } catch(e) {
+                    console.error('Error enviando story reaction:', e);
+                }
                 setViewedStories(prev => ({ ...prev, [viewingStory.id]: Date.now() }));
                 setViewingStory(null);
             };
@@ -2513,7 +2555,7 @@
                             <div className="sidebar-item" onClick={() => { setShowStoryUpload(true); setShowSidebar(false); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Subir Historia</span></div>
                             <div className="sidebar-item" onClick={() => { setShowPreferences(true); setShowSidebar(false); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Mis Preferencias</span></div>
                             <div className="sidebar-item" style={{ marginTop: 'auto', color: '#f87171' }} onClick={handleLogout}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Cerrar Sesión</span></div>
-                            <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}><span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.6.6</span></div>
+                            <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}><span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.7.0</span></div>
                         </div>
                     </div>
 
