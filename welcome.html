@@ -102,6 +102,17 @@
             gap: 10px;
         }
         
+        .bottom-fade {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 140px;
+            background: linear-gradient(to bottom, transparent 0%, #1a1a1a 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        
         .continue-btn.ready {
             background: #2d2d2d;
         }
@@ -140,6 +151,8 @@
         
         <p class="permissions-text">Al continuar, aceptas el acceso a tu ubicación y cámara para el funcionamiento de la app.</p>
     </div>
+    
+    <div class="bottom-fade"></div>
     
     <button class="continue-btn" id="continueBtn" onclick="continueToApp()">
         <span id="btnText">Preparando...</span>
