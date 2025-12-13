@@ -132,7 +132,7 @@
         .hero-wrapper {
             overflow: hidden;
             position: relative;
-            height: calc(100vh - 200px);
+            min-height: 100vh;
             background: #1a1a1a;
         }
 
@@ -751,10 +751,15 @@
                 display: none !important;
             }
 
+            .hero-wrapper {
+                min-height: 100vh;
+            }
+
             .hero-section {
                 grid-template-columns: 1fr;
-                min-height: auto;
-                padding: 60px 24px;
+                min-height: 100vh;
+                padding: 40px 24px;
+                align-content: center;
             }
 
             .hero-left {
@@ -763,7 +768,20 @@
             }
 
             .hero-title {
-                font-size: 36px;
+                font-size: 28px;
+            }
+
+            .hero-subtitle {
+                font-size: 13px;
+                margin-bottom: 60px;
+            }
+
+            .google-btn {
+                margin-top: 40px;
+            }
+
+            .privacy-text {
+                margin-top: 50px;
             }
 
             .login-container {
@@ -915,205 +933,6 @@
         </section>
     </div>
 
-    <!-- Interest Cards Section -->
-    <section class="section section-dark desktop-only" id="caracteristicas">
-        <div class="section-content">
-            <div class="interest-grid">
-                <div class="interest-card">
-                    <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=600" alt="Coffee">
-                    <div class="interest-label">☕ Tomando café</div>
-                </div>
-                <div class="interest-card">
-                    <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600" alt="Gym">
-                    <div class="interest-label">💪 En el gym</div>
-                </div>
-                <div class="interest-card">
-                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600" alt="Studying">
-                    <div class="interest-label">📚 Estudiando</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Feature 1: Mapa en tiempo real -->
-    <section class="section desktop-only" id="como-funciona">
-        <div class="section-content">
-            <div class="section-grid">
-                <div class="section-image">
-                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800" alt="Real-time map">
-                </div>
-                <div>
-                    <h3 class="section-title">Mapa en tiempo real</h3>
-                    <p class="section-text">Visualiza a todas las personas cercanas en un mapa interactivo. Los avatares se mueven en tiempo real cuando las personas se desplazan.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Feature 2: Comparte lo que buscas -->
-    <section class="section section-dark desktop-only">
-        <div class="section-content">
-            <div class="section-grid reverse">
-                <div class="section-image">
-                    <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800" alt="Share thoughts">
-                </div>
-                <div>
-                    <h3 class="section-title">Comparte lo que buscas</h3>
-                    <p class="section-text">Publica un pensamiento y deja que otros sepan qué tienes en mente. "¿Café?", "Gym?", "¿Alguien para estudiar?" - conecta con personas que buscan lo mismo.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Feature Cards: Stories + Chat -->
-    <section class="section desktop-only">
-        <div class="section-content">
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800" alt="Stories">
-                    <div class="feature-card-content">
-                        <h3>📸 Stories de 12 horas</h3>
-                        <p>Comparte fotos que desaparecen automáticamente. Muestra tu día, dónde estás y qué haces.</p>
-                    </div>
-                </div>
-                <div class="feature-card">
-                    <img src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800" alt="Chat">
-                    <div class="feature-card-content">
-                        <h3>💬 Chat instantáneo</h3>
-                        <p>Envía mensajes directos a cualquier persona cercana. Sin necesidad de match previo.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonial -->
-    <section class="section section-dark desktop-only">
-        <div class="section-content">
-            <div class="section-grid">
-                <div>
-                    <div class="testimonial-quote">"</div>
-                    <p class="testimonial-text">Conocí a mi mejor amigo en un café gracias a NexMe. Él publicó "¿Alguien para charlar?" y yo estaba a 50 metros.</p>
-                    <p class="testimonial-author"><strong>María García</strong> · Panamá City</p>
-                </div>
-                <div class="section-image">
-                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800" alt="Friends">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Conexiones reales -->
-    <section class="section desktop-only">
-        <div class="section-content">
-            <div class="section-grid">
-                <div class="section-image">
-                    <img src="https://images.unsplash.com/photo-1543807535-eceef0bc6599?w=800" alt="Real connections">
-                </div>
-                <div>
-                    <h3 class="section-title">Conexiones reales, no virtuales</h3>
-                    <p class="section-text">NexMe está diseñado para que conozcas personas en el mundo real. Encuentra gente cercana y sal a conocerla hoy mismo.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Mobile: Conexiones reales (simplified) -->
-    <section class="section section-dark" style="display: none;" id="mobile-feature">
-        <div class="section-content" style="text-align: center; max-width: 600px;">
-            <h3 class="section-title">Conexiones reales, no virtuales</h3>
-            <p class="section-text">NexMe está diseñado para que conozcas personas en el mundo real. Encuentra gente cercana y sal a conocerla hoy mismo.</p>
-        </div>
-    </section>
-
-    <!-- Stats Banner -->
-    <section class="stats-section">
-        <div class="stats-carousel" id="statsCarousel">
-            <div class="stat-item">
-                <div class="stat-number">5m</div>
-                <div class="stat-label">Radio mínimo</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">1km</div>
-                <div class="stat-label">Radio máximo</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">12h</div>
-                <div class="stat-label">Stories activas</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">∞</div>
-                <div class="stat-label">Conexiones posibles</div>
-            </div>
-        </div>
-        <div class="stats-dots">
-            <div class="stats-dot active" data-index="0"></div>
-            <div class="stats-dot" data-index="1"></div>
-            <div class="stats-dot" data-index="2"></div>
-            <div class="stats-dot" data-index="3"></div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <h2 class="cta-title">Empieza a conectar</h2>
-        <p class="cta-text">Únete a miles de personas que ya están conociendo gente nueva en su zona.</p>
-        <button onclick="signInWithGoogle()" class="cta-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Continuar con Google
-        </button>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer" id="privacidad">
-        <div class="footer-content">
-            <div class="footer-grid">
-                <div>
-                    <div class="footer-brand">NexMe</div>
-                    <p class="footer-desc">La forma más auténtica de conocer personas cerca de ti. Sin algoritmos, sin juegos, solo conexiones reales.</p>
-                </div>
-                <div>
-                    <div class="footer-title">Producto</div>
-                    <div class="footer-links">
-                        <span>Cómo funciona</span>
-                        <span>Características</span>
-                        <span>Descargar App</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="footer-title">Compañía</div>
-                    <div class="footer-links">
-                        <span>Sobre nosotros</span>
-                        <span>Blog</span>
-                        <span>Empleos</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="footer-title">Legal</div>
-                    <div class="footer-links">
-                        <span>Términos</span>
-                        <span>Privacidad</span>
-                        <span>Cookies</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <span class="footer-copy">© 2024 NexMe. Todos los derechos reservados.</span>
-                <div class="footer-social">
-                    <span>📷</span>
-                    <span>🐦</span>
-                    <span>📘</span>
-                </div>
-            </div>
-        </div>
-    </footer>
-
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -1132,33 +951,6 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-
-        // Stats Carousel
-        const carousel = document.getElementById('statsCarousel');
-        const dots = document.querySelectorAll('.stats-dot');
-        
-        // Update dots on scroll
-        carousel.addEventListener('scroll', () => {
-            const scrollLeft = carousel.scrollLeft;
-            const itemWidth = carousel.offsetWidth * 0.8;
-            const index = Math.round(scrollLeft / itemWidth);
-            dots.forEach((dot, i) => {
-                dot.classList.toggle('active', i === index);
-            });
-        });
-        
-        // Click on dots to scroll
-        dots.forEach((dot, i) => {
-            dot.addEventListener('click', () => {
-                const itemWidth = carousel.offsetWidth * 0.8;
-                carousel.scrollTo({ left: i * itemWidth, behavior: 'smooth' });
-            });
-        });
-
-        // Show mobile feature section on mobile
-        if (window.innerWidth <= 768) {
-            document.getElementById('mobile-feature').style.display = 'block';
-        }
 
         // Language toggle (placeholder)
         function toggleLanguage() {
