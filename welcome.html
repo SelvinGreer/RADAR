@@ -96,6 +96,27 @@
             font-family: 'Inter', sans-serif;
             cursor: pointer;
             z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .continue-btn.ready {
+            background: #2d2d2d;
+        }
+        
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -120,7 +141,10 @@
         <p class="permissions-text">Al continuar, aceptas el acceso a tu ubicación y cámara para el funcionamiento de la app.</p>
     </div>
     
-    <button class="continue-btn" onclick="continueToApp()">Continuar</button>
+    <button class="continue-btn" id="continueBtn" onclick="continueToApp()">
+        <span id="btnText">Preparando...</span>
+        <div class="spinner" id="btnSpinner"></div>
+    </button>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -139,15 +163,70 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         
+        let gpsReady = false;
+        let userLocation = null;
+        
+        // Check if user is logged in
         auth.onAuthStateChanged(user => {
             if (!user) {
                 window.location.href = 'index.html';
             }
         });
         
-        function continueToApp() {
-            window.location.href = 'radar-social.html';
+        // Start getting GPS in background
+        function initGPS() {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        gpsReady = true;
+                        updateButton();
+                    },
+                    (error) => {
+                        console.log('GPS error:', error);
+                        // Still allow to continue, radar-social will handle it
+                        gpsReady = true;
+                        updateButton();
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                gpsReady = true;
+                updateButton();
+            }
         }
+        
+        function updateButton() {
+            const btn = document.getElementById('continueBtn');
+            const text = document.getElementById('btnText');
+            const spinner = document.getElementById('btnSpinner');
+            
+            if (gpsReady) {
+                text.textContent = 'Continuar';
+                spinner.style.display = 'none';
+                btn.classList.add('ready');
+            }
+        }
+        
+        function continueToApp() {
+            if (gpsReady) {
+                // Store location for radar-social to use
+                if (userLocation) {
+                    sessionStorage.setItem('initialLocation', JSON.stringify(userLocation));
+                }
+                window.location.href = 'radar-social.html';
+            }
+        }
+        
+        // Start GPS when page loads
+        initGPS();
     </script>
 </body>
 </html>
