@@ -6,7 +6,7 @@
     "scope": "./",
     "display": "standalone",
     "background_color": "#0d1117",
-    "theme_color": "#38bd62",
+    "theme_color": "#0d1117",
     "orientation": "portrait",
     "lang": "es",
     "categories": ["social", "lifestyle"],
