@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Radar Social</title>
-    <!-- v7.7.3 Build: 2025-12-14 | MOVE: Radius slider to sidebar with neumorphic design -->
+    <!-- v7.7.5 Build: 2025-12-14 | FIX: Sidebar layout - slider middle, logout bottom -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -127,76 +127,76 @@
             50% { opacity: 0.5; }
         }
 
-        /* Slider de radio - Diseño neumórfico para sidebar */
+        /* Slider de radio - Diseño sutil para sidebar */
         .radius-slider-section {
             padding: 20px 20px 16px 20px;
+            border-top: 1px solid rgba(48, 54, 61, 0.3);
+            border-bottom: 1px solid rgba(48, 54, 61, 0.3);
+            margin-top: 12px;
         }
 
         .radius-slider-label {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
         }
 
         .radius-slider-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #8b949e;
+            font-size: 11px;
+            font-weight: 500;
+            color: #6e7681;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .radius-slider-value {
-            font-size: 20px;
-            font-weight: 700;
+            font-size: 14px;
+            font-weight: 600;
             color: #38bd62;
         }
 
         .radius-slider-track {
             position: relative;
             width: 100%;
-            height: 10px;
+            height: 6px;
             background: #161b22;
-            border-radius: 8px;
+            border-radius: 3px;
             cursor: pointer;
             touch-action: none;
-            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.6), inset -2px -2px 6px rgba(48, 54, 61, 0.3);
+            box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
         }
 
         .radius-slider-progress {
             position: absolute;
             height: 100%;
-            background: linear-gradient(90deg, rgba(56, 189, 98, 0.4) 0%, #38bd62 100%);
-            border-radius: 8px;
-            box-shadow: 0 0 8px rgba(56, 189, 98, 0.4);
+            background: linear-gradient(90deg, rgba(56, 189, 98, 0.5) 0%, #38bd62 100%);
+            border-radius: 3px;
         }
 
         .radius-slider-thumb {
             position: absolute;
             top: 50%;
-            width: 26px;
-            height: 26px;
+            width: 18px;
+            height: 18px;
             background: linear-gradient(145deg, #3fcf6e 0%, #2ea556 100%);
-            border: 3px solid #0d1117;
+            border: 2px solid #0d1117;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             cursor: grab;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 98, 0.5);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
             touch-action: none;
         }
 
         .radius-slider-marks {
             display: flex;
             justify-content: space-between;
-            margin-top: 10px;
+            margin-top: 6px;
         }
 
         .radius-slider-mark {
-            font-size: 10px;
+            font-size: 9px;
             color: #6e7681;
-            font-weight: 500;
-        }
             font-weight: 500;
         }
 
@@ -205,9 +205,9 @@
             bottom: 0;
             left: 0;
             right: 0;
-            z-index: 60;
+            z-index: 90;
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             gap: 8px;
             padding: 50px 12px 16px 12px;
             background: linear-gradient(to bottom, 
@@ -2014,7 +2014,7 @@
 
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.7.3 - Radius slider moved to sidebar');
+                console.log('🚀 RADAR SOCIAL v7.7.5 - Sidebar layout fixed');
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
                         const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
@@ -2606,7 +2606,7 @@
                             
                             <div className="radius-slider-section">
                                 <div className="radius-slider-label">
-                                    <span className="radius-slider-title">📍 Radio de búsqueda</span>
+                                    <span className="radius-slider-title">Radio de búsqueda</span>
                                     <span className="radius-slider-value">{radius}m</span>
                                 </div>
                                 <div className="radius-slider-track" 
@@ -2628,7 +2628,6 @@
                             </div>
                             
                             <div className="sidebar-item" style={{ marginTop: 'auto', color: '#f87171' }} onClick={handleLogout}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Cerrar Sesión</span></div>
-                            <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(48,54,61,0.5)', marginTop: '12px' }}><span style={{ fontSize: '11px', color: '#6e7681', fontWeight: '500' }}>NexMe v7.7.3</span></div>
                         </div>
                     </div>
 
