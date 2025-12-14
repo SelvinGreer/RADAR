@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nexme-v771';
+const CACHE_NAME = 'nexme-v773';
 const urlsToCache = [
     './',
     './index.html',
