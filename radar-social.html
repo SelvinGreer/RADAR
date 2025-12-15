@@ -1056,16 +1056,8 @@
         .chat-send-btn:disabled svg { color: #8696a0; }
 
         .instagram-modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 9998;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .instagram-modal-backdrop.active { opacity: 1; pointer-events: all; }
+    display: none;
+}
 
         .instagram-modal {
     position: fixed;
@@ -2782,7 +2774,7 @@
 
                     <div className={`instagram-modal-backdrop ${showInstagramModal ? 'active' : ''}`} onClick={() => setShowInstagramModal(false)}/>
                     <>
-<div className={`instagram-modal ${showInstagramModal ? 'active' : ''}`}>
+{/* Backdrop eliminado */}
   {instagramModalUser && (<><div className="instagram-modal-header"><img src={instagramModalUser.photo} alt={instagramModalUser.name} className="instagram-modal-avatar"/><div className="instagram-modal-info"><div className="instagram-modal-name">{instagramModalUser.name}</div><div className="instagram-modal-distance">📍 A {instagramModalUser.distance}m {instagramModalUser.thought && `• "${instagramModalUser.thought}"`}</div></div></div><div className="instagram-modal-actions"><input type="text" className="instagram-modal-input" placeholder="Enviar mensaje..." value={quickMessage} onChange={(e) => setQuickMessage(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && sendQuickMessage()}/><button className="instagram-modal-send" onClick={sendQuickMessage} disabled={!quickMessage.trim()}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div></>)}
 </div>
 {showInstagramModal && (
