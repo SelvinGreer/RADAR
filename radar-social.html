@@ -2403,10 +2403,14 @@
             }, [users, currentUser?.latitude]);
 
             useEffect(() => {
-                if (!viewingStory) return;
-                const timer = setTimeout(() => { setViewedStories(prev => ({ ...prev, [viewingStory.id]: Date.now() })); setViewingStory(null); }, 5000);
-                return () => clearTimeout(timer);
-            }, [viewingStory]);
+    if (!viewingStory) return;
+    const timer = setTimeout(() => { 
+        setViewedStories(prev => ({ ...prev, [viewingStory.id]: Date.now() })); 
+        setViewingStory(null); 
+        setMarkerRefreshTick(t => t + 1);
+    }, 5000);
+    return () => clearTimeout(timer);
+}, [viewingStory]);
 
             // Handle Android back button
             const overlayOpenRef = React.useRef(false);
@@ -2492,14 +2496,20 @@
             };
 
             const handleAvatarClick = (user) => {
-                if (user.id === currentUser?.id) {
-                    if (currentUser.hasStory && currentUser.storyUrl) setViewingStory(currentUser);
-                    else setShowStoryUpload(true);
-                } else {
-                    if (user.hasStory && user.storyUrl) { setViewedStories(prev => ({ ...prev, [user.id]: Date.now() })); setViewingStory(user); }
-                    else { setInstagramModalUser(user); setShowInstagramModal(true); }
-                }
-            };
+    if (user.id === currentUser?.id) {
+        if (currentUser.hasStory && currentUser.storyUrl) setViewingStory(currentUser);
+        else setShowStoryUpload(true);
+    } else {
+        if (user.hasStory && user.storyUrl && !viewedStories[user.id]) { 
+            setViewedStories(prev => ({ ...prev, [user.id]: Date.now() })); 
+            setViewingStory(user); 
+        }
+        else { 
+            setInstagramModalUser(user); 
+            setShowInstagramModal(true); 
+        }
+    }
+};
 
             const handleStoryImageSelect = (e) => { const file = e.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (ev) => setStoryImage(ev.target.result); reader.readAsDataURL(file); } };
 
