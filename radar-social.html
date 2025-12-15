@@ -2031,7 +2031,7 @@
             }, []);
             // Auth effect
             useEffect(() => {
-                console.log('🚀 RADAR SOCIAL v7.7.5 - Sidebar layout fixed');
+                console.log('🚀 NEXME v7.7.8 - Fix login Android + degradado #1a1f26 opacidad 1.0');
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
                         const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
@@ -2392,7 +2392,16 @@
             const toggleInterest = (id) => setUserPreferences(prev => ({ ...prev, interests: prev.interests.includes(id) ? prev.interests.filter(i => i !== id) : [...prev.interests, id] }));
             const toggleLookingFor = (id) => setUserPreferences(prev => ({ ...prev, lookingFor: prev.lookingFor.includes(id) ? [] : [id] }));
 
-            const handleGoogleSignIn = async () => { try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider().setCustomParameters({ prompt: 'select_account' })); } catch(e) { alert('Error: ' + e.message); } };
+            const handleGoogleSignIn = async () => { 
+                try { 
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    provider.setCustomParameters({ prompt: 'select_account' });
+                    await auth.signInWithRedirect(provider);
+                } catch(e) { 
+                    console.error('Error al iniciar sesión:', e);
+                    alert('Error: ' + e.message); 
+                } 
+            };
             const handleLogout = async () => { 
                 if (currentUser) {
                     try {
