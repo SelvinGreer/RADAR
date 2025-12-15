@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe - Conecta con personas cerca de ti</title>
-    <!-- v7.7.8 Build: 2025-12-14 | FIX: Google login redirect para Android PWA + degradado header #1a1f26 opacidad 1.0 -->
+    <!-- v7.7.9 Build: 2025-12-14 | Modal estilo Instagram + mapa azul/verde -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -1817,14 +1817,15 @@
                 if (!mapRef.current || googleMap) return;
                 currentUserPositionRef.current = { lat, lng };
                 const darkStyle = [
-                    { elementType: 'geometry', stylers: [{ color: '#1a1f26' }] },
-                    { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1f26' }] },
-                    { elementType: 'labels.text.fill', stylers: [{ color: '#9ca3af' }] },
+                    { elementType: 'geometry', stylers: [{ color: '#2c3e50' }] },
+                    { elementType: 'labels.text.stroke', stylers: [{ color: '#1a2332' }] },
+                    { elementType: 'labels.text.fill', stylers: [{ color: '#8b9eb5' }] },
                     { featureType: 'poi', stylers: [{ visibility: 'off' }] },
                     { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-                    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2d3748' }] },
-                    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#6b7280' }] },
-                    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f1820' }] }
+                    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#3d5467' }] },
+                    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#7a8fa3' }] },
+                    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#1a4d6b' }] },
+                    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#2a3f52' }] }
                 ];
                 const map = new google.maps.Map(mapRef.current, {
                     center: { lat, lng }, zoom: FIXED_ZOOM, minZoom: FIXED_ZOOM, maxZoom: FIXED_ZOOM,
