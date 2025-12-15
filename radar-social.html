@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>NexMe - Conecta con personas cerca de ti</title>
-    <!-- v7.7.9 Build: 2025-12-14 | Modal estilo Instagram + mapa azul/verde -->
+    <!-- v7.8.0 Build: 2025-12-14 | Modal Instagram completo con botón X -->
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Encuentra y conecta con personas cerca de ti">
@@ -2055,7 +2055,7 @@
             }, []);
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.7.9 - Modal Instagram + mapa azul/verde');
+                console.log('🚀 NEXME v7.8.0 - Modal Instagram completo con botón X');
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
                         const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
