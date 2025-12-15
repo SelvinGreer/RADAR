@@ -1061,21 +1061,20 @@
 
         .instagram-modal {
     position: fixed;
-    bottom: 120px;
-    left: 16px;
-    right: 16px;
-    max-width: 500px;
-    margin: 0 auto;
+    bottom: 160px;
+    left: 50%;
+    transform: translateX(-50%) translateY(calc(100% + 100px));
+    max-width: 360px;
+    width: calc(100% - 60px);
     background: rgba(13, 17, 23, 0.98);
     backdrop-filter: blur(20px);
     border-radius: 20px;
-    padding: 16px;
+    padding: 14px;
     z-index: 9999;
-    transform: translateY(calc(100% + 100px));
     transition: transform 0.3s ease;
 }
 
-.instagram-modal.active { transform: translateY(0); }
+.instagram-modal.active { transform: translateX(-50%) translateY(0); }
 
 .instagram-modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 
@@ -1131,7 +1130,7 @@
 .instagram-modal-send:disabled svg { color: #6e7681; }
         .instagram-modal-close-btn {
     position: fixed;
-    bottom: 20px;
+    bottom: 80px;
     left: 50%;
     transform: translateX(-50%);
     width: 56px;
