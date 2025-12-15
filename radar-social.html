@@ -2012,6 +2012,23 @@
                 }
             };
 
+            // v7.7.8 FIX: Handle redirect result on mount
+            useEffect(() => {
+                const checkRedirectResult = async () => {
+                    try {
+                        const result = await auth.getRedirectResult();
+                        if (result.user) {
+                            console.log('✅ Login redirect exitoso:', result.user.email);
+                        }
+                    } catch (error) {
+                        console.error('❌ Error en redirect result:', error);
+                        if (error.code !== 'auth/popup-closed-by-user') {
+                            alert('Error al iniciar sesión: ' + error.message);
+                        }
+                    }
+                };
+                checkRedirectResult();
+            }, []);
             // Auth effect
             useEffect(() => {
                 console.log('🚀 RADAR SOCIAL v7.7.5 - Sidebar layout fixed');
