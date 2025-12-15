@@ -2057,7 +2057,7 @@
             }, []);
             // Auth effect
             useEffect(() => {
-                console.log('🚀 NEXME v7.8.0 - Modal Instagram completo con botón X');
+                console.log('🚀 NEXME v7.8.1 - Modal Instagram flotante');
                 const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
                     if (firebaseUser) {
                         const userDoc = await db.collection('users').doc(firebaseUser.uid).get();
