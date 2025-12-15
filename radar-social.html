@@ -1089,8 +1089,9 @@
 
 .instagram-modal-header { 
     display: flex; 
-    align-items: center; 
-    gap: 12px; 
+    align-items: flex-start;  ← Alinear arriba
+    gap: 12px;
+} 
     margin-bottom: 12px;
     position: relative;
 }
@@ -1953,7 +1954,7 @@
                 const innerContainer = document.createElement('div');
                 const ringThickness = isExplorer ? 2 : 3;
                 const innerSize = size - ringThickness;
-                innerContainer.style.cssText = `width:${innerSize}px;height:${innerSize}px;border-radius:50%;background:#0d1117;display:flex;align-items:center;justify-content:center;`;
+                innerContainer.style.cssText = `width:${innerSize}px;height:${innerSize}px;border-radius:50%;background:#404040;display:flex;align-items:center;justify-content:center;`;
                 
                 const avatarImg = document.createElement('img');
                 avatarImg.src = user.photo;
