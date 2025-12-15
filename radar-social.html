@@ -1075,7 +1075,7 @@
     bottom: 160px;
     left: 50%;
     transform: translateX(-50%) translateY(calc(100% + 200px));
-    max-width: 330px;
+    max-width: 300px;
     width: calc(100% - 60px);
     background: rgba(13, 17, 23, 0.98);
     backdrop-filter: blur(20px);
@@ -1087,8 +1087,13 @@
 
 .instagram-modal.active { transform: translateX(-50%) translateY(0); }
 
-.instagram-modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-
+.instagram-modal-header { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    margin-bottom: 12px;
+    position: relative;
+}
 .instagram-modal-avatar {
     width: 50px;
     height: 50px;
@@ -1141,7 +1146,7 @@
 .instagram-modal-send:disabled svg { color: #6e7681; }
         .instagram-modal-close-btn {
     position: fixed;
-    bottom: 80px;
+    bottom: 130px;
     left: 50%;
     transform: translateX(-50%);
     width: 56px;
@@ -1463,6 +1468,26 @@
         @keyframes slideIn {
             from { opacity: 0; transform: translateX(-50%) translateY(-30px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            .instagram-modal-menu-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #8b949e;
+    transition: color 0.2s ease;
+}
+
+.instagram-modal-menu-btn:hover {
+    color: #f0f6fc;
+}
+
+.instagram-modal-menu-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
         }
 
         .social-notification-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
@@ -1856,7 +1881,9 @@
                     { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#3d5467' }] },
                     { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#7a8fa3' }] },
                     { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#1a4d6b' }] },
-                    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#2a3f52' }] }
+                    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#2a3f52' }] },
+                    { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#2d5a3f' }] },
+                    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#2d5a3f' }] }
                 ];
                 const map = new google.maps.Map(mapRef.current, {
                     center: { lat, lng }, zoom: FIXED_ZOOM, minZoom: FIXED_ZOOM, maxZoom: FIXED_ZOOM,
