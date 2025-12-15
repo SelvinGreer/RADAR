@@ -2592,28 +2592,26 @@
             };
 
             const sendStoryReaction = async (emoji) => {
-                if (!viewingStory || !currentUser || viewingStory.id === currentUser.id) return;
-                
-                // Mostrar animación de burbujas de emoji
-                setEmojiBurst(emoji);
-                setTimeout(() => setEmojiBurst(null), 1500);
-                
-                const chatId = [currentUser.id, viewingStory.id].sort().join('_');
-                try {
-                    await db.collection('chats').doc(chatId).collection('messages').add({ text: `Reaccionó ${emoji} a tu historia`, senderId: currentUser.id, senderName: currentUser.name, senderPhoto: currentUser.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp(), type: 'story_reaction', emoji });
-                    await db.collection('chats').doc(chatId).set({ 
-                        participants: [currentUser.id, viewingStory.id], 
-                        lastMessage: emoji, 
-                        lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), 
-                        [`unreadCount_${viewingStory.id}`]: firebase.firestore.FieldValue.increment(1) 
-                    }, { merge: true });
-                    console.log('Story reaction enviada, incrementando unreadCount para:', viewingStory.id);
-                } catch(e) {
-                    console.error('Error enviando story reaction:', e);
-                }
-                setViewedStories(prev => ({ ...prev, [viewingStory.id]: Date.now() }));
-                setTimeout(() => setViewingStory(null), 800);
-            };
+    if (!viewingStory || !currentUser || viewingStory.id === currentUser.id) return;
+    
+    setEmojiBurst(emoji);
+    setTimeout(() => setEmojiBurst(null), 1500);
+    
+    const chatId = [currentUser.id, viewingStory.id].sort().join('_');
+    try {
+        await db.collection('chats').doc(chatId).collection('messages').add({ text: `Reaccionó ${emoji} a tu historia`, senderId: currentUser.id, senderName: currentUser.name, senderPhoto: currentUser.photo, timestamp: firebase.firestore.FieldValue.serverTimestamp(), type: 'story_reaction', emoji });
+        await db.collection('chats').doc(chatId).set({ 
+            participants: [currentUser.id, viewingStory.id], 
+            lastMessage: emoji, 
+            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), 
+            [`unreadCount_${viewingStory.id}`]: firebase.firestore.FieldValue.increment(1) 
+        }, { merge: true });
+        console.log('Story reaction enviada, incrementando unreadCount para:', viewingStory.id);
+    } catch(e) {
+        console.error('Error enviando story reaction:', e);
+    }
+    setViewedStories(prev => ({ ...prev, [viewingStory.id]: Date.now() }));
+};
 
             const sendEmoji = async (emoji) => {
                 if (!currentUser) return;
