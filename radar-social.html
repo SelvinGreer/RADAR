@@ -1131,6 +1131,29 @@
 
         .instagram-modal-send svg { width: 20px; height: 20px; color: #fff; }
         .instagram-modal-send:disabled svg { color: #6e7681; }
+        .instagram-modal-close-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 56px;
+    height: 56px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10000;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.instagram-modal-close-btn svg {
+    width: 24px;
+    height: 24px;
+    color: #fff;
+}
 
         .story-viewer {
             position: fixed;
