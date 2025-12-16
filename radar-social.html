@@ -2580,7 +2580,8 @@
                         else if (showProfile) setShowProfile(false);
                         else if (showSidebar) setShowSidebar(false);
                         else if (showPreferences) setShowPreferences(false);
-                        overlayOpenRef.current = false;
+else if (showNearbyModal) setShowNearbyModal(false);
+overlayOpenRef.current = false;
                     } else if (currentUser) {
                         // En el mapa sin overlays: bloquear navegación hacia atrás
                         window.history.pushState({ map: true }, '');
