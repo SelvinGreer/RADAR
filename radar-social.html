@@ -2758,7 +2758,21 @@
                                 if (!aHasUnviewed && bHasUnviewed) return 1;
                                 return a.distance - b.distance;
                             }).slice(0,10).map(user => (
-                                <div key={user.id} className="inbox-story-item" onClick={() => { if (user.hasStory && !viewedStories[user.id]) { setViewedStories(prev => ({ ...prev, [user.id]: Date.now() })); setViewingStory(user); } else { openChat(user); setShowInbox(false); } }}>
+                               <div key={user.id} className="inbox-story-item" onClick={() => { 
+    if (user.hasStory && !viewedStories[user.id]) { 
+        setViewedStories(prev => ({ ...prev, [user.id]: Date.now() })); 
+        setViewingStory(user);
+        // Marcar mensajes como leídos también
+        if (unreadMessages[user.id]) {
+            const chatId = [currentUser.id, user.id].sort().join('_');
+            db.collection('chats').doc(chatId).update({ [`unreadCount_${currentUser.id}`]: 0 }).catch(() => {});
+            setUnreadMessages(prev => { const u = { ...prev }; delete u[user.id]; return u; });
+        }
+    } else { 
+        openChat(user); 
+        setShowInbox(false); 
+    }
+}}>
                                     {user.thought && <div className="inbox-bubble">{user.thought}</div>}
                                     <div className={`inbox-story-ring ${user.hasStory && !viewedStories[user.id] ? 'has-story' : unreadMessages[user.id] ? 'has-unread' : ''}`}>
                                         <img src={user.photo} alt={user.name} className="inbox-story-img"/>
