@@ -2589,8 +2589,7 @@ overlayOpenRef.current = false;
                 };
                 window.addEventListener('popstate', handleBackButton);
                 return () => window.removeEventListener('popstate', handleBackButton);
-            }, [showInbox, showSidebar, showProfile, selectedUser, showPreferences, currentUser]);
-
+            }, [showInbox, showSidebar, showProfile, selectedUser, showPreferences, showNearbyModal, currentUser]);
             const savePreferences = async () => {
                 if (!currentUser?.id) return;
                 await db.collection('users').doc(currentUser.id).update({ preferences: userPreferences, preferencesUpdated: firebase.firestore.FieldValue.serverTimestamp() });
