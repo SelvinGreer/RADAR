@@ -2572,7 +2572,7 @@
 
             useEffect(() => {
                 const handleBackButton = () => {
-                    const hasOverlay = selectedUser || showInbox || showProfile || showSidebar || showPreferences;
+                    const hasOverlay = selectedUser || showInbox || showProfile || showSidebar || showPreferences || showNearbyModal;
                     
                     if (hasOverlay) {
                         if (selectedUser) setSelectedUser(null);
