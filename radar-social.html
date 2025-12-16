@@ -2560,7 +2560,7 @@
             const overlayOpenRef = React.useRef(false);
             
             useEffect(() => {
-                const hasOverlay = showInbox || showSidebar || showProfile || selectedUser || showPreferences;
+                const hasOverlay = showInbox || showSidebar || showProfile || selectedUser || showPreferences || showNearbyModal;
                 
                 if (hasOverlay && !overlayOpenRef.current) {
                     window.history.pushState({ overlay: true }, '');
@@ -2568,7 +2568,7 @@
                 } else if (!hasOverlay && overlayOpenRef.current) {
                     overlayOpenRef.current = false;
                 }
-            }, [showInbox, showSidebar, showProfile, selectedUser, showPreferences]);
+            }, [showInbox, showSidebar, showProfile, selectedUser, showPreferences, showNearbyModal]);
 
             useEffect(() => {
                 const handleBackButton = () => {
