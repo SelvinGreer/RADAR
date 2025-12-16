@@ -2805,7 +2805,7 @@
                             <div id="google-map" ref={mapRef}></div>
                             <div className="map-header">
                                 <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" onClick={() => setShowSidebar(true)}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                                <div className="map-people-counter" onClick={() => setMarkerRefreshTick(t => t + 1)} style={{ cursor: 'pointer' }}>
+                                <div className="map-people-counter" onClick={() => setShowNearbyModal(true)} style={{ cursor: 'pointer' }}>
                                     <span className="map-people-counter-number">{usersInRange.length}</span>
                                     <span className="map-people-counter-text">cerca</span>
                                 </div>
