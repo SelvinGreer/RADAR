@@ -2971,6 +2971,35 @@ overlayOpenRef.current = false;
                         <div className="radar-container">
                             <div id="google-map" ref={mapRef}></div>
                             <div className="map-header">
+                                x 20px',
+        zIndex: 100,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        maxWidth: '90%'
+    }}>
+        <span style={{ fontSize: '20px' }}>👻</span>
+        <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#f0f6fc' }}>Modo Invitado</div>
+            <div style={{ fontSize: '11px', color: '#8b949e' }}>Regístrate para chatear</div>
+        </div>
+        <button 
+            onClick={() => window.location.href = 'index.html'}
+            style={{
+                padding: '8px 16px',
+                background: '#38bd62',
+                border: 'none',
+                borderRadius: '8px',
+                color: '#fff',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer'
+            }}
+        >
+            Registrarme
+        </button>
+    </div>
+)}
                                 <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" onClick={() => setShowSidebar(true)}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                                 <div className="map-people-counter" onClick={() => setShowNearbyModal(true)} style={{ cursor: 'pointer' }}>
                                     <span className="map-people-counter-number">{usersInRange.length}</span>
