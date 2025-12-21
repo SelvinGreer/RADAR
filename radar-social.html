@@ -2536,6 +2536,9 @@ const isGuestMode = urlParams.get('mode') === 'guest';
                 window.location.href = 'index.html';
             }
         }
+    });
+    return () => unsubscribe();
+}, []);
 
             useEffect(() => {
                 if (!currentUser?.latitude || currentUser.latitude === 0 || googleMap) return;
