@@ -2956,10 +2956,13 @@ overlayOpenRef.current = false;
             const formatTimeAgo = (ts) => { if (!ts) return 'Hace un momento'; const t = typeof ts === 'number' ? ts : (ts.toMillis ? ts.toMillis() : ts); const m = Math.floor((Date.now() - t) / 60000); const h = Math.floor((Date.now() - t) / 3600000); if (m < 1) return 'Hace un momento'; if (m < 60) return `Hace ${m}m`; if (h < 24) return `Hace ${h}h`; return 'Hace más de 1 día'; };
 
             if (!currentUser) {
-                return (
-                    <div style={{ minHeight: '100vh', background: '#0d1117' }}></div>
-                );
-            }
+    return (
+        <div style={{ minHeight: '100vh', background: '#0d1117', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '18px', flexDirection: 'column', gap: '20px' }}>
+            <div>⏳ Cargando modo invitado...</div>
+            <div style={{ fontSize: '14px', color: '#8b949e' }}>Esperando GPS y configuración</div>
+        </div>
+    );
+}
 
             const usersInRange = users.filter(u => u.distance <= radius && u.isOnline && u.latitude !== 0);
             const chatId = selectedUser ? [currentUser?.id, selectedUser.id].sort().join('_') : null;
