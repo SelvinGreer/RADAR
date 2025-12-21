@@ -1791,6 +1791,16 @@
     <div id="root"></div>
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
+        const urlParams = new URLSearchParams(window.location.search);
+const isGuestMode = urlParams.get('mode') === 'guest';
+        const getGuestUID = () => {
+    let guestUID = localStorage.getItem('guestUID');
+    if (!guestUID) {
+        guestUID = 'guest_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        localStorage.setItem('guestUID', guestUID);
+    }
+    return guestUID;
+};
 
         const firebaseConfig = {
             apiKey: "AIzaSyAhcfX0M5oqX7rZ6WdCZaHfxHKcxySxQl8",
@@ -2354,33 +2364,178 @@
                             }, (error) => console.error('Location error:', error),
                             { enableHighAccuracy: true, timeout: 30000, maximumAge: 10000 });
                         }
-                    } else { 
-                        // User logged out - clean all states
-                        setCurrentUser(null); 
-                        setUserLocation(null);
-                        setUsers([]);
+                    } else {
+            // MODO INVITADO
+            if (isGuestMode) {
+                const guestUID = getGuestUID();
+                
+                // Crear usuario invitado
+                const guestUser = {
+                    id: guestUID,
+                    name: '👻 Invitado',
+                    photo: 'https://em-content.zobj.net/thumbs/240/apple/354/ghost_1f47b.png',
+                    thought: '',
+                    hasStory: false,
+                    storyUrl: null,
+                    storyTimestamp: null,
+                    email: 'invitado@nexme.app',
+                    latitude: 0,
+                    longitude: 0,
+                    isOnline: true,
+                    isGuest: true
+                };
+                
+                setCurrentUser(guestUser);
+                
+                // Guardar invitado en Firestore
+                await db.collection('users').doc(guestUID).set({
+                    uid: guestUID,
+                    displayName: '👻 Invitado',
+                    email: 'invitado@nexme.app',
+                    photoURL: 'https://em-content.zobj.net/thumbs/240/apple/354/ghost_1f47b.png',
+                    isOnline: true,
+                    isGuest: true,
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                    location: new firebase.firestore.GeoPoint(0, 0),
+                    pendingGPS: true
+                }, { merge: true });
+                
+                // Obtener ubicación del invitado
+                if ('geolocation' in navigator) {
+                    const location = await getInitialLocation();
+                    if (location) {
+                        setUserLocation({ latitude: location.latitude, longitude: location.longitude });
+                        setCurrentUser(prev => ({ ...prev, latitude: location.latitude, longitude: location.longitude }));
                         setWaitingForGPS(false);
-                        setGoogleMap(null);
-                        setSelectedUser(null);
-                        setMessages({});
-                        setViewedStories({});
-                        setUnreadMessages({});
-                        setTotalUnread(0);
-                        setInitialLoadComplete(false);
-                        setKnownUserIds(new Set());
-                        // Clear markers
-                        Object.keys(markersRef.current).forEach(key => {
-                            if (markersRef.current[key]?.marker?.setMap) {
-                                markersRef.current[key].marker.setMap(null);
-                            }
+                        
+                        await db.collection('users').doc(guestUID).update({
+                            location: new firebase.firestore.GeoPoint(location.latitude, location.longitude),
+                            pendingGPS: false,
+                            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        markersRef.current = {};
-                        // Redirect to landing page
-                        window.location.href = 'index.html';
                     }
-                });
-                return () => unsubscribe();
-            }, []);
+                    
+                    // Watch position para invitado (igual que usuario normal)
+                    let usersUnsubscribe = null;
+                    let lastUpdateTime = 0;
+                    
+                    navigator.geolocation.watchPosition(async (position) => {
+                        let { latitude, longitude, accuracy } = position.coords;
+                        if (accuracy > 100) return;
+                        const now = Date.now();
+                        if (now - lastUpdateTime < 3000) return;
+                        lastUpdateTime = now;
+                        
+                        if (techSettings.kalman) {
+                            const filtered = filterGPSWithKalman(latitude, longitude, accuracy);
+                            latitude = filtered.lat;
+                            longitude = filtered.lng;
+                            accuracy = Math.max(2, accuracy / 2);
+                        }
+                        
+                        setUserLocation({ latitude, longitude });
+                        setCurrentUser(prev => ({ ...prev, latitude, longitude }));
+                        setLocationAccuracy(accuracy);
+                        
+                        // Listener de otros usuarios
+                        if (!usersUnsubscribe) {
+                            usersUnsubscribe = db.collection('users')
+                                .where('isOnline', '==', true)
+                                .onSnapshot((snapshot) => {
+                                    setCurrentUser(currentUserState => {
+                                        if (!currentUserState?.latitude) return currentUserState;
+                                        const otherUsers = [];
+                                        
+                                        snapshot.forEach((doc) => {
+                                            const userData = doc.data();
+                                            if (userData.uid === guestUID) return;
+                                            
+                                            let isOnline = false;
+                                            if (userData.lastSeen) {
+                                                const lastSeenTime = userData.lastSeen.toMillis ? userData.lastSeen.toMillis() : userData.lastSeen;
+                                                isOnline = (Date.now() - lastSeenTime) <= 90000;
+                                            }
+                                            
+                                            if (userData.location && isOnline) {
+                                                const userLat = userData.location.latitude;
+                                                const userLon = userData.location.longitude;
+                                                
+                                                if (userLat !== 0 && userLon !== 0) {
+                                                    const distance = Math.round(calculateDistance(
+                                                        currentUserState.latitude,
+                                                        currentUserState.longitude,
+                                                        userLat,
+                                                        userLon
+                                                    ));
+                                                    
+                                                    let displayThought = '';
+                                                    if (userData.thought && userData.thoughtTimestamp) {
+                                                        const ts = userData.thoughtTimestamp.toMillis ? userData.thoughtTimestamp.toMillis() : userData.thoughtTimestamp;
+                                                        if ((Date.now() - ts) / 3600000 < 24) displayThought = userData.thought;
+                                                    }
+                                                    
+                                                    let hasActiveStory = false, storyUrl = null, storyTimestamp = null;
+                                                    if (userData.storyUrl && userData.storyTimestamp) {
+                                                        const ts = userData.storyTimestamp.toMillis ? userData.storyTimestamp.toMillis() : userData.storyTimestamp;
+                                                        if ((Date.now() - ts) / 3600000 < 12) {
+                                                            hasActiveStory = true;
+                                                            storyUrl = userData.storyUrl;
+                                                            storyTimestamp = ts;
+                                                        }
+                                                    }
+                                                    
+                                                    let activeEmoji = null;
+                                                    if (userData.currentEmoji && userData.emojiTimestamp) {
+                                                        const ets = userData.emojiTimestamp.toMillis ? userData.emojiTimestamp.toMillis() : userData.emojiTimestamp;
+                                                        if ((Date.now() - ets) < 3000) activeEmoji = userData.currentEmoji;
+                                                    }
+                                                    
+                                                    otherUsers.push({
+                                                        id: userData.uid,
+                                                        name: userData.displayName || 'Usuario',
+                                                        photo: userData.photoURL || 'https://ui-avatars.com/api/?name=User&background=38bd62&color=fff',
+                                                        thought: displayThought,
+                                                        hasStory: hasActiveStory,
+                                                        storyUrl,
+                                                        storyTimestamp,
+                                                        distance,
+                                                        isOnline: true,
+                                                        latitude: userLat,
+                                                        longitude: userLon,
+                                                        preferences: userData.preferences || null,
+                                                        currentEmoji: activeEmoji,
+                                                        movement: calculateMovement(userData.uid, userLat, userLon),
+                                                        approaching: isApproaching(userData.uid, userLat, userLon, currentUserState.latitude, currentUserState.longitude)
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        
+                                        setUsers(otherUsers);
+                                        return currentUserState;
+                                    });
+                                });
+                        }
+                        
+                        // Actualizar ubicación en Firestore
+                        await db.collection('users').doc(guestUID).update({
+                            location: new firebase.firestore.GeoPoint(latitude, longitude),
+                            isOnline: true,
+                            lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                            accuracy,
+                            pendingGPS: false
+                        });
+                    }, (error) => console.error('Location error:', error), {
+                        enableHighAccuracy: true,
+                        timeout: 30000,
+                        maximumAge: 10000
+                    });
+                }
+            } else {
+                // Usuario no autenticado y NO es invitado → redirigir
+                window.location.href = 'index.html';
+            }
+        }
 
             useEffect(() => {
                 if (!currentUser?.latitude || currentUser.latitude === 0 || googleMap) return;
