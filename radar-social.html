@@ -2794,9 +2794,22 @@ overlayOpenRef.current = false;
             };
 
             const handleAvatarClick = (user) => {
+    // Bloquear si es invitado haciendo click en otros
+    if (currentUser?.isGuest && user.id !== currentUser.id) {
+        alert('👻 Los invitados no pueden ver historias ni chatear. ¡Regístrate para interactuar!');
+        return;
+    }
+    
     if (user.id === currentUser?.id) {
         if (currentUser.hasStory && currentUser.storyUrl) setViewingStory(currentUser);
-        else setShowStoryUpload(true);
+        else {
+            // Bloquear subir historia si es invitado
+            if (currentUser.isGuest) {
+                alert('👻 Los invitados no pueden subir historias. ¡Regístrate gratis!');
+                return;
+            }
+            setShowStoryUpload(true);
+        }
     } else {
         if (user.hasStory && user.storyUrl && !viewedStories[user.id]) { 
             setViewedStories(prev => ({ ...prev, [user.id]: Date.now() })); 
