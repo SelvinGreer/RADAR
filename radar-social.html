@@ -2690,54 +2690,29 @@ const isGuestMode = urlParams.get('mode') === 'guest';
 
             useEffect(() => {
                 useEffect(() => {
-                if (!currentUser?.latitude || users.length === 0) return;
-                const closeUsers = users.filter(u => u.distance <= 100 && u.isOnline);
+                useEffect(() => {  // ✅ Solo UN useEffect
+    if (!currentUser?.latitude || users.length === 0) return;
                 const currentUserIds = new Set(closeUsers.map(u => u.id));
-                if (!initialLoadComplete) { setKnownUserIds(currentUserIds); setInitialLoadComplete(true); return; }
+                if (!initialLoadComplete) { 
+                    setKnownUserIds(currentUserIds); 
+                    setInitialLoadComplete(true); 
+                    return; 
+                }
                 closeUsers.forEach(user => {
                     if (!knownUserIds.has(user.id)) {
-                        setSocialNotifications(prev => prev.some(n => n.userId === user.id) ? prev : [...prev, { id: `${user.id}-${Date.now()}`, userId: user.id, user, timestamp: Date.now() }]);
+                        setSocialNotifications(prev => 
+                            prev.some(n => n.userId === user.id) ? prev : 
+                            [...prev, { id: `${user.id}-${Date.now()}`, userId: user.id, user, timestamp: Date.now() }]
+                        );
                     }
                 });
                 setKnownUserIds(currentUserIds);
-                const cleanup = setInterval(() => setSocialNotifications(prev => prev.filter(n => (Date.now() - n.timestamp) < 8000)), 1000);
+                const cleanup = setInterval(() => 
+                    setSocialNotifications(prev => prev.filter(n => (Date.now() - n.timestamp) < 8000)), 
+                    1000
+                );
                 return () => clearInterval(cleanup);
             }, [users, currentUser?.latitude]);
-
-            // === NOTIFICACIONES PUSH ===
-            const [notifiedUsers, setNotifiedUsers] = useState(new Set());
-            const hasNotificationPermission = useRef(false);
-
-            // Solicitar permisos de notificación al cargar
-            useEffect(() => {
-                const checkPermission = async () => {
-                    if ('Notification' in window) {
-                        hasNotificationPermission.current = Notification.permission === 'granted';
-                    }
-                };
-                checkPermission();
-            }, []);
-
-            // Detectar nuevos usuarios y enviar notificación
-            useEffect(() => {
-                if (!currentUser?.latitude || !hasNotificationPermission.current || !initialLoadComplete) return;
-                
-                users.forEach(user => {
-                    // Solo notificar si:
-                    // 1. No hemos notificado antes
-                    // 2. Está dentro de 50m
-                    // 3. La app no está en foco (background)
-                    if (!notifiedUsers.has(user.id) && 
-                        user.distance <= 50 && 
-                        document.hidden) {
-                        
-                        // Llamar a la función global que creamos
-                        if (window.showProximityNotification) {
-                            window.showProximityNotification(user);
-                        }
-                        setNotifiedUsers(prev => new Set([...prev, user.id]));
-                    }
-                });
                 
                 // Limpiar usuarios que ya no están cerca
                 const currentUserIds = new Set(users.map(u => u.id));
