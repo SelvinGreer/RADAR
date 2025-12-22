@@ -3314,5 +3314,92 @@ overlayOpenRef.current = false;
             });
         }
     </script>
+    <script>
+// === SISTEMA DE NOTIFICACIONES PUSH ===
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.log('Browser no soporta notificaciones');
+        return false;
+    }
+    
+    if (Notification.permission === 'granted') {
+        return true;
+    }
+    
+    if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+    }
+    
+    return false;
+}
+
+// Mostrar notificación cuando alguien aparece cerca
+function showProximityNotification(user) {
+    if (Notification.permission !== 'granted') return;
+    
+    const distance = user.distance;
+    let title, body, emoji;
+    
+    // Personalizar mensaje según distancia
+    if (distance < 10) {
+        emoji = '⚡';
+        title = `¡WOW! ${user.name.split(' ')[0]} está a solo ${distance}m`;
+        body = '¿Te animas a saludar? Podrían estar en el mismo lugar';
+    } else if (distance < 25) {
+        emoji = '👋';
+        title = `${user.name.split(' ')[0]} está cerca (${distance}m)`;
+        body = user.thought || 'Anímate y salúdalo';
+    } else if (distance < 50) {
+        emoji = '💫';
+        title = `${user.name.split(' ')[0]} acaba de conectarse`;
+        body = `A ${distance}m de ti`;
+    } else {
+        emoji = '📍';
+        title = `Nueva persona cerca`;
+        body = `${user.name.split(' ')[0]} • ${distance}m`;
+    }
+    
+    const notification = new Notification(title, {
+        body: body,
+        icon: user.photo,
+        badge: 'https://em-content.zobj.net/thumbs/240/apple/354/waving-hand_1f44b.png',
+        tag: `proximity-${user.id}`,
+        requireInteraction: false,
+        silent: false,
+        vibrate: [200, 100, 200],
+        data: {
+            userId: user.id,
+            userName: user.name,
+            distance: distance,
+            timestamp: Date.now()
+        }
+    });
+    
+    notification.onclick = function(event) {
+        event.preventDefault();
+        window.focus();
+        // Abrir modal de ese usuario
+        const clickEvent = new CustomEvent('openUserModal', { 
+            detail: { userId: user.id } 
+        });
+        window.dispatchEvent(clickEvent);
+        notification.close();
+    };
+    
+    // Auto-cerrar después de 8 segundos
+    setTimeout(() => notification.close(), 8000);
+}
+
+// Solicitar permisos al cargar la app
+window.addEventListener('load', async () => {
+    const hasPermission = await requestNotificationPermission();
+    if (hasPermission) {
+        console.log('✅ Notificaciones habilitadas');
+    } else {
+        console.log('⚠️ Notificaciones bloqueadas');
+    }
+});
+</script>
 </body>
 </html>
