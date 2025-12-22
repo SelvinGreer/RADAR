@@ -2692,8 +2692,6 @@ const hasNotificationPermission = useRef(false);
             useEffect(() => { const h = () => setMarkerRefreshTick(t => t + 1); window.addEventListener('online', h); return () => window.removeEventListener('online', h); }, []);
 
             useEffect(() => {
-                useEffect(() => {
-                useEffect(() => {
                 if (!currentUser?.latitude || users.length === 0) return;
                 
                 const closeUsers = users.filter(u => u.distance <= 100 && u.isOnline);
@@ -2769,17 +2767,7 @@ const hasNotificationPermission = useRef(false);
                 
             }, [users, currentUser?.latitude, notifiedUsers, initialLoadComplete]);
 
-            // Handle Android back button
-
-            useEffect(() => {
-    if (!viewingStory) return;
-    const timer = setTimeout(() => { 
-        setViewedStories(prev => ({ ...prev, [viewingStory.id]: Date.now() })); 
-        setViewingStory(null); 
-        setMarkerRefreshTick(t => t + 1);
-    }, 5000);
-    return () => clearTimeout(timer);
-}, [viewingStory]);
+            // === NOTIFICACIONES PUSH - Verificar permisos ===
 
             // Handle Android back button
             const overlayOpenRef = React.useRef(false);
