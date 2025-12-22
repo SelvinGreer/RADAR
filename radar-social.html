@@ -1855,6 +1855,9 @@ const isGuestMode = urlParams.get('mode') === 'guest';
             const [showEmojiPicker, setShowEmojiPicker] = useState(false);
             const [currentEmoji, setCurrentEmoji] = useState(null);
             const [emojiTimestamp, setEmojiTimestamp] = useState(null);
+            // === ESTADOS PARA NOTIFICACIONES PUSH ===
+const [notifiedUsers, setNotifiedUsers] = useState(new Set());
+const hasNotificationPermission = useRef(false);
             
             const [userPreferences, setUserPreferences] = useState({
                 age: 25, gender: '', interests: [], lookingFor: [],
@@ -2690,14 +2693,18 @@ const isGuestMode = urlParams.get('mode') === 'guest';
 
             useEffect(() => {
                 useEffect(() => {
-                useEffect(() => {  // ✅ Solo UN useEffect
-    if (!currentUser?.latitude || users.length === 0) return;
+                useEffect(() => {
+                if (!currentUser?.latitude || users.length === 0) return;
+                
+                const closeUsers = users.filter(u => u.distance <= 100 && u.isOnline);
                 const currentUserIds = new Set(closeUsers.map(u => u.id));
+                
                 if (!initialLoadComplete) { 
                     setKnownUserIds(currentUserIds); 
                     setInitialLoadComplete(true); 
                     return; 
                 }
+                
                 closeUsers.forEach(user => {
                     if (!knownUserIds.has(user.id)) {
                         setSocialNotifications(prev => 
@@ -2706,15 +2713,54 @@ const isGuestMode = urlParams.get('mode') === 'guest';
                         );
                     }
                 });
+                
                 setKnownUserIds(currentUserIds);
+                
                 const cleanup = setInterval(() => 
                     setSocialNotifications(prev => prev.filter(n => (Date.now() - n.timestamp) < 8000)), 
                     1000
                 );
+                
                 return () => clearInterval(cleanup);
             }, [users, currentUser?.latitude]);
+
+            // Story viewer auto-close
+            useEffect(() => {
+                if (!viewingStory) return;
+                const timer = setTimeout(() => { 
+                    setViewedStories(prev => ({ ...prev, [viewingStory.id]: Date.now() })); 
+                    setViewingStory(null); 
+                    setMarkerRefreshTick(t => t + 1);
+                }, 5000);
+                return () => clearTimeout(timer);
+            }, [viewingStory]);
+
+            // === NOTIFICACIONES PUSH - Verificar permisos ===
+            useEffect(() => {
+                const checkPermission = async () => {
+                    if ('Notification' in window) {
+                        hasNotificationPermission.current = Notification.permission === 'granted';
+                    }
+                };
+                checkPermission();
+            }, []);
+
+            // === NOTIFICACIONES PUSH - Detectar usuarios cercanos ===
+            useEffect(() => {
+                if (!currentUser?.latitude || !hasNotificationPermission.current || !initialLoadComplete) return;
                 
-                // Limpiar usuarios que ya no están cerca
+                users.forEach(user => {
+                    if (!notifiedUsers.has(user.id) && 
+                        user.distance <= 50 && 
+                        document.hidden) {
+                        
+                        if (window.showProximityNotification) {
+                            window.showProximityNotification(user);
+                        }
+                        setNotifiedUsers(prev => new Set([...prev, user.id]));
+                    }
+                });
+                
                 const currentUserIds = new Set(users.map(u => u.id));
                 setNotifiedUsers(prev => {
                     const filtered = new Set([...prev].filter(id => currentUserIds.has(id)));
@@ -2722,6 +2768,8 @@ const isGuestMode = urlParams.get('mode') === 'guest';
                 });
                 
             }, [users, currentUser?.latitude, notifiedUsers, initialLoadComplete]);
+
+            // Handle Android back button
 
             useEffect(() => {
     if (!viewingStory) return;
