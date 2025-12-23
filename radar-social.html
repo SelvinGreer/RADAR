@@ -1858,6 +1858,10 @@ const isGuestMode = urlParams.get('mode') === 'guest';
             // === ESTADOS PARA NOTIFICACIONES PUSH ===
 const [notifiedUsers, setNotifiedUsers] = useState(new Set());
 const hasNotificationPermission = useRef(false);
+            // === NUEVOS ESTADOS PARA PUNTOS DE ENCUENTRO ===
+const [selectedMeetingCategory, setSelectedMeetingCategory] = useState('all');
+const [meetingPoints, setMeetingPoints] = useState([]);
+const [selectedMeetingPoint, setSelectedMeetingPoint] = useState(null);
             
             const [userPreferences, setUserPreferences] = useState({
                 age: 25, gender: '', interests: [], lookingFor: [],
@@ -1891,6 +1895,47 @@ const hasNotificationPermission = useRef(false);
             ];
             
             const reactionEmojis = ['🔥', '❤️', '👋'];
+            // === CATEGORÍAS DE PUNTOS DE ENCUENTRO ===
+const meetingCategories = [
+    { id: 'all', label: 'Todo', emoji: '🏠' },
+    { id: 'cafes', label: 'Cafés', emoji: '☕' },
+    { id: 'restaurants', label: 'Restaurantes', emoji: '🍔' },
+    { id: 'bars', label: 'Bares', emoji: '🍺' },
+    { id: 'entertainment', label: 'Ocio', emoji: '🎬' },
+    { id: 'sports', label: 'Deportes', emoji: '🏋️' }
+];
+
+// === DATOS DUMMY DE PUNTOS DE ENCUENTRO (testing) ===
+// IMPORTANTE: Cambiar estas coordenadas a lugares reales cerca de ti
+const dummyMeetingPoints = [
+    {
+        id: 'starbucks_albrook',
+        name: 'Starbucks Albrook',
+        category: 'cafes',
+        location: { latitude: 8.9824, longitude: -79.5199 }, // Cambia estas coords
+        icon: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Starbucks_Corporation_Logo_2011.svg/1200px-Starbucks_Corporation_Logo_2011.svg.png',
+        captureRadius: 30,
+        isActive: true
+    },
+    {
+        id: 'mcdonalds_centro',
+        name: "McDonald's Centro",
+        category: 'restaurants',
+        location: { latitude: 8.9830, longitude: -79.5205 }, // Cambia estas coords
+        icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/McDonald%27s_Golden_Arches.svg/1200px-McDonald%27s_Golden_Arches.svg.png',
+        captureRadius: 30,
+        isActive: true
+    },
+    {
+        id: 'cinepolis_multiplaza',
+        name: 'Cinépolis Multiplaza',
+        category: 'entertainment',
+        location: { latitude: 8.9836, longitude: -79.5211 }, // Cambia estas coords
+        icon: 'https://seeklogo.com/images/C/cinepolis-logo-B9DC17D7A6-seeklogo.com.png',
+        captureRadius: 50,
+        isActive: true
+    }
+];
             
             const userPositionHistory = useRef({});
             const notificationSound = useRef(null);
@@ -1973,6 +2018,12 @@ const hasNotificationPermission = useRef(false);
             useEffect(() => {
                 setBleSupported('bluetooth' in navigator);
             }, []);
+            // === CARGAR PUNTOS DE ENCUENTRO (dummy para testing) ===
+useEffect(() => {
+    console.log('📍 Cargando puntos de encuentro dummy...');
+    setMeetingPoints(dummyMeetingPoints);
+    console.log('✅ Puntos cargados:', dummyMeetingPoints.length);
+}, []);
             
             const applyKalmanFilter = (measurement, state) => {
                 const p_pred = state.p + state.q;
