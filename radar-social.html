@@ -2891,6 +2891,8 @@ const createMeetingPointMarker = (point, map, usersAtPoint) => {
                     }).length;
                     
                     // Solo mostrar puntos con usuarios activos
+// TEMP: Comentado para testing visual
+// if (usersAtPoint === 0) return;
                     if (usersAtPoint === 0) return;
                     
                     const pointMarkerId = `point_${point.id}`;
