@@ -2198,36 +2198,7 @@ useEffect(() => {
     
     loadPlaces();
 }, [currentUser?.latitude, currentUser?.longitude, selectedMeetingCategory, googleMap]);
-```
 
----
-
-## **🎯 ¿QUÉ CAMBIA?**
-
-**ANTES (dummy):**
-- Carga 3 puntos fijos al iniciar
-- No depende de ubicación GPS
-- No usa Google Places API
-
-**DESPUÉS (Google Places):**
-- Espera a que tengas GPS válido
-- Busca lugares reales en 500m a tu alrededor
-- Cambia cuando seleccionas otra categoría en el filtro
-- Usa caché de 24 horas para ahorrar API calls
-- Fallback a dummy points si falla
-
----
-
-## **📊 RESULTADO ESPERADO:**
-
-Cuando recargues la app verás en la consola:
-```
-⏳ Esperando GPS y mapa...
-📍 Cargando puntos de encuentro desde Google Places...
-🔍 Buscando cafes en Google Places...
-✅ 15 lugares encontrados para cafes
-✅ 67 puntos cargados para categoría: all
-            
             const applyKalmanFilter = (measurement, state) => {
                 const p_pred = state.p + state.q;
                 const k = p_pred / (p_pred + state.r);
