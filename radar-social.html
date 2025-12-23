@@ -2018,11 +2018,15 @@ const fetchNearbyPlaces = async (lat, lng, category) => {
     }
 
     console.log(`🔍 Buscando ${category} en Google Places...`);
-    
+// === NUEVO CÓDIGO - AGREGAR AQUÍ ===
+if (!window.google || !window.google.maps || !window.google.maps.places) {
+    console.error('❌ Google Maps API no disponible aún');
+    return [];
+}
+// === FIN NUEVO CÓDIGO ===
     const service = new google.maps.places.PlacesService(document.createElement('div'));
     const types = categoryToPlaceType[category] || [];
     const allPlaces = [];
-
     for (const type of types) {
         try {
             const results = await new Promise((resolve, reject) => {
