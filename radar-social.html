@@ -2912,7 +2912,7 @@ const createMeetingPointMarker = (point, map, usersAtPoint) => {
                         };
                     }
                 });
-            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.thought, currentUser?.hasStory, users, radius, viewedStories, unreadMessages, userPreferences, markerRefreshTick, currentEmoji]);
+            }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.thought, currentUser?.hasStory, users, radius, viewedStories, unreadMessages, userPreferences, markerRefreshTick, currentEmoji, selectedMeetingCategory, meetingPoints]);
             
             useEffect(() => {
                 if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
