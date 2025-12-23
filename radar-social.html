@@ -2295,7 +2295,10 @@ if (places.length === 0) {
             
             setMeetingPoints(realPanamaMeetingPoints);
             console.log(`✅ ${realPanamaMeetingPoints.length} puntos reales de Panamá cargados`);
-            
+            } else {
+    setMeetingPoints(places);
+    console.log(`✅ ${places.length} lugares encontrados para ${selectedMeetingCategory}`);
+}
         } catch (error) {
             console.error('❌ Error cargando lugares:', error);
             console.log('📍 Usando puntos dummy como fallback');
