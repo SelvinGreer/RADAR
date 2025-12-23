@@ -3152,7 +3152,21 @@ overlayOpenRef.current = false;
         {totalUnread > 0 && <div style={{ position: 'absolute', top: '-6px', right: '-6px', minWidth: '18px', height: '18px', background: 'linear-gradient(135deg,#ff6b35,#f7931e)', borderRadius: '9px', border: '2px solid #0d1117', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700', color: '#fff', padding: '0 4px' }}>{totalUnread > 9 ? '9+' : totalUnread}</div>}
     </div>
 </div>
-
+{/* === MENÚ DE FILTROS DE PUNTOS DE ENCUENTRO === */}
+<div className="meeting-points-filter-bar">
+    <div className="meeting-filter-scroll">
+        {meetingCategories.map(category => (
+            <div 
+                key={category.id}
+                className={`meeting-filter-chip ${selectedMeetingCategory === category.id ? 'active' : ''}`}
+                onClick={() => setSelectedMeetingCategory(category.id)}
+            >
+                <span className="meeting-filter-emoji">{category.emoji}</span>
+                <span>{category.label}</span>
+            </div>
+        ))}
+    </div>
+</div>
 {currentUser?.isGuest && (
     <div style={{
         position: 'absolute',
