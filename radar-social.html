@@ -3092,9 +3092,6 @@ const createMeetingPointMarker = (point, map, usersAtPoint) => {
                 });
                 
                 Object.keys(markersRef.current).forEach(userId => { if (!activeMarkerIds.has(userId)) removeMarker(userId); });
-                Object.keys(markersRef.current)
-    .filter(key => key.startsWith('point_') && !activeMarkerIds.has(key))
-    .forEach(pointId => removeMarker(pointId));
                 // === RENDERIZAR PUNTOS DE ENCUENTRO ===
                 const filteredPoints = selectedMeetingCategory === 'all' 
                     ? meetingPoints 
