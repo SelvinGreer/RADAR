@@ -1965,12 +1965,13 @@ const meetingCategories = [
 
 // === DATOS DUMMY DE PUNTOS DE ENCUENTRO (testing) ===
 // IMPORTANTE: Cambiar estas coordenadas a lugares reales cerca de ti
+// === DATOS DUMMY DE PUNTOS DE ENCUENTRO (testing) ===
 const dummyMeetingPoints = [
     {
         id: 'starbucks_albrook',
         name: 'Starbucks Albrook',
         category: 'cafes',
-        location: { latitude: 8.9824, longitude: -79.5199 }, // Cambia estas coords
+        location: { latitude: 8.9824, longitude: -79.5199 },
         icon: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Starbucks_Corporation_Logo_2011.svg/1200px-Starbucks_Corporation_Logo_2011.svg.png',
         captureRadius: 30,
         isActive: true
@@ -1979,7 +1980,7 @@ const dummyMeetingPoints = [
         id: 'mcdonalds_centro',
         name: "McDonald's Centro",
         category: 'restaurants',
-        location: { latitude: 8.9830, longitude: -79.5205 }, // Cambia estas coords
+        location: { latitude: 8.9830, longitude: -79.5205 },
         icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/McDonald%27s_Golden_Arches.svg/1200px-McDonald%27s_Golden_Arches.svg.png',
         captureRadius: 30,
         isActive: true
@@ -1988,13 +1989,104 @@ const dummyMeetingPoints = [
         id: 'cinepolis_multiplaza',
         name: 'Cinépolis Multiplaza',
         category: 'entertainment',
-        location: { latitude: 8.9836, longitude: -79.5211 }, // Cambia estas coords
+        location: { latitude: 8.9836, longitude: -79.5211 },
         icon: 'https://seeklogo.com/images/C/cinepolis-logo-B9DC17D7A6-seeklogo.com.png',
         captureRadius: 50,
         isActive: true
     }
 ];
-            
+
+// === MAPEO DE CATEGORÍAS NEXME → GOOGLE PLACES ===
+const categoryToPlaceType = {
+    'cafes': ['cafe', 'coffee_shop'],
+    'restaurants': ['restaurant', 'meal_takeaway', 'meal_delivery'],
+    'bars': ['bar', 'night_club'],
+    'entertainment': ['movie_theater', 'bowling_alley', 'amusement_park', 'museum'],
+    'sports': ['gym', 'stadium', 'sports_complex']
+};
+
+// === FUNCIÓN PARA BUSCAR LUGARES CON GOOGLE PLACES API ===
+const fetchNearbyPlaces = async (lat, lng, category) => {
+    const cacheKey = `places_${category}_${lat.toFixed(3)}_${lng.toFixed(3)}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+            console.log(`📦 Usando cache para ${category}`);
+            return data;
+        }
+    }
+
+    console.log(`🔍 Buscando ${category} en Google Places...`);
+    
+    const service = new google.maps.places.PlacesService(document.createElement('div'));
+    const types = categoryToPlaceType[category] || [];
+    const allPlaces = [];
+
+    for (const type of types) {
+        try {
+            const results = await new Promise((resolve, reject) => {
+                service.nearbySearch({
+                    location: { lat, lng },
+                    radius: 500,
+                    type: type
+                }, (results, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+                        resolve(results || []);
+                    } else {
+                        console.warn(`Places API status: ${status} for type: ${type}`);
+                        resolve([]);
+                    }
+                });
+            });
+
+            allPlaces.push(...results);
+        } catch (error) {
+            console.error(`Error buscando ${type}:`, error);
+        }
+    }
+
+    const nexmePlaces = allPlaces.map(place => ({
+        id: place.place_id,
+        name: place.name,
+        category: category,
+        location: {
+            latitude: place.geometry.location.lat(),
+            longitude: place.geometry.location.lng()
+        },
+        icon: place.icon || place.photos?.[0]?.getUrl({ maxWidth: 100 }) || 
+              'https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/geocode-71.png',
+        captureRadius: 30,
+        isActive: true,
+        rating: place.rating || null,
+        vicinity: place.vicinity || ''
+    }));
+
+    localStorage.setItem(cacheKey, JSON.stringify({
+        data: nexmePlaces,
+        timestamp: Date.now()
+    }));
+
+    console.log(`✅ ${nexmePlaces.length} lugares encontrados para ${category}`);
+    return nexmePlaces;
+};
+
+// === CARGAR TODOS LOS LUGARES DE UNA CATEGORÍA ===
+const loadPlacesForCategory = async (lat, lng, category) => {
+    if (category === 'all') {
+        const allCategories = ['cafes', 'restaurants', 'bars', 'entertainment', 'sports'];
+        const allPlaces = [];
+        
+        for (const cat of allCategories) {
+            const places = await fetchNearbyPlaces(lat, lng, cat);
+            allPlaces.push(...places);
+        }
+        
+        return allPlaces;
+    } else {
+        return await fetchNearbyPlaces(lat, lng, category);
+    }
+};
             const userPositionHistory = useRef({});
             const notificationSound = useRef(null);
             
@@ -2077,11 +2169,64 @@ const dummyMeetingPoints = [
                 setBleSupported('bluetooth' in navigator);
             }, []);
             // === CARGAR PUNTOS DE ENCUENTRO (dummy para testing) ===
+// === CARGAR PUNTOS DE ENCUENTRO (Google Places API) ===
 useEffect(() => {
-    console.log('📍 Cargando puntos de encuentro dummy...');
-    setMeetingPoints(dummyMeetingPoints);
-    console.log('✅ Puntos cargados:', dummyMeetingPoints.length);
-}, []);
+    const loadPlaces = async () => {
+        if (!currentUser?.latitude || currentUser.latitude === 0 || !googleMap) {
+            console.log('⏳ Esperando GPS y mapa...');
+            return;
+        }
+        
+        console.log('📍 Cargando puntos de encuentro desde Google Places...');
+        
+        try {
+            const places = await loadPlacesForCategory(
+                currentUser.latitude,
+                currentUser.longitude,
+                selectedMeetingCategory
+            );
+            
+            setMeetingPoints(places);
+            console.log(`✅ ${places.length} puntos cargados para categoría: ${selectedMeetingCategory}`);
+            
+        } catch (error) {
+            console.error('❌ Error cargando lugares:', error);
+            console.log('📍 Usando puntos dummy como fallback');
+            setMeetingPoints(dummyMeetingPoints);
+        }
+    };
+    
+    loadPlaces();
+}, [currentUser?.latitude, currentUser?.longitude, selectedMeetingCategory, googleMap]);
+```
+
+---
+
+## **🎯 ¿QUÉ CAMBIA?**
+
+**ANTES (dummy):**
+- Carga 3 puntos fijos al iniciar
+- No depende de ubicación GPS
+- No usa Google Places API
+
+**DESPUÉS (Google Places):**
+- Espera a que tengas GPS válido
+- Busca lugares reales en 500m a tu alrededor
+- Cambia cuando seleccionas otra categoría en el filtro
+- Usa caché de 24 horas para ahorrar API calls
+- Fallback a dummy points si falla
+
+---
+
+## **📊 RESULTADO ESPERADO:**
+
+Cuando recargues la app verás en la consola:
+```
+⏳ Esperando GPS y mapa...
+📍 Cargando puntos de encuentro desde Google Places...
+🔍 Buscando cafes en Google Places...
+✅ 15 lugares encontrados para cafes
+✅ 67 puntos cargados para categoría: all
             
             const applyKalmanFilter = (measurement, state) => {
                 const p_pred = state.p + state.q;
