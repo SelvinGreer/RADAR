@@ -1785,6 +1785,64 @@
     font-size: 10px;
     color: #f09433;
 }
+        /* === PUNTOS DE ENCUENTRO - Menú de filtros === */
+.meeting-points-filter-bar {
+    position: absolute;
+    top: 68px;
+    left: 0;
+    right: 0;
+    z-index: 9;
+    background: linear-gradient(180deg, rgba(26, 31, 38, 0.95) 0%, rgba(26, 31, 38, 0.85) 100%);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(48, 54, 61, 0.3);
+    padding: 8px 0;
+}
+
+.meeting-filter-scroll {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.meeting-filter-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.meeting-filter-chip {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(22, 27, 34, 0.8);
+    border: 1px solid rgba(48, 54, 61, 0.5);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 500;
+    color: #c9d1d9;
+}
+
+.meeting-filter-chip:hover {
+    background: rgba(34, 39, 46, 0.9);
+    border-color: rgba(56, 189, 98, 0.3);
+}
+
+.meeting-filter-chip.active {
+    background: rgba(56, 189, 98, 0.15);
+    border-color: #38bd62;
+    color: #38bd62;
+}
+
+.meeting-filter-emoji {
+    font-size: 16px;
+}
     </style>
 </head>
 <body>
