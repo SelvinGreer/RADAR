@@ -2293,8 +2293,8 @@ if (places.length === 0) {
         { id: 'orangetheory', name: 'Orangetheory Fitness', category: 'sports', location: { latitude: 9.0258, longitude: -79.4768 }, icon: 'https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png', captureRadius: 50 }
     ];
             
-            setMeetingPoints(places);
-            console.log(`✅ ${places.length} puntos cargados para categoría: ${selectedMeetingCategory}`);
+            setMeetingPoints(realPanamaMeetingPoints);
+            console.log(`✅ ${realPanamaMeetingPoints.length} puntos reales de Panamá cargados`);
             
         } catch (error) {
             console.error('❌ Error cargando lugares:', error);
