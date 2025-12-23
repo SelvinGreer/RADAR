@@ -2292,27 +2292,6 @@ if (places.length === 0) {
         { id: 'crossfit_507', name: 'CrossFit 507', category: 'sports', location: { latitude: 8.9885, longitude: -79.5230 }, icon: 'https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png', captureRadius: 50 },
         { id: 'orangetheory', name: 'Orangetheory Fitness', category: 'sports', location: { latitude: 9.0258, longitude: -79.4768 }, icon: 'https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png', captureRadius: 50 }
     ];
-    
-    // Filtrar por categoría y calcular distancia
-    const filteredByCategory = selectedMeetingCategory === 'all' 
-        ? realPanamaMeetingPoints 
-        : realPanamaMeetingPoints.filter(p => p.category === selectedMeetingCategory);
-    
-    // Solo mostrar puntos dentro de 5km (para testing)
-    const nearbyPoints = filteredByCategory.filter(point => {
-        const distanceToPoint = Math.round(calculateDistance(
-            currentUser.latitude,
-            currentUser.longitude,
-            point.location.latitude,
-            point.location.longitude
-        ));
-        return distanceToPoint <= 5000; // 5km
-    });
-    
-    setMeetingPoints(nearbyPoints);
-    console.log(`✅ ${nearbyPoints.length} lugares reales de Panamá cargados (${selectedMeetingCategory})`);
-    return;
-}
             
             setMeetingPoints(places);
             console.log(`✅ ${places.length} puntos cargados para categoría: ${selectedMeetingCategory}`);
