@@ -2327,40 +2327,7 @@ useEffect(() => {
             };
 
             const FIXED_ZOOM = 15;
-            
-            const initializeGoogleMap = (lat, lng) => {
-                if (!mapRef.current || googleMap) return;
-                currentUserPositionRef.current = { lat, lng };
-                const darkStyle = [
-                    { elementType: 'geometry', stylers: [{ color: '#2c3e50' }] },
-                    { elementType: 'labels.text.stroke', stylers: [{ color: '#1a2332' }] },
-                    { elementType: 'labels.text.fill', stylers: [{ color: '#8b9eb5' }] },
-                    { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-                    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-                    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#3d5467' }] },
-                    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#7a8fa3' }] },
-                    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#1a4d6b' }] },
-                    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#2a3f52' }] },
-                    { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#2d5a3f' }] },
-                    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#2d5a3f' }] }
-                ];
-                const map = new google.maps.Map(mapRef.current, {
-                    center: { lat, lng }, zoom: FIXED_ZOOM, minZoom: FIXED_ZOOM, maxZoom: FIXED_ZOOM,
-                    styles: darkStyle, disableDefaultUI: true, zoomControl: false,
-                    gestureHandling: 'greedy', clickableIcons: false
-                });
-                map.addListener('zoom_changed', () => { if (map.getZoom() !== FIXED_ZOOM) map.setZoom(FIXED_ZOOM); });
-                map.addListener('dragend', () => {
-                    const center = map.getCenter();
-                    const userPos = currentUserPositionRef.current;
-                    const distance = calculateDistance(userPos.lat, userPos.lng, center.lat(), center.lng());
-                    if (distance > 1000) {
-                        const bearing = Math.atan2(center.lng() - userPos.lng, center.lat() - userPos.lat);
-                        map.panTo({ lat: userPos.lat + (0.009 * Math.cos(bearing)), lng: userPos.lng + (0.009 * Math.sin(bearing)) });
-                    }
-                });
-                setGoogleMap(map);
-                // === CREAR MARKER DE PUNTO DE ENCUENTRO ===
+            // === CREAR MARKER DE PUNTO DE ENCUENTRO ===
 const createMeetingPointMarker = (point, map, usersAtPoint) => {
     const markerDiv = document.createElement('div');
     markerDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;';
@@ -2443,6 +2410,39 @@ const createMeetingPointMarker = (point, map, usersAtPoint) => {
     marker.setMap(map);
     return marker;
 };
+            const initializeGoogleMap = (lat, lng) => {
+                if (!mapRef.current || googleMap) return;
+                currentUserPositionRef.current = { lat, lng };
+                const darkStyle = [
+                    { elementType: 'geometry', stylers: [{ color: '#2c3e50' }] },
+                    { elementType: 'labels.text.stroke', stylers: [{ color: '#1a2332' }] },
+                    { elementType: 'labels.text.fill', stylers: [{ color: '#8b9eb5' }] },
+                    { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+                    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+                    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#3d5467' }] },
+                    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#7a8fa3' }] },
+                    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#1a4d6b' }] },
+                    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#2a3f52' }] },
+                    { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#2d5a3f' }] },
+                    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#2d5a3f' }] }
+                ];
+                const map = new google.maps.Map(mapRef.current, {
+                    center: { lat, lng }, zoom: FIXED_ZOOM, minZoom: FIXED_ZOOM, maxZoom: FIXED_ZOOM,
+                    styles: darkStyle, disableDefaultUI: true, zoomControl: false,
+                    gestureHandling: 'greedy', clickableIcons: false
+                });
+                map.addListener('zoom_changed', () => { if (map.getZoom() !== FIXED_ZOOM) map.setZoom(FIXED_ZOOM); });
+                map.addListener('dragend', () => {
+                    const center = map.getCenter();
+                    const userPos = currentUserPositionRef.current;
+                    const distance = calculateDistance(userPos.lat, userPos.lng, center.lat(), center.lng());
+                    if (distance > 1000) {
+                        const bearing = Math.atan2(center.lng() - userPos.lng, center.lat() - userPos.lat);
+                        map.panTo({ lat: userPos.lat + (0.009 * Math.cos(bearing)), lng: userPos.lng + (0.009 * Math.sin(bearing)) });
+                    }
+                });
+                setGoogleMap(map);
+                
             };
             
             const createUserMarker = (user, map, size, isCurrentUser = false, isOrbital = true, orbitalIndex = -1) => {
