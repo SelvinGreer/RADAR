@@ -2165,8 +2165,91 @@ useEffect(() => {
                     }
                 });
                 setGoogleMap(map);
+                // === CREAR MARKER DE PUNTO DE ENCUENTRO ===
+const createMeetingPointMarker = (point, map, usersAtPoint) => {
+    const markerDiv = document.createElement('div');
+    markerDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;';
+    
+    // Logo del punto (48px)
+    const logoContainer = document.createElement('div');
+    logoContainer.style.cssText = 'width:48px;height:48px;position:relative;';
+    
+    // Anillo verde gradiente
+    const ring = document.createElement('div');
+    ring.style.cssText = 'position:absolute;width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#38bd62,#2d9d51);display:flex;align-items:center;justify-content:center;';
+    
+    const innerContainer = document.createElement('div');
+    innerContainer.style.cssText = 'width:44px;height:44px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;';
+    
+    const logoImg = document.createElement('img');
+    logoImg.src = point.icon;
+    logoImg.style.cssText = 'width:36px;height:36px;border-radius:50%;object-fit:cover;';
+    logoImg.onerror = () => { logoImg.style.display = 'none'; };
+    
+    innerContainer.appendChild(logoImg);
+    ring.appendChild(innerContainer);
+    logoContainer.appendChild(ring);
+    
+    // Badge de contador
+    if (usersAtPoint > 0) {
+        const badge = document.createElement('div');
+        badge.style.cssText = 'position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;background:linear-gradient(135deg,#ff6b35,#f7931e);border-radius:10px;border:2px solid #0d1117;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;padding:0 5px;';
+        badge.textContent = usersAtPoint > 9 ? '9+' : usersAtPoint;
+        logoContainer.appendChild(badge);
+    }
+    
+    markerDiv.appendChild(logoContainer);
+    
+    // Label del nombre
+    const nameLabel = document.createElement('div');
+    nameLabel.style.cssText = 'margin-top:2px;background:rgba(0,0,0,0.75);padding:2px 6px;border-radius:999px;font-size:7px;font-weight:600;color:#38bd62;white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis;';
+    nameLabel.textContent = point.name;
+    markerDiv.appendChild(nameLabel);
+    
+    markerDiv.style.opacity = '0';
+    markerDiv.style.transition = 'opacity 0.15s ease';
+    
+    class CustomMarker extends google.maps.OverlayView {
+        constructor(position, content) {
+            super();
+            this.position = position;
+            this.content = content;
+            this.isFirstDraw = true;
+        }
+        onAdd() { this.getPanes().overlayMouseTarget.appendChild(this.content); }
+        draw() {
+            const pos = this.getProjection().fromLatLngToDivPixel(this.position);
+            if (pos) {
+                this.content.style.position = 'absolute';
+                const width = this.content.offsetWidth || 60;
+                const height = this.content.offsetHeight || 80;
+                if (this.isFirstDraw) {
+                    this.isFirstDraw = false;
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            this.content.style.left = (pos.x - width/2) + 'px';
+                            this.content.style.top = (pos.y - height) + 'px';
+                            this.content.style.opacity = '1';
+                        });
+                    });
+                } else {
+                    this.content.style.left = (pos.x - width/2) + 'px';
+                    this.content.style.top = (pos.y - height) + 'px';
+                }
+            }
+        }
+        onRemove() { if (this.content.parentElement) this.content.parentElement.removeChild(this.content); }
+    }
+    
+    const marker = new CustomMarker(
+        new google.maps.LatLng(point.location.latitude, point.location.longitude),
+        markerDiv
+    );
+    marker.setMap(map);
+    return marker;
+};
             };
-
+            
             const createUserMarker = (user, map, size, isCurrentUser = false, isOrbital = true, orbitalIndex = -1) => {
                 const markerDiv = document.createElement('div');
                 markerDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;';
@@ -2779,6 +2862,56 @@ useEffect(() => {
                 });
                 
                 Object.keys(markersRef.current).forEach(userId => { if (!activeMarkerIds.has(userId)) removeMarker(userId); });
+                // === RENDERIZAR PUNTOS DE ENCUENTRO ===
+                const filteredPoints = selectedMeetingCategory === 'all' 
+                    ? meetingPoints 
+                    : meetingPoints.filter(p => p.category === selectedMeetingCategory);
+                
+                filteredPoints.forEach(point => {
+                    const distanceToPoint = Math.round(calculateDistance(
+                        currentUser.latitude, 
+                        currentUser.longitude, 
+                        point.location.latitude, 
+                        point.location.longitude
+                    ));
+                    
+                    // Solo mostrar puntos dentro de 500m
+                    if (distanceToPoint > 500) return;
+                    
+                    // Contar usuarios en este punto (dentro de 30m del punto)
+                    const usersAtPoint = users.filter(u => {
+                        if (!u.isOnline || u.latitude === 0) return false;
+                        const distanceToPointFromUser = Math.round(calculateDistance(
+                            u.latitude,
+                            u.longitude,
+                            point.location.latitude,
+                            point.location.longitude
+                        ));
+                        return distanceToPointFromUser <= point.captureRadius;
+                    }).length;
+                    
+                    // Solo mostrar puntos con usuarios activos
+                    if (usersAtPoint === 0) return;
+                    
+                    const pointMarkerId = `point_${point.id}`;
+                    activeMarkerIds.add(pointMarkerId);
+                    
+                    const existing = markersRef.current[pointMarkerId];
+                    const pointChanged = existing && (existing.userCount !== usersAtPoint);
+                    
+                    if (existing && existing.type === 'meetingPoint' && !pointChanged) {
+                        // Punto ya existe y no cambió, no hacer nada
+                    } else {
+                        // Crear/recrear marker del punto
+                        if (existing) removeMarker(pointMarkerId);
+                        const marker = createMeetingPointMarker(point, googleMap, usersAtPoint);
+                        markersRef.current[pointMarkerId] = { 
+                            marker, 
+                            type: 'meetingPoint', 
+                            userCount: usersAtPoint 
+                        };
+                    }
+                });
             }, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.thought, currentUser?.hasStory, users, radius, viewedStories, unreadMessages, userPreferences, markerRefreshTick, currentEmoji]);
             
             useEffect(() => {
