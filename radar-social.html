@@ -2379,7 +2379,7 @@ const createMeetingPointMarker = (point, map, usersAtPoint) => {
     innerContainer.style.cssText = 'width:44px;height:44px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;';
     
     const logoImg = document.createElement('img');
-    logoImg.src = point.icon;
+    logoImg.src = point.icon || 'https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/geocode-71.png';
     logoImg.style.cssText = 'width:36px;height:36px;border-radius:50%;object-fit:cover;';
     logoImg.onerror = () => { logoImg.style.display = 'none'; };
     
@@ -3092,6 +3092,9 @@ const createMeetingPointMarker = (point, map, usersAtPoint) => {
                 });
                 
                 Object.keys(markersRef.current).forEach(userId => { if (!activeMarkerIds.has(userId)) removeMarker(userId); });
+                Object.keys(markersRef.current)
+    .filter(key => key.startsWith('point_') && !activeMarkerIds.has(key))
+    .forEach(pointId => removeMarker(pointId));
                 // === RENDERIZAR PUNTOS DE ENCUENTRO ===
                 const filteredPoints = selectedMeetingCategory === 'all' 
                     ? meetingPoints 
