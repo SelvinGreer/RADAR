@@ -2631,7 +2631,7 @@ badge.style.cssText = 'position:absolute;top:-2px;right:-2px;min-width:14px;heig
             };
             
             const getOrbitalPosition = (centerLat, centerLng, index, totalSlots = 8) => {
-                const orbitRadius = 0.00104;
+                const orbitRadius = 0.00090;
                 const angle = (index * (360 / totalSlots)) * (Math.PI / 180);
                 const latCorrection = Math.cos(centerLat * Math.PI / 180);
                 return { 
