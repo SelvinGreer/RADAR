@@ -1917,7 +1917,7 @@ const hasNotificationPermission = useRef(false);
 const [selectedMeetingCategory, setSelectedMeetingCategory] = useState('all');
 const [meetingPoints, setMeetingPoints] = useState([]);
 const [selectedMeetingPoint, setSelectedMeetingPoint] = useState(null);
-            
+            const [showMeetingPointModal, setShowMeetingPointModal] = useState(false);
             const [userPreferences, setUserPreferences] = useState({
                 age: 25, gender: '', interests: [], lookingFor: [],
                 ageRangeMin: 18, ageRangeMax: 50, genderPreference: 'all'
@@ -2360,7 +2360,89 @@ if (places.length === 0) {
 
             const FIXED_ZOOM = 17;
             // === CREAR MARKER DE PUNTO DE ENCUENTRO ===
-const createMeetingPointMarker = (point, map, usersAtPoint) => {
+const createMeetingPointMarker = (point, map, usersCount, distanceToPoint, usersAtPoint) => {
+    const markerDiv = document.createElement('div');
+    markerDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;';
+    
+    // Click handler para abrir modal
+    markerDiv.addEventListener('click', () => {
+        setSelectedMeetingPoint({ ...point, usersAtPoint, distance: distanceToPoint });
+        setShowMeetingPointModal(true);
+    });
+    
+    const logoContainer = document.createElement('div');
+    logoContainer.style.cssText = 'width:32px;height:32px;position:relative;';
+
+    const circle = document.createElement('div');
+    circle.style.cssText = 'position:absolute;width:100%;height:100%;border-radius:50%;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.15);box-shadow:0 2px 8px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:20px;';
+
+    const categoryEmojis = {
+        'cafes': '☕',
+        'restaurants': '🍔',
+        'bars': '🍺',
+        'entertainment': '🎬',
+        'sports': '🏋️'
+    };
+
+    circle.textContent = categoryEmojis[point.category] || '📍';
+    logoContainer.appendChild(circle);
+    
+    if (usersCount > 0) {
+        const badge = document.createElement('div');
+        badge.style.cssText = 'position:absolute;top:-2px;right:-2px;min-width:14px;height:14px;background:linear-gradient(135deg,#ff6b35,#f7931e);border-radius:7px;border:1.5px solid #0d1117;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;padding:0 3px;';
+        badge.textContent = usersCount > 9 ? '9+' : usersCount;
+        logoContainer.appendChild(badge);
+    }
+    
+    markerDiv.appendChild(logoContainer);
+    
+    const nameLabel = document.createElement('div');
+    nameLabel.style.cssText = 'margin-top:1px;background:rgba(0,0,0,0.75);padding:1px 4px;border-radius:999px;font-size:6px;font-weight:600;color:#38bd62;white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis;';
+    nameLabel.textContent = point.name + ' / ' + distanceToPoint + 'm';
+    markerDiv.appendChild(nameLabel);
+    
+    markerDiv.style.opacity = '0';
+    markerDiv.style.transition = 'opacity 0.15s ease';
+    
+    class CustomMarker extends google.maps.OverlayView {
+        constructor(position, content) {
+            super();
+            this.position = position;
+            this.content = content;
+            this.isFirstDraw = true;
+        }
+        onAdd() { this.getPanes().overlayMouseTarget.appendChild(this.content); }
+        draw() {
+            const pos = this.getProjection().fromLatLngToDivPixel(this.position);
+            if (pos) {
+                this.content.style.position = 'absolute';
+                const width = this.content.offsetWidth || 60;
+                const height = this.content.offsetHeight || 80;
+                if (this.isFirstDraw) {
+                    this.isFirstDraw = false;
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            this.content.style.left = (pos.x - width/2) + 'px';
+                            this.content.style.top = (pos.y - height) + 'px';
+                            this.content.style.opacity = '1';
+                        });
+                    });
+                } else {
+                    this.content.style.left = (pos.x - width/2) + 'px';
+                    this.content.style.top = (pos.y - height) + 'px';
+                }
+            }
+        }
+        onRemove() { if (this.content.parentElement) this.content.parentElement.removeChild(this.content); }
+    }
+    
+    const marker = new CustomMarker(
+        new google.maps.LatLng(point.location.latitude, point.location.longitude),
+        markerDiv
+    );
+    marker.setMap(map);
+    return marker;
+};
     const markerDiv = document.createElement('div');
     markerDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;';
     
@@ -3012,9 +3094,161 @@ nameLabel.textContent = point.name + ' / ' + distanceToPoint + 'm';
 
             // v7.5.0 FIX: Update markers - includes viewedStories in signature
             useEffect(() => {
-                if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
-                
-                const usersInRange = users.filter(u => {
+    if (!googleMap || !currentUser?.latitude || currentUser.latitude === 0) return;
+    
+    // === CALCULAR USUARIOS DENTRO DE PUNTOS DE ENCUENTRO ===
+    const usersInMeetingPoints = new Set();
+    const filteredPoints = selectedMeetingCategory === 'all' 
+        ? meetingPoints 
+        : meetingPoints.filter(p => p.category === selectedMeetingCategory);
+    
+    filteredPoints.forEach(point => {
+        users.forEach(user => {
+            if (!user.isOnline || user.latitude === 0) return;
+            const distanceToPoint = Math.round(calculateDistance(
+                user.latitude,
+                user.longitude,
+                point.location.latitude,
+                point.location.longitude
+            ));
+            if (distanceToPoint <= 10) {  // Radio de captura: 10m
+                usersInMeetingPoints.add(user.id);
+            }
+        });
+    });
+    
+    // === FILTRAR USUARIOS QUE NO ESTÁN EN PUNTOS ===
+    const usersNotInPoints = users.filter(u => !usersInMeetingPoints.has(u.id));
+    
+    const usersInRange = usersNotInPoints.filter(u => {
+        if (u.distance > radius || !u.isOnline || u.latitude === 0) return false;
+        if (u.preferences?.age) {
+            if (u.preferences.age < userPreferences.ageRangeMin || u.preferences.age > userPreferences.ageRangeMax) return false;
+        }
+        if (userPreferences.genderPreference !== 'all' && u.preferences?.gender && u.preferences.gender !== userPreferences.genderPreference) return false;
+        const myLF = userPreferences.lookingFor.length > 0;
+        const theirLF = u.preferences?.lookingFor?.length > 0;
+        if (myLF && theirLF && !u.preferences.lookingFor.some(lf => userPreferences.lookingFor.includes(lf))) return false;
+        if ((myLF && !theirLF) || (!myLF && theirLF)) return false;
+        return true;
+    }).sort((a, b) => a.distance - b.distance);
+    
+    const currentDataSignature = JSON.stringify({
+        usersCount: usersInRange.length,
+        userIds: usersInRange.map(u => u.id).join(','),
+        userPositions: usersInRange.map(u => `${u.latitude.toFixed(5)},${u.longitude.toFixed(5)}`).join('|'),
+        userThoughts: usersInRange.map(u => u.thought || '').join('|'),
+        userStories: usersInRange.map(u => u.hasStory ? '1' : '0').join(''),
+        userEmojis: usersInRange.map(u => u.currentEmoji || '').join(''),
+        viewedStoriesState: Object.keys(viewedStories).sort().join(','),
+        unreadMessagesState: Object.entries(unreadMessages).map(([k,v]) => `${k}:${v}`).join(','),
+        currentThought: currentUser.thought || '',
+        currentHasStory: currentUser.hasStory || false,
+        currentEmoji: currentEmoji || '',
+        currentLat: currentUser.latitude.toFixed(5),
+        currentLng: currentUser.longitude.toFixed(5),
+        selectedCategory: selectedMeetingCategory
+    });
+    
+    const tickChanged = markerRefreshTick !== lastTickRef.current;
+    lastTickRef.current = markerRefreshTick;
+    if (!tickChanged && currentDataSignature === lastMarkersDataRef.current) return;
+    lastMarkersDataRef.current = currentDataSignature;
+    
+    const activeMarkerIds = new Set();
+    const closeUsers = usersInRange.filter(u => u.distance <= 50);
+    const farFromOrbit = usersInRange.filter(u => u.distance > 50);
+    const orbitUsers = closeUsers.slice(0, 8);
+    const closeButNotOrbital = closeUsers.slice(8);
+    
+    const currentUserId = 'current_user';
+    activeMarkerIds.add(currentUserId);
+    const existingCurrent = markersRef.current[currentUserId];
+    const currentChanged = existingCurrent && (existingCurrent.hasStory !== currentUser.hasStory || existingCurrent.thought !== (currentUser.thought || '') || existingCurrent.emoji !== (currentEmoji || ''));
+    if (existingCurrent && !currentChanged) {
+        existingCurrent.marker.updatePosition(currentUser.latitude, currentUser.longitude);
+    } else {
+        if (existingCurrent) removeMarker(currentUserId);
+        const marker = createUserMarker(currentUser, googleMap, 48, true, true, -1);
+        markersRef.current[currentUserId] = { marker, type: 'current', hasStory: currentUser.hasStory, thought: currentUser.thought || '', emoji: currentEmoji || '' };
+    }
+    
+    orbitUsers.forEach((user, index) => {
+        const orbitalPos = getOrbitalPosition(currentUser.latitude, currentUser.longitude, index, 8);
+        activeMarkerIds.add(user.id);
+        const existing = markersRef.current[user.id];
+        const viewedChanged = existing && existing.viewed !== !!viewedStories[user.id];
+        const userChanged = existing && (existing.hasStory !== user.hasStory || existing.thought !== (user.thought || '') || viewedChanged || existing.emoji !== (user.currentEmoji || ''));
+        if (existing && existing.type === 'orbital' && !userChanged) {
+            existing.marker.updatePosition(orbitalPos.lat, orbitalPos.lng);
+        } else {
+            if (existing) removeMarker(user.id);
+            const marker = createUserMarker({ ...user, displayLat: orbitalPos.lat, displayLng: orbitalPos.lng }, googleMap, 38, false, true, index);
+            markersRef.current[user.id] = { marker, type: 'orbital', hasStory: user.hasStory, thought: user.thought || '', viewed: !!viewedStories[user.id], emoji: user.currentEmoji || '' };
+        }
+    });
+    
+    [...farFromOrbit, ...closeButNotOrbital].forEach(user => {
+        activeMarkerIds.add(user.id);
+        const existing = markersRef.current[user.id];
+        const viewedChanged = existing && existing.viewed !== !!viewedStories[user.id];
+        const userChanged = existing && (existing.hasStory !== user.hasStory || existing.thought !== (user.thought || '') || viewedChanged || existing.emoji !== (user.currentEmoji || ''));
+        if (existing && existing.type === 'explorer' && !userChanged) {
+            existing.marker.updatePosition(user.latitude, user.longitude);
+        } else {
+            if (existing) removeMarker(user.id);
+            const marker = createUserMarker(user, googleMap, 22, false, false, -1);
+            markersRef.current[user.id] = { marker, type: 'explorer', hasStory: user.hasStory, thought: user.thought || '', viewed: !!viewedStories[user.id], emoji: user.currentEmoji || '' };
+        }
+    });
+    
+    // === RENDERIZAR PUNTOS DE ENCUENTRO ===
+    filteredPoints.forEach(point => {
+        const distanceToPoint = Math.round(calculateDistance(
+            currentUser.latitude, 
+            currentUser.longitude, 
+            point.location.latitude, 
+            point.location.longitude
+        ));
+        
+        if (distanceToPoint > 500) return;
+        
+        const usersAtPoint = users.filter(u => {
+            if (!u.isOnline || u.latitude === 0) return false;
+            const distanceToPointFromUser = Math.round(calculateDistance(
+                u.latitude,
+                u.longitude,
+                point.location.latitude,
+                point.location.longitude
+            ));
+            return distanceToPointFromUser <= 10;  // Radio de captura: 10m
+        });
+        
+        const pointMarkerId = `point_${point.id}`;
+        activeMarkerIds.add(pointMarkerId);
+        
+        const existing = markersRef.current[pointMarkerId];
+        const pointChanged = existing && (existing.userCount !== usersAtPoint.length);
+        
+        if (existing && existing.type === 'meetingPoint' && !pointChanged) {
+            // Punto ya existe y no cambió
+        } else {
+            if (existing) removeMarker(pointMarkerId);
+            const marker = createMeetingPointMarker(point, googleMap, usersAtPoint.length, distanceToPoint, usersAtPoint);
+            markersRef.current[pointMarkerId] = { 
+                marker, 
+                type: 'meetingPoint', 
+                userCount: usersAtPoint.length,
+                point: point,
+                usersAtPoint: usersAtPoint
+            };
+        }
+    });
+    
+    Object.keys(markersRef.current).forEach(userId => { 
+        if (!activeMarkerIds.has(userId)) removeMarker(userId); 
+    });
+}, [googleMap, currentUser?.latitude, currentUser?.longitude, currentUser?.thought, currentUser?.hasStory, users, radius, viewedStories, unreadMessages, userPreferences, markerRefreshTick, currentEmoji, selectedMeetingCategory, meetingPoints]);
                     if (u.distance > radius || !u.isOnline || u.latitude === 0) return false;
                     if (u.preferences?.age) {
                         if (u.preferences.age < userPreferences.ageRangeMin || u.preferences.age > userPreferences.ageRangeMax) return false;
