@@ -2399,7 +2399,13 @@ badge.style.cssText = 'position:absolute;top:-2px;right:-2px;min-width:14px;heig
     // Label del nombre
     const nameLabel = document.createElement('div');
     nameLabel.style.cssText = 'margin-top:1px;background:rgba(0,0,0,0.75);padding:1px 4px;border-radius:999px;font-size:6px;font-weight:600;color:#38bd62;white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis;';
-    nameLabel.textContent = point.name + ' / ' + distanceToPoint + 'm';
+    const distanceToPoint = Math.round(calculateDistance(
+    currentUser.latitude, 
+    currentUser.longitude, 
+    point.location.latitude, 
+    point.location.longitude
+));
+nameLabel.textContent = point.name + ' / ' + distanceToPoint + 'm';
     markerDiv.appendChild(nameLabel);
     
     markerDiv.style.opacity = '0';
