@@ -2356,11 +2356,8 @@ if (places.length === 0) {
                     tryGetLocation();
                 });
             };
-
             const FIXED_ZOOM = 17;
-            // === CREAR MARKER DE PUNTO DE ENCUENTRO ===
-Busca la línea ~1798 y reemplaza TODA la función hasta el }; final:
-javascript// === CREAR MARKER DE PUNTO DE ENCUENTRO ===
+// === CREAR MARKER DE PUNTO DE ENCUENTRO ===
 const createMeetingPointMarker = (point, map, usersCount, distanceToPoint, usersAtPoint) => {
     const markerDiv = document.createElement('div');
     markerDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;';
