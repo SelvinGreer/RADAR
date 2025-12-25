@@ -3436,24 +3436,7 @@ useEffect(() => {
                     console.error('Error enviando mensaje:', e);
                 }
             };
-            const sendQuickMessage = async () => {
-    // ... código ...
-    setQuickMessage('');
-    setShowInstagramModal(false);
-    openChat(instagramModalUser);
-};
-
-// === HANDLER DE CLICK EN PUNTOS DE ENCUENTRO ===
-const handleMeetingPointClick = (point, usersAtPoint) => {
-    setSelectedMeetingPoint({ ...point, usersAtPoint });
-    setShowMeetingPointModal(true);
-};
-
-useEffect(() => {
-    window.handleMeetingPointClick = handleMeetingPointClick;
-}, []);
-
-const sendLike = async () => {
+            const sendLike = async () => {
                 if (!instagramModalUser || !currentUser) return;
                 const chatId = [currentUser.id, instagramModalUser.id].sort().join('_');
                 try {
