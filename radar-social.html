@@ -1906,6 +1906,8 @@ const isGuestMode = urlParams.get('mode') === 'guest';
             const [totalUnread, setTotalUnread] = useState(0);
             const [showPreferences, setShowPreferences] = useState(false);
             const [showNearbyModal, setShowNearbyModal] = useState(false);
+            const [selectedMeetingPoint, setSelectedMeetingPoint] = useState(null);
+            const [showMeetingPointModal, setShowMeetingPointModal] = useState(false);
             const [showEmojiPicker, setShowEmojiPicker] = useState(false);
             const [currentEmoji, setCurrentEmoji] = useState(null);
             const [emojiTimestamp, setEmojiTimestamp] = useState(null);
@@ -2359,11 +2361,13 @@ if (places.length === 0) {
 
             const FIXED_ZOOM = 17;
             // === CREAR MARKER DE PUNTO DE ENCUENTRO ===
+Busca la línea ~1798 y reemplaza TODA la función hasta el }; final:
+javascript// === CREAR MARKER DE PUNTO DE ENCUENTRO ===
 const createMeetingPointMarker = (point, map, usersCount, distanceToPoint, usersAtPoint) => {
     const markerDiv = document.createElement('div');
     markerDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;';
     
-    // Contenedor del emoji (20px) - REDUCIDO
+    // Contenedor del emoji (20px)
     const logoContainer = document.createElement('div');
     logoContainer.style.cssText = 'width:20px;height:20px;position:relative;';
 
@@ -2380,12 +2384,10 @@ const createMeetingPointMarker = (point, map, usersCount, distanceToPoint, users
         'sports': '🏋️'
     };
 
-    // Emoji de la categoría
     circle.textContent = categoryEmojis[point.category] || '📍';
-
     logoContainer.appendChild(circle);
     
-    // Badge de contador - REDUCIDO
+    // Badge de contador
     if (usersCount > 0) {
         const badge = document.createElement('div');
         badge.style.cssText = 'position:absolute;top:-2px;right:-2px;min-width:10px;height:10px;background:linear-gradient(135deg,#ff6b35,#f7931e);border-radius:5px;border:1px solid #0d1117;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;color:#fff;padding:0 2px;';
@@ -2395,11 +2397,16 @@ const createMeetingPointMarker = (point, map, usersCount, distanceToPoint, users
     
     markerDiv.appendChild(logoContainer);
     
-    // Label del nombre con distancia - REDUCIDO
+    // Label del nombre con distancia
     const nameLabel = document.createElement('div');
     nameLabel.style.cssText = 'margin-top:1px;background:rgba(0,0,0,0.75);padding:1px 3px;border-radius:999px;font-size:5px;font-weight:600;color:#38bd62;white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis;';
     nameLabel.textContent = point.name + ' / ' + distanceToPoint + 'm';
     markerDiv.appendChild(nameLabel);
+    
+    // ✅ CLICK HANDLER
+    markerDiv.addEventListener('click', () => {
+        window.handleMeetingPointClick && window.handleMeetingPointClick(point, usersAtPoint);
+    });
     
     markerDiv.style.opacity = '0';
     markerDiv.style.transition = 'opacity 0.15s ease';
@@ -2572,7 +2579,14 @@ const createMeetingPointMarker = (point, map, usersCount, distanceToPoint, users
                     nameLabel.textContent = user.distance ? `${user.name.split(' ')[0]} / ${user.distance}m` : user.name.split(' ')[0];
                     markerDiv.appendChild(nameLabel);
                 }
-                
+                const handleMeetingPointClick = (point, usersAtPoint) => {
+    setSelectedMeetingPoint({ ...point, usersAtPoint });
+    setShowMeetingPointModal(true);
+};
+
+useEffect(() => {
+    window.handleMeetingPointClick = handleMeetingPointClick;
+}, []);
                 markerDiv.addEventListener('click', () => handleAvatarClick(user));
                 markerDiv.style.opacity = '0';
                 markerDiv.style.transition = 'opacity 0.15s ease';
@@ -3342,6 +3356,15 @@ overlayOpenRef.current = false;
             };
 
             const handleAvatarClick = (user) => {
+                const handleMeetingPointClick = (point, usersAtPoint) => {
+    setSelectedMeetingPoint({ ...point, usersAtPoint });
+    setShowMeetingPointModal(true);
+};
+
+// Exponer función globalmente
+useEffect(() => {
+    window.handleMeetingPointClick = handleMeetingPointClick;
+}, []);
     // Bloquear si es invitado haciendo click en otros
     if (currentUser?.isGuest && user.id !== currentUser.id) {
         alert('👻 Los invitados no pueden ver historias ni chatear. ¡Regístrate para interactuar!');
@@ -3524,6 +3547,65 @@ overlayOpenRef.current = false;
                             <div className="map-header">
     <svg className="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" onClick={() => setShowSidebar(true)}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     <div className="map-people-counter" onClick={() => setShowNearbyModal(true)} style={{ cursor: 'pointer' }}>
+        <div className={`nearby-modal ${showMeetingPointModal ? 'active' : ''}`}>
+    <div className="nearby-modal-header">
+        <svg style={{ width: 24, height: 24, cursor: 'pointer', color: '#8b949e' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" onClick={() => setShowMeetingPointModal(false)}>
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        <h2>{selectedMeetingPoint?.name || 'Punto de Encuentro'}</h2>
+    </div>
+    <div className="nearby-modal-content">
+        {selectedMeetingPoint?.usersAtPoint?.length > 0 ? (
+            selectedMeetingPoint.usersAtPoint.map(user => {
+                const lookingForEmoji = user.preferences?.lookingFor?.[0] 
+                    ? lookingForOptions.find(opt => opt.id === user.preferences.lookingFor[0])?.emoji 
+                    : '👥';
+                const lookingForLabel = user.preferences?.lookingFor?.[0]
+                    ? lookingForOptions.find(opt => opt.id === user.preferences.lookingFor[0])?.label.replace(/^.+\s/, '')
+                    : 'Conexión';
+                
+                return (
+                    <div key={user.id} className="nearby-user-item" onClick={() => { 
+                        setShowMeetingPointModal(false); 
+                        handleAvatarClick(user); 
+                    }}>
+                        <div className="nearby-user-avatar-wrap">
+                            {user.hasStory && !viewedStories[user.id] ? (
+                                <div className="nearby-user-story-ring">
+                                    <img src={user.photo} alt={user.name} className="nearby-user-story-img"/>
+                                </div>
+                            ) : (
+                                <img src={user.photo} alt={user.name} className="nearby-user-avatar"/>
+                            )}
+                        </div>
+                        <div className="nearby-user-info">
+                            <div className="nearby-user-name">
+                                {user.name}
+                                {user.hasStory && <span style={{ fontSize: '12px' }}>📸</span>}
+                            </div>
+                            <div className="nearby-user-looking">
+                                {lookingForEmoji} {lookingForLabel}
+                            </div>
+                            {user.thought && (
+                                <div className="nearby-user-thought">"{user.thought}"</div>
+                            )}
+                        </div>
+                        <div className="nearby-user-distance">
+                            <span className="nearby-user-meters">📍 Aquí</span>
+                        </div>
+                    </div>
+                );
+            })
+        ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#6e7681', fontSize: '14px', gap: '8px' }}>
+                <div style={{ fontSize: '48px' }}>📍</div>
+                <div>No hay nadie en este punto</div>
+                <div style={{ fontSize: '12px', color: '#8b949e' }}>Sé el primero en llegar</div>
+            </div>
+        )}
+    </div>
+</div>
         <span className="map-people-counter-number">{usersInRange.length}</span>
         <span className="map-people-counter-text">cerca</span>
     </div>
