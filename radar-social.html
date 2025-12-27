@@ -3715,7 +3715,6 @@ const sendQuickMessage = async () => {
 };
 
 const sendMessage = async () => {
-    if (!messageInput.trim() || !selectedUser || !currentUser) return;
                 if (!messageInput.trim() || !selectedUser || !currentUser) return;
                 const chatId = [currentUser.id, selectedUser.id].sort().join('_');
                 const text = messageInput.trim();
