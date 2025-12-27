@@ -1847,7 +1847,17 @@
     font-size: 10px;
     color: #f09433;
 }
-        ;
+
+.chat-menu-dropdown {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: rgba(22, 27, 34, 0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(48, 54, 61, 0.6);
+    border-radius: 12px;
+    padding: 8px;
+    z-index: 1000;
     min-width: 200px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     opacity: 0;
@@ -3654,8 +3664,7 @@ const sendQuickMessage = async () => {
         console.error('Error enviando mensaje rápido:', e);
     }
 };
-            const sendMessage = async () => {
-                const deleteConversation = async (user) => {
+            const deleteConversation = async (user) => {
     if (!user || !currentUser) return;
     
     const confirmed = window.confirm(`¿Borrar toda la conversación con ${user.name}? Esta acción no se puede deshacer.`);
@@ -3666,7 +3675,6 @@ const sendQuickMessage = async () => {
     try {
         console.log('🗑️ Borrando conversación:', chatId);
         
-        // 1. Borrar todos los mensajes
         const messagesSnapshot = await db.collection('chats')
             .doc(chatId)
             .collection('messages')
@@ -3678,7 +3686,6 @@ const sendQuickMessage = async () => {
         });
         await batch.commit();
         
-        // 2. Resetear documento del chat
         await db.collection('chats').doc(chatId).set({
             participants: [currentUser.id, user.id],
             lastMessage: '',
@@ -3687,7 +3694,6 @@ const sendQuickMessage = async () => {
             [`unreadCount_${user.id}`]: 0
         }, { merge: true });
         
-        // 3. Limpiar estado local
         setMessages(prev => ({ ...prev, [chatId]: [] }));
         setUnreadMessages(prev => {
             const updated = { ...prev };
@@ -3695,7 +3701,6 @@ const sendQuickMessage = async () => {
             return updated;
         });
         
-        // 4. Cerrar chat y actualizar UI
         setSelectedUser(null);
         setShowChatMenu(false);
         setMarkerRefreshTick(t => t + 1);
@@ -3707,6 +3712,10 @@ const sendQuickMessage = async () => {
         console.error('❌ Error borrando conversación:', error);
         alert('Error al borrar la conversación');
     }
+};
+
+const sendMessage = async () => {
+    if (!messageInput.trim() || !selectedUser || !currentUser) return;
 };
                 if (!messageInput.trim() || !selectedUser || !currentUser) return;
                 const chatId = [currentUser.id, selectedUser.id].sort().join('_');
