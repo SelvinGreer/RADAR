@@ -3476,14 +3476,28 @@ useEffect(() => {
         
         // ⭐ PRIORIDAD 1: Si tiene mensajes sin leer (anillo amarillo) → Abrir chat DIRECTAMENTE
         if (unreadMessages[user.id] && unreadMessages[user.id] > 0) {
-            // ✅ LIMPIAR INMEDIATAMENTE el estado local
+            const chatId = [currentUser.id, user.id].sort().join('_');
+            
+            console.log('🟡 Click en anillo amarillo:', user.name);
+            console.log('🟡 Limpiando unreadCount en Firestore para chatId:', chatId);
+            
+            // ✅ ACTUALIZAR FIRESTORE PRIMERO (bloqueante)
+            db.collection('chats').doc(chatId).set({ 
+                [`unreadCount_${currentUser.id}`]: 0 
+            }, { merge: true }).then(() => {
+                console.log('✅ Firestore actualizado - unreadCount = 0');
+            }).catch(err => {
+                console.error('❌ Error actualizando Firestore:', err);
+            });
+            
+            // ✅ Luego limpiar estado local
             setUnreadMessages(prev => { 
                 const updated = { ...prev }; 
                 delete updated[user.id]; 
                 return updated; 
             });
             
-            // ✅ FORZAR refresh de markers para actualizar el anillo
+            // ✅ Forzar refresh de markers
             setMarkerRefreshTick(t => t + 1);
             
             // Abrir chat
