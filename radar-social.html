@@ -3407,6 +3407,17 @@ useEffect(() => {
         
         // ⭐ PRIORIDAD 1: Si tiene mensajes sin leer (anillo amarillo) → Abrir chat DIRECTAMENTE
         if (unreadMessages[user.id] && unreadMessages[user.id] > 0) {
+            // ✅ LIMPIAR INMEDIATAMENTE el estado local
+            setUnreadMessages(prev => { 
+                const updated = { ...prev }; 
+                delete updated[user.id]; 
+                return updated; 
+            });
+            
+            // ✅ FORZAR refresh de markers para actualizar el anillo
+            setMarkerRefreshTick(t => t + 1);
+            
+            // Abrir chat
             openChat(user);
             return;
         }
@@ -3422,7 +3433,7 @@ useEffect(() => {
             setShowInstagramModal(true); 
         }
     }
-};
+};;
 
             const handleStoryImageSelect = (e) => { const file = e.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (ev) => setStoryImage(ev.target.result); reader.readAsDataURL(file); } };
 
