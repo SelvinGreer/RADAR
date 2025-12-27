@@ -3944,40 +3944,38 @@ const sendQuickMessage = async () => {
                         <div className="inbox-conversations">
                             {users.length === 0 ? <div className="inbox-no-chats"><p>No hay conversaciones</p></div> :
 users.filter(u => u.isOnline).sort((a,b) => a.distance - b.distance).map(user => (
-    <div key={user.id} className="inbox-conv-item" onClick={async () => { 
-        console.log('📱 Click en inbox para usuario:', user.id);
+    <div key={user.id} className="inbox-conv-item" onClick={() => { 
+    console.log('🔵 Click en inbox para usuario:', user.name, user.id);
+    console.log('🔵 Unread count:', unreadMessages[user.id]);
+    
+    // ✅ Limpiar badge ANTES de abrir chat
+    if (unreadMessages[user.id]) {
+        const chatId = [currentUser.id, user.id].sort().join('_');
+        console.log('🔵 ChatID generado:', chatId);
+        console.log('🔵 CurrentUser.id:', currentUser.id);
         
-        // ✅ Limpiar badge ANTES de abrir chat
-        if (unreadMessages[user.id]) {
-            const chatId = [currentUser.id, user.id].sort().join('_');
-            
-            console.log('🧹 Limpiando chat:', chatId);
-            
-            // Limpiar estado local PRIMERO
-            setUnreadMessages(prev => { 
-                const updated = { ...prev }; 
-                delete updated[user.id]; 
-                return updated; 
-            });
-            
-            // ✅ ESPERAR a que Firestore se actualice
-            try {
-                await db.collection('chats').doc(chatId).set({ 
-                    [`unreadCount_${currentUser.id}`]: 0 
-                }, { merge: true });
-                console.log('✅ Firestore actualizado:', chatId);
-            } catch (err) {
-                console.error('❌ Error actualizando Firestore:', err);
-            }
-            
-            // Pequeña pausa para garantizar propagación
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
+        // Limpiar estado local
+        setUnreadMessages(prev => { 
+            const updated = { ...prev }; 
+            delete updated[user.id]; 
+            return updated; 
+        });
         
-        openChat(user); 
-        setShowInbox(false); 
-    }}>
-
+        // Actualizar Firestore
+        db.collection('chats').doc(chatId).set({ 
+            [`unreadCount_${currentUser.id}`]: 0 
+        }, { merge: true }).then(() => {
+            console.log('✅ Firestore actualizado correctamente');
+        }).catch(err => {
+            console.error('❌ Error actualizando Firestore:', err);
+        });
+    } else {
+        console.log('⚠️ NO hay unread messages para este usuario');
+    }
+    
+    openChat(user); 
+    setShowInbox(false); 
+}}>
                                     <div className="inbox-conv-avatar-wrap">
                                         <img src={user.photo} alt={user.name} className="inbox-conv-avatar" style={unreadMessages[user.id] ? { border: '3px solid #f7d046' } : {}}/>
                                         {user.isOnline && <div className="inbox-conv-online"/>}
