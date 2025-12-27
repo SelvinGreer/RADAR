@@ -3392,9 +3392,10 @@ useEffect(() => {
     }
     
     if (user.id === currentUser?.id) {
-        if (currentUser.hasStory && currentUser.storyUrl) setViewingStory(currentUser);
-        else {
-            // Bloquear subir historia si es invitado
+        // Click en tu propio avatar
+        if (currentUser.hasStory && currentUser.storyUrl) {
+            setViewingStory(currentUser);
+        } else {
             if (currentUser.isGuest) {
                 alert('👻 Los invitados no pueden subir historias. ¡Regístrate gratis!');
                 return;
@@ -3402,10 +3403,20 @@ useEffect(() => {
             setShowStoryUpload(true);
         }
     } else {
+        // Click en avatar de otro usuario
+        
+        // ⭐ PRIORIDAD 1: Si tiene mensajes sin leer (anillo amarillo) → Abrir chat DIRECTAMENTE
+        if (unreadMessages[user.id] && unreadMessages[user.id] > 0) {
+            openChat(user);
+            return;
+        }
+        
+        // PRIORIDAD 2: Si tiene historia no vista (anillo morado/rojo) → Mostrar historia
         if (user.hasStory && user.storyUrl && !viewedStories[user.id]) { 
             setViewedStories(prev => ({ ...prev, [user.id]: Date.now() })); 
             setViewingStory(user); 
         }
+        // PRIORIDAD 3: Si no hay mensajes ni historia → Mostrar modal Instagram
         else { 
             setInstagramModalUser(user); 
             setShowInstagramModal(true); 
