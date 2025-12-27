@@ -2981,7 +2981,8 @@ const createMeetingPointMarker = (point, map, usersCount, distanceToPoint, users
             useEffect(() => {
     if (!currentUser?.id) return;
     console.log('🔔 Iniciando listener de mensajes no leídos para:', currentUser.id);
-    // ✅ DEBUG TEMPORAL - Verificación manual
+    
+                // ✅ DEBUG TEMPORAL - Verificación manual
 setTimeout(() => {
     db.collection('chats')
         .where('participants', 'array-contains', currentUser.id)
