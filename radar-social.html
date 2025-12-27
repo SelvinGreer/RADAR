@@ -3856,10 +3856,35 @@ const sendQuickMessage = async () => {
         // Marcar mensajes como leídos también
         if (unreadMessages[user.id]) {
             const chatId = [currentUser.id, user.id].sort().join('_');
-            db.collection('chats').doc(chatId).update({ [`unreadCount_${currentUser.id}`]: 0 }).catch(() => {});
-            setUnreadMessages(prev => { const u = { ...prev }; delete u[user.id]; return u; });
+            
+            // Limpiar estado local
+            setUnreadMessages(prev => { 
+                const updated = { ...prev }; 
+                delete updated[user.id]; 
+                return updated; 
+            });
+            
+            // Actualizar Firestore
+            db.collection('chats').doc(chatId).set({ 
+                [`unreadCount_${currentUser.id}`]: 0 
+            }, { merge: true });
         }
     } else { 
+        // ✅ Limpiar badge ANTES de abrir chat
+        if (unreadMessages[user.id]) {
+            const chatId = [currentUser.id, user.id].sort().join('_');
+            
+            setUnreadMessages(prev => { 
+                const updated = { ...prev }; 
+                delete updated[user.id]; 
+                return updated; 
+            });
+            
+            db.collection('chats').doc(chatId).set({ 
+                [`unreadCount_${currentUser.id}`]: 0 
+            }, { merge: true });
+        }
+        
         openChat(user); 
         setShowInbox(false); 
     }
@@ -3878,8 +3903,29 @@ const sendQuickMessage = async () => {
                         </div>
                         <div className="inbox-conversations">
                             {users.length === 0 ? <div className="inbox-no-chats"><p>No hay conversaciones</p></div> :
-                            users.filter(u => u.isOnline).sort((a,b) => a.distance - b.distance).map(user => (
-                                <div key={user.id} className="inbox-conv-item" onClick={() => { openChat(user); setShowInbox(false); }}>
+                            {users.filter(u => u.isOnline).sort((a,b) => a.distance - b.distance).map(user => (
+    <div key={user.id} className="inbox-conv-item" onClick={() => { 
+        // ✅ Limpiar badge ANTES de abrir chat
+        if (unreadMessages[user.id]) {
+            const chatId = [currentUser.id, user.id].sort().join('_');
+            
+            // Limpiar estado local
+            setUnreadMessages(prev => { 
+                const updated = { ...prev }; 
+                delete updated[user.id]; 
+                return updated; 
+            });
+            
+            // Actualizar Firestore
+            db.collection('chats').doc(chatId).set({ 
+                [`unreadCount_${currentUser.id}`]: 0 
+            }, { merge: true });
+        }
+        
+        openChat(user); 
+        setShowInbox(false); 
+    }}>
+
                                     <div className="inbox-conv-avatar-wrap">
                                         <img src={user.photo} alt={user.name} className="inbox-conv-avatar" style={unreadMessages[user.id] ? { border: '3px solid #f7d046' } : {}}/>
                                         {user.isOnline && <div className="inbox-conv-online"/>}
