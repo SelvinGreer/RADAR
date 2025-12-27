@@ -3095,33 +3095,63 @@ const createMeetingPointMarker = (point, map, usersCount, distanceToPoint, users
     }
     
     orbitUsers.forEach((user, index) => {
-        const orbitalPos = getOrbitalPosition(currentUser.latitude, currentUser.longitude, index, 8);
-        activeMarkerIds.add(user.id);
-        const existing = markersRef.current[user.id];
-        const viewedChanged = existing && existing.viewed !== !!viewedStories[user.id];
-        const userChanged = existing && (existing.hasStory !== user.hasStory || existing.thought !== (user.thought || '') || viewedChanged || existing.emoji !== (user.currentEmoji || ''));
-        if (existing && existing.type === 'orbital' && !userChanged) {
-            existing.marker.updatePosition(orbitalPos.lat, orbitalPos.lng);
-        } else {
-            if (existing) removeMarker(user.id);
-            const marker = createUserMarker({ ...user, displayLat: orbitalPos.lat, displayLng: orbitalPos.lng }, googleMap, 38, false, true, index);
-            markersRef.current[user.id] = { marker, type: 'orbital', hasStory: user.hasStory, thought: user.thought || '', viewed: !!viewedStories[user.id], emoji: user.currentEmoji || '' };
-        }
-    });
+    const orbitalPos = getOrbitalPosition(currentUser.latitude, currentUser.longitude, index, 8);
+    activeMarkerIds.add(user.id);
+    const existing = markersRef.current[user.id];
+    const viewedChanged = existing && existing.viewed !== !!viewedStories[user.id];
+    const unreadChanged = existing && existing.unreadCount !== (unreadMessages[user.id] || 0); // ✅ NUEVO
+    const userChanged = existing && (
+        existing.hasStory !== user.hasStory || 
+        existing.thought !== (user.thought || '') || 
+        viewedChanged || 
+        existing.emoji !== (user.currentEmoji || '') ||
+        unreadChanged // ✅ NUEVO
+    );
+    if (existing && existing.type === 'orbital' && !userChanged) {
+        existing.marker.updatePosition(orbitalPos.lat, orbitalPos.lng);
+    } else {
+        if (existing) removeMarker(user.id);
+        const marker = createUserMarker({ ...user, displayLat: orbitalPos.lat, displayLng: orbitalPos.lng }, googleMap, 38, false, true, index);
+        markersRef.current[user.id] = { 
+            marker, 
+            type: 'orbital', 
+            hasStory: user.hasStory, 
+            thought: user.thought || '', 
+            viewed: !!viewedStories[user.id], 
+            emoji: user.currentEmoji || '',
+            unreadCount: unreadMessages[user.id] || 0 // ✅ NUEVO
+        };
+    }
+});
     
     [...farFromOrbit, ...closeButNotOrbital].forEach(user => {
-        activeMarkerIds.add(user.id);
-        const existing = markersRef.current[user.id];
-        const viewedChanged = existing && existing.viewed !== !!viewedStories[user.id];
-        const userChanged = existing && (existing.hasStory !== user.hasStory || existing.thought !== (user.thought || '') || viewedChanged || existing.emoji !== (user.currentEmoji || ''));
-        if (existing && existing.type === 'explorer' && !userChanged) {
-            existing.marker.updatePosition(user.latitude, user.longitude);
-        } else {
-            if (existing) removeMarker(user.id);
-            const marker = createUserMarker(user, googleMap, 22, false, false, -1);
-            markersRef.current[user.id] = { marker, type: 'explorer', hasStory: user.hasStory, thought: user.thought || '', viewed: !!viewedStories[user.id], emoji: user.currentEmoji || '' };
-        }
-    });
+    activeMarkerIds.add(user.id);
+    const existing = markersRef.current[user.id];
+    const viewedChanged = existing && existing.viewed !== !!viewedStories[user.id];
+    const unreadChanged = existing && existing.unreadCount !== (unreadMessages[user.id] || 0); // ✅ NUEVO
+    const userChanged = existing && (
+        existing.hasStory !== user.hasStory || 
+        existing.thought !== (user.thought || '') || 
+        viewedChanged || 
+        existing.emoji !== (user.currentEmoji || '') ||
+        unreadChanged // ✅ NUEVO
+    );
+    if (existing && existing.type === 'explorer' && !userChanged) {
+        existing.marker.updatePosition(user.latitude, user.longitude);
+    } else {
+        if (existing) removeMarker(user.id);
+        const marker = createUserMarker(user, googleMap, 22, false, false, -1);
+        markersRef.current[user.id] = { 
+            marker, 
+            type: 'explorer', 
+            hasStory: user.hasStory, 
+            thought: user.thought || '', 
+            viewed: !!viewedStories[user.id], 
+            emoji: user.currentEmoji || '',
+            unreadCount: unreadMessages[user.id] || 0 // ✅ NUEVO
+        };
+    }
+});
     
     // === RENDERIZAR PUNTOS DE ENCUENTRO ===
     filteredPoints.forEach(point => {
