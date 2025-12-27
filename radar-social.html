@@ -3321,22 +3321,48 @@ overlayOpenRef.current = false;
                 } 
             };
             const handleLogout = async () => { 
-                if (currentUser) {
-                    try {
-                        await db.collection('users').doc(currentUser.id).update({ isOnline: false, lastSeen: firebase.firestore.FieldValue.serverTimestamp() });
-                    } catch(e) { console.log('Logout update error:', e); }
-                }
-                // Clear map markers before logout
-                Object.keys(markersRef.current).forEach(key => {
-                    if (markersRef.current[key]?.marker?.setMap) {
-                        markersRef.current[key].marker.setMap(null);
-                    }
+    if (currentUser) {
+        try {
+            // Solo actualizar Firestore si NO es invitado
+            if (!currentUser.isGuest) {
+                await db.collection('users').doc(currentUser.id).update({ 
+                    isOnline: false, 
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp() 
                 });
-                markersRef.current = {};
-                setGoogleMap(null);
-                setShowSidebar(false);
-                await auth.signOut();
-            };
+            }
+        } catch(e) { 
+            console.log('Logout update error:', e); 
+        }
+    }
+    
+    // Limpiar marcadores del mapa
+    Object.keys(markersRef.current).forEach(key => {
+        if (markersRef.current[key]?.marker?.setMap) {
+            markersRef.current[key].marker.setMap(null);
+        }
+    });
+    markersRef.current = {};
+    setGoogleMap(null);
+    
+    // Cerrar todos los modals
+    setShowSidebar(false);
+    setShowInbox(false);
+    setShowProfile(false);
+    setSelectedUser(null);
+    
+    // Si es invitado, limpiar localStorage
+    if (currentUser?.isGuest) {
+        localStorage.removeItem('guestUID');
+    }
+    
+    // Cerrar sesión Firebase (solo si NO es invitado)
+    if (!currentUser?.isGuest) {
+        await auth.signOut();
+    }
+    
+    // Redirigir a inicio
+    window.location.href = 'index.html';
+};
 
             const handleThoughtSubmit = async () => {
                 if (!thought.trim() || !currentUser) return;
@@ -3407,19 +3433,67 @@ useEffect(() => {
             };
 
             const openChat = (user) => {
-                setSelectedUser(user);
-                setShowInstagramModal(false);
-                const chatId = [currentUser.id, user.id].sort().join('_');
-                db.collection('chats').doc(chatId).update({ [`unreadCount_${currentUser.id}`]: 0 }).catch(() => {});
-                setUnreadMessages(prev => { const u = { ...prev }; delete u[user.id]; return u; });
-                db.collection('chats').doc(chatId).collection('messages').orderBy('timestamp', 'asc').onSnapshot((snapshot) => {
-                    const msgs = [];
-                    snapshot.forEach((doc) => msgs.push({ id: doc.id, ...doc.data() }));
-                    setMessages(prev => ({ ...prev, [chatId]: msgs }));
-                    setTimeout(() => { if (chatMessagesRef.current) chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight; }, 100);
-                });
-            };
-
+    if (!user || !currentUser) return;
+    
+    // Cerrar modales y abrir chat
+    setShowInstagramModal(false);
+    setShowInbox(false);
+    setSelectedUser(user);
+    
+    const chatId = [currentUser.id, user.id].sort().join('_');
+    
+    // Marcar como leído
+    db.collection('chats').doc(chatId).update({ 
+        [`unreadCount_${currentUser.id}`]: 0 
+    }).catch(() => {});
+    
+    setUnreadMessages(prev => { 
+        const u = { ...prev }; 
+        delete u[user.id]; 
+        return u; 
+    });
+    
+    // Cargar mensajes
+    db.collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', 'asc')
+        .onSnapshot((snapshot) => {
+            const msgs = [];
+            snapshot.forEach((doc) => msgs.push({ id: doc.id, ...doc.data() }));
+            setMessages(prev => ({ ...prev, [chatId]: msgs }));
+            setTimeout(() => { 
+                if (chatMessagesRef.current) {
+                    chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight; 
+                }
+            }, 100);
+        });
+};
+const sendQuickMessage = async () => {
+    if (!quickMessage.trim() || !instagramModalUser || !currentUser) return;
+    const chatId = [currentUser.id, instagramModalUser.id].sort().join('_');
+    const text = quickMessage.trim();
+    setQuickMessage('');
+    try {
+        await db.collection('chats').doc(chatId).collection('messages').add({ 
+            text, 
+            senderId: currentUser.id, 
+            senderName: currentUser.name, 
+            senderPhoto: currentUser.photo, 
+            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+        });
+        await db.collection('chats').doc(chatId).set({ 
+            participants: [currentUser.id, instagramModalUser.id], 
+            lastMessage: text, 
+            lastMessageTime: firebase.firestore.FieldValue.serverTimestamp(), 
+            [`unreadCount_${instagramModalUser.id}`]: firebase.firestore.FieldValue.increment(1) 
+        }, { merge: true });
+        setShowInstagramModal(false);
+        openChat(instagramModalUser);
+    } catch(e) {
+        console.error('Error enviando mensaje rápido:', e);
+    }
+};
             const sendMessage = async () => {
                 if (!messageInput.trim() || !selectedUser || !currentUser) return;
                 const chatId = [currentUser.id, selectedUser.id].sort().join('_');
