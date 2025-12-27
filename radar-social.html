@@ -2981,7 +2981,25 @@ const createMeetingPointMarker = (point, map, usersCount, distanceToPoint, users
             useEffect(() => {
     if (!currentUser?.id) return;
     console.log('🔔 Iniciando listener de mensajes no leídos para:', currentUser.id);
-    
+    // ✅ DEBUG TEMPORAL - Verificación manual
+setTimeout(() => {
+    db.collection('chats')
+        .where('participants', 'array-contains', currentUser.id)
+        .get()
+        .then(snap => {
+            console.log('=== 🔍 VERIFICACIÓN MANUAL ===');
+            console.log('Total de chats:', snap.size);
+            snap.forEach(doc => {
+                const data = doc.data();
+                const count = data[`unreadCount_${currentUser.id}`] || 0;
+                console.log('---');
+                console.log('Chat:', doc.id);
+                console.log('Contador:', count);
+                console.log('Último mensaje:', data.lastMessage);
+            });
+        })
+        .catch(err => console.error('Error verificación:', err));
+}, 2000); // Espera 2 segundos después de iniciar
     // ✅ FORZAR LECTURA DEL SERVIDOR (sin cache)
     const unsubscribe = db.collection('chats')
         .where('participants', 'array-contains', currentUser.id)
