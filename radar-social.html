@@ -3943,7 +3943,7 @@ const sendQuickMessage = async () => {
                         </div>
                         <div className="inbox-conversations">
                             {users.length === 0 ? <div className="inbox-no-chats"><p>No hay conversaciones</p></div> :
-{users.filter(u => u.isOnline).sort((a,b) => a.distance - b.distance).map(user => (
+users.filter(u => u.isOnline).sort((a,b) => a.distance - b.distance).map(user => (
     <div key={user.id} className="inbox-conv-item" onClick={async () => { 
         console.log('📱 Click en inbox para usuario:', user.id);
         
