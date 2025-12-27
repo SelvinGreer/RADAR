@@ -1917,6 +1917,7 @@ const isGuestMode = urlParams.get('mode') === 'guest';
             const [showEmojiPicker, setShowEmojiPicker] = useState(false);
             const [currentEmoji, setCurrentEmoji] = useState(null);
             const [emojiTimestamp, setEmojiTimestamp] = useState(null);
+            const [showChatMenu, setShowChatMenu] = useState(false);
             // === ESTADOS PARA NOTIFICACIONES PUSH ===
 const [notifiedUsers, setNotifiedUsers] = useState(new Set());
 const hasNotificationPermission = useRef(false);
