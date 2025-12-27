@@ -2979,32 +2979,53 @@ const createMeetingPointMarker = (point, map, usersCount, distanceToPoint, users
             }, [currentUser?.latitude, currentUser?.longitude, googleMap]);
 
             useEffect(() => {
-                if (!currentUser?.id) return;
-                console.log('Iniciando listener de mensajes no leídos para:', currentUser.id);
-                const unsubscribe = db.collection('chats').where('participants', 'array-contains', currentUser.id).onSnapshot((snapshot) => {
-                    const unreadCounts = {};
-                    let total = 0;
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const count = data[`unreadCount_${currentUser.id}`] || 0;
-                        if (count > 0) {
-                            const otherUserId = data.participants?.find(id => id !== currentUser.id);
-                            if (otherUserId) {
-                                const prev = unreadMessages[otherUserId] || 0;
-                                if (count > prev && prev >= 0 && notificationSound.current && initialLoadComplete) {
-                                    try { notificationSound.current(); } catch(e) {}
-                                }
-                                unreadCounts[otherUserId] = count;
-                                total += count;
+    if (!currentUser?.id) return;
+    console.log('🔔 Iniciando listener de mensajes no leídos para:', currentUser.id);
+    
+    // ✅ FORZAR LECTURA DEL SERVIDOR (sin cache)
+    const unsubscribe = db.collection('chats')
+        .where('participants', 'array-contains', currentUser.id)
+        .onSnapshot(
+            { includeMetadataChanges: false }, // ✅ Solo cambios reales del servidor
+            (snapshot) => {
+                const unreadCounts = {};
+                let total = 0;
+                
+                console.log(`📊 Snapshot recibido: ${snapshot.docs.length} chats`);
+                
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const count = data[`unreadCount_${currentUser.id}`] || 0;
+                    
+                    console.log(`📧 Chat ${doc.id}: unreadCount = ${count}`);
+                    
+                    if (count > 0) {
+                        const otherUserId = data.participants?.find(id => id !== currentUser.id);
+                        if (otherUserId) {
+                            const prev = unreadMessages[otherUserId] || 0;
+                            if (count > prev && prev >= 0 && notificationSound.current && initialLoadComplete) {
+                                try { notificationSound.current(); } catch(e) {}
                             }
+                            unreadCounts[otherUserId] = count;
+                            total += count;
                         }
-                    });
-                    console.log('Mensajes no leídos actualizados:', unreadCounts, 'Total:', total);
-                    setUnreadMessages(unreadCounts);
-                    setTotalUnread(total);
+                    }
                 });
-                return () => unsubscribe();
-            }, [currentUser?.id, initialLoadComplete]);
+                
+                console.log('✅ Mensajes no leídos actualizados:', unreadCounts, 'Total:', total);
+                setUnreadMessages(unreadCounts);
+                setTotalUnread(total);
+            },
+            (error) => {
+                console.error('❌ Error en listener de unread:', error);
+            }
+        );
+    
+    return () => {
+        console.log('🔕 Desconectando listener de mensajes no leídos');
+        unsubscribe();
+    };
+}, [currentUser?.id, initialLoadComplete]);
 
             useEffect(() => {
                 if (!currentUser?.latitude || currentUser.latitude === 0 || users.length === 0) return;
